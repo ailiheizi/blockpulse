@@ -21,6 +21,7 @@ let feedKey = '';
 let historyKey = '';
 let opponentsKey = '';
 let chartKey = '';
+let previousResult;
 
 try {
   const saved = JSON.parse(localStorage.getItem(KEY));
@@ -111,6 +112,8 @@ function drawHistory() {
 
 function drawResult() {
   const result = state.result;
+  if (result === previousResult) return;
+  previousResult = result;
   $('result').hidden = !result;
   if (!result) return;
   const stake = result.stakes.player;
@@ -129,6 +132,8 @@ function render() {
   const active = state.phase === 'active';
   const settled = state.phase === 'settled';
   const outcome = state.heat > 100 ? 'red' : state.heat < 100 ? 'black' : 'green';
+  document.body.dataset.phase = state.phase;
+  $('chart-prompt').hidden = !betting;
   $('balance').textContent = number(player.balance);
   $('locked').textContent = player.bet ? `本轮${settled ? '已结算' : '锁定'} ${player.bet.stake} 积分` : '本轮未下注';
   $('pool').textContent = number(settled ? state.result.pool : state.pool);
@@ -145,12 +150,17 @@ function render() {
   $('heat-direction').textContent = `${COLORS[outcome].symbol} ${state.heat === 100 ? '平盘' : (state.heat > 100 ? '+' : '') + (state.heat - 100)}`;
   $('heat-direction').className = `direction ${COLORS[outcome].css}`;
   $('time').textContent = (state.remainingMs / 1000).toFixed(1);
+  $('countdown-dial').style.setProperty('--remaining', `${100 * state.remainingMs / state.durationMs}%`);
+  $('countdown-dial').classList.toggle('urgent', active && state.remainingMs < 4000);
   $('time-bar').style.width = `${100 * state.remainingMs / state.durationMs}%`;
   $('timer').setAttribute('aria-valuenow', (state.remainingMs / 1000).toFixed(1));
   $('timer').classList.toggle('urgent', active && state.remainingMs < 4000);
   const actions = state.events.filter(e => e.type === 'action').length;
   $('action-count').textContent = `${actions} 次有效行动 · 游戏指数`;
   $('tickets').textContent = active ? `你的行动券 ${player.tickets} / 3 · 可保留不用` : settled ? `你使用了 ${3 - player.tickets} 张行动券` : '每轮最多 3 张行动券，可以保留不用';
+  $('ticket-dots').querySelectorAll('i').forEach((ticket, index) => {
+    ticket.classList.toggle('used', index >= player.tickets);
+  });
   $('heat-up').disabled = $('heat-down').disabled = !active || player.tickets <= 0;
   $('phase-note').textContent = active ? '预测已锁定。观察 Bot 的动作，选择加热、降温，或按兵不动。' : settled ? '结果来自本轮所有有效行动。你可以查看结算，或继续下一轮。' : '选好方向后开始。封盘后无法改注，15 秒里你和 Bot 都能行动。';
   document.querySelectorAll('[data-color]').forEach(button => {
@@ -160,7 +170,9 @@ function render() {
   });
   document.querySelectorAll('[data-stake]').forEach(button => {
     button.disabled = !betting || Number(button.dataset.stake) > player.balance;
-    button.classList.toggle('selected', Number(button.dataset.stake) === Number($('stake').value));
+    const selected = Number(button.dataset.stake) === Number($('stake').value);
+    button.classList.toggle('selected', selected);
+    button.setAttribute('aria-pressed', String(selected));
   });
   $('stake').disabled = !betting;
   $('stake').max = player.balance;
@@ -242,7 +254,11 @@ function freshGame() {
   showError(''); persist(); render(); announce('试玩已重置，所有参与者回到一千积分。');
 }
 $('reset').addEventListener('click', freshGame);
+$('rules-link').addEventListener('click', () => { $('rules').open = true; });
 window.addEventListener('resize', () => { chartKey = ''; drawChart(); });
 window.addEventListener('pagehide', persist);
-setInterval(() => { flushTime(); render(); }, 100);
+setInterval(() => {
+  if (state.phase !== 'active') return;
+  flushTime(); render();
+}, 100);
 render();

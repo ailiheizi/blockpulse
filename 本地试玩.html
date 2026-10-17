@@ -3,80 +3,515 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#10131c">
+  <meta name="theme-color" content="#0e121d">
   <meta name="description" content="预测热度，用有限的行动改变结果。和量化 Bot 同场玩的区块预言家原型，使用不可兑换模拟积分。">
   <title>BlockPulse · 区块预言家</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23a68bfa'/%3E%3Cpath d='M7 22h8l4-11 5 20 4-9h5' fill='none' stroke='%2310131c' stroke-width='3'/%3E%3C/svg%3E">
   <style>
-:root{color-scheme:dark;--bg:#10131c;--surface:#181d29;--surface-soft:#1d2331;--border:#2b3243;--muted:#9da8bc;--text:#eef1f8;--purple:#b29afd;--red:#ff7a87;--green:#72dbb2;--blue:#91baf9;--warm:#ffb48d;font-family:system-ui,-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;font-size:14px;line-height:1.5;background:var(--bg);color:var(--text)}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 55% -25%,#45396a35,transparent 60%),var(--bg)}button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed}a{color:inherit;text-decoration:none}button:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--purple);outline-offset:4px}button{transition:background .18s,transform .18s,border-color .18s,opacity .18s}button:not(:disabled):active{transform:translateY(1px)}button:disabled{opacity:.38}.shell{max-width:1320px;margin:0 auto;padding:0 38px}.topbar{height:92px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}.brand{display:flex;align-items:center;gap:12px;font-family:'Avenir Next',system-ui,sans-serif;font-size:19px;font-weight:700;letter-spacing:1.1px}.brand-light{font-weight:400;color:var(--muted)}.brand small{display:block;font-family:inherit;font-size:10px;color:var(--muted);font-weight:400;letter-spacing:3px;margin-top:2px}.brand-mark{display:grid;place-items:center;width:43px;height:43px;border-radius:13px;background:var(--purple);color:#171122;font-size:41px;font-weight:500;line-height:1}.top-actions{display:flex;align-items:center;gap:24px}.demo-tag{font-size:10px;letter-spacing:1.4px;color:var(--purple);display:flex;align-items:center;gap:7px}.demo-tag span{width:6px;height:6px;background:var(--purple);border-radius:50%}.quiet-button{color:var(--muted);border:0;background:none;padding:10px 0;font-size:12px}.quiet-button:hover{color:var(--text)}main{padding-top:36px}.intro{display:flex;justify-content:space-between;align-items:flex-end;gap:20px}.eyebrow{font-family:'Avenir Next',system-ui,sans-serif;font-size:10px;letter-spacing:2px;color:var(--purple);margin:0 0 10px}h1{font-size:32px;line-height:1.35;letter-spacing:-1px;margin:0 0 12px;font-weight:600}h1 span{color:var(--purple)}.intro-copy{color:var(--muted);margin:0;font-size:13px}.simulation-label{display:flex;gap:9px;align-items:flex-start;flex-shrink:0;font-size:11px;color:var(--text);margin-bottom:3px}.simulation-label small{display:block;color:var(--muted);font-size:10px;margin-top:4px}.live-dot{width:6px;height:6px;background:var(--green);border-radius:50%;margin-top:6px}.overview{display:grid;grid-template-columns:1fr 1fr 1fr 1.18fr;border:1px solid var(--border);border-radius:13px;margin:28px 0 24px;background:#171c27b3}.overview>div{padding:18px 24px;position:relative;min-width:0}.overview>div+div:before{content:'';position:absolute;left:0;top:22px;bottom:22px;width:1px;background:var(--border)}.overview span,.overview small{display:block;color:var(--muted);font-size:11px}.overview strong{display:block;font-family:'Avenir Next',system-ui,sans-serif;font-size:25px;line-height:1.25;margin:7px 0;letter-spacing:-.7px;font-weight:500;font-variant-numeric:tabular-nums}.overview>div:first-child strong{color:var(--purple)}.overview small{font-size:10px}.game-grid{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(335px,1fr);gap:22px;align-items:start}.panel{background:var(--surface);border:1px solid var(--border);border-radius:16px}.arena,.prediction{padding:24px}.panel-header{display:flex;align-items:center;justify-content:space-between;gap:10px}h2{font-size:16px;line-height:1.4;font-weight:500;margin:0}.round-label{display:flex;align-items:center;gap:12px}.round-label>span{font-family:'Avenir Next',system-ui;font-size:10px;letter-spacing:1.2px;color:var(--muted)}.phase-pill{font-size:11px;border-radius:6px;padding:5px 9px;background:#b29afd14;color:var(--purple)}.phase-pill.active{color:var(--green);background:#72dbb210}.phase-pill.settled{color:var(--warm);background:#ffb48d10}.arena-readout{display:flex;justify-content:space-between;align-items:flex-end;padding:26px 0 17px}.small-label{color:var(--muted);font-size:10px;letter-spacing:.8px;margin:0 0 5px}.heat-number{display:flex;align-items:center;gap:16px}.heat-number>strong{font-family:'Avenir Next',system-ui,sans-serif;font-size:66px;line-height:1.05;font-weight:500;letter-spacing:-4px;font-variant-numeric:tabular-nums}.direction{font-size:11px;border-radius:5px;padding:4px 7px}.direction.up{background:#ff7a8714;color:var(--red)}.direction.down{background:#91baf914;color:var(--blue)}.direction.flat{background:#72dbb214;color:var(--green)}.countdown{text-align:right;align-self:flex-end}.countdown strong{display:block;font-family:'Avenir Next',system-ui,sans-serif;font-size:27px;font-weight:400;font-variant-numeric:tabular-nums}.countdown span{color:var(--muted);font-size:10px}.time-track{height:3px;background:#ffffff08;border-radius:2px;overflow:hidden}.time-track>span{display:block;width:100%;height:100%;background:var(--purple);transition:width .15s linear}.time-track.urgent>span{background:var(--red)}.chart-wrap{margin:18px -5px 0}.chart-wrap svg{display:block;width:100%;height:auto;overflow:visible}.chart-grid{stroke:#2c3342;stroke-width:1}.chart-baseline{stroke:#697388;stroke-width:1;stroke-dasharray:4 5}.chart-text{fill:var(--muted);font-family:'Avenir Next',system-ui,sans-serif;font-size:11px}.chart-path{fill:none;stroke:var(--purple);stroke-width:2.8;stroke-linejoin:round;stroke-linecap:round}.chart-area{fill:url(#heat-fill)}.chart-dot{fill:var(--purple);stroke:var(--surface);stroke-width:3}.chart-foot{display:flex;justify-content:space-between;color:var(--muted);font-size:10px;padding:1px 4px 17px;border-bottom:1px solid var(--border)}.chart-foot>span:first-child{display:flex;gap:6px;align-items:center}.chart-foot i{display:block;width:13px;border-top:1px dashed var(--muted)}.action-zone{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:20px}h3{font-size:12px;font-weight:500;margin:0 0 4px}.action-zone p{color:var(--muted);font-size:10px;margin:0}.action-buttons{display:flex;gap:8px}.action-button{border:1px solid var(--border);border-radius:8px;background:var(--surface-soft);color:var(--text);padding:11px 13px;white-space:nowrap;font-size:12px;min-height:44px}.action-button b{font-family:'Avenir Next',system-ui;font-weight:500;margin-left:4px}.action-button span{font-size:16px;margin-right:3px}.action-button.warm:not(:disabled){color:var(--red);border-color:#ff7a8740;background:#ff7a8709}.action-button.cool:not(:disabled){color:var(--blue);border-color:#91baf940;background:#91baf909}.action-button:hover:not(:disabled){background:#ffffff0c}.arena-note{color:var(--muted);font-size:10px;margin:15px 0 0;min-height:30px}.prediction .panel-header{margin-bottom:24px}.choice-arrow{font-size:28px;color:var(--purple);font-weight:400}.color-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.color-choice{position:relative;display:flex;align-items:center;flex-direction:column;padding:15px 2px 13px;border:1px solid var(--border);background:var(--surface-soft);border-radius:10px;color:var(--text);min-width:0}.color-choice .color-symbol{font-size:24px;line-height:1.15;margin-bottom:12px}.color-choice.red .color-symbol{color:var(--red)}.color-choice.black .color-symbol{color:var(--blue)}.color-choice.green .color-symbol{color:var(--green)}.color-choice strong{font-size:12px;font-weight:500;white-space:nowrap}.color-choice small{color:var(--muted);font-size:10px;margin-top:6px}.color-choice.selected{border-color:var(--purple);background:#b29afd0e}.color-choice:disabled{opacity:.6}.selection-dot{height:5px;width:5px;border-radius:50%;background:transparent;position:absolute;right:8px;top:8px}.selected .selection-dot{background:var(--purple)}.stake-heading{display:flex;justify-content:space-between;align-items:center;margin-top:23px;font-size:12px;gap:10px}.stake-heading span{color:var(--muted);font-size:10px}.stake-control{display:flex;align-items:center;margin-top:10px;border:1px solid var(--border);border-radius:9px;padding:9px 13px;background:#111620}.stake-control input{border:0;background:none;color:var(--text);outline:none;min-width:0;width:100%;font-family:'Avenir Next',system-ui,sans-serif;font-size:23px;font-variant-numeric:tabular-nums}.stake-control input:focus-visible{outline:none}.stake-control:focus-within{outline:2px solid var(--purple);outline-offset:1px}.stake-control>span{font-size:9px;letter-spacing:1px;color:var(--muted)}.stake-presets{display:flex;gap:8px;margin-top:9px}.stake-presets button{flex:1;background:var(--surface-soft);border:1px solid var(--border);border-radius:7px;color:var(--muted);font-family:'Avenir Next',system-ui,sans-serif;min-height:35px;font-size:11px}.stake-presets button.selected{border-color:#b29afd66;color:var(--purple);background:#b29afd0a}.primary-button{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;background:var(--purple);color:#171122;font-weight:600;border:0;border-radius:9px;padding:15px 17px;margin-top:20px;min-height:49px;font-size:12px}.primary-button:hover:not(:disabled){background:#c0acff}.primary-button b{font-size:20px;font-weight:400}.primary-button:disabled{opacity:.45}.bet-hint{font-size:10px;color:var(--muted);margin:11px 0 0;line-height:1.7}.error-message{font-size:11px;color:var(--red);margin-top:10px}.rules{margin-top:19px;border-top:1px solid var(--border);padding-top:16px;color:var(--muted);font-size:11px}.rules summary{display:flex;justify-content:space-between;align-items:center;cursor:pointer;list-style:none}.rules summary::-webkit-details-marker{display:none}.rules summary span{font-size:16px;color:var(--muted)}.rules[open] summary span{transform:rotate(45deg)}.rules ol{margin:12px 0 0;padding-left:17px;font-size:11px;line-height:1.8}.rules li+li{margin-top:5px}.result-box{border-top:1px solid var(--border);margin-top:18px;padding-top:18px}.result-head{display:flex;justify-content:space-between;align-items:center;gap:8px}.result-head strong{font-size:14px;font-weight:500}.result-head>span{font-family:'Avenir Next',system-ui;font-size:23px;color:var(--green)}.result-head>span.loss{color:var(--red)}.result-box p{color:var(--muted);font-size:11px;margin:7px 0 0}.result-stats{display:grid;grid-template-columns:repeat(3,1fr);margin-top:13px;gap:8px}.result-stats span{display:block;color:var(--muted);font-size:10px}.result-stats b{display:block;font-family:'Avenir Next',system-ui;font-size:15px;font-weight:400;margin-top:3px}.opponents-section{margin-top:27px}.section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}.section-heading>span{color:var(--muted);font-size:10px}.section-heading p{margin-bottom:5px}.opponents{display:grid;grid-template-columns:1fr 1fr;gap:20px}.opponent{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:13px;padding:18px 21px;background:var(--surface);border:1px solid var(--border);border-radius:12px}.bot-avatar{display:grid;place-items:center;width:39px;height:39px;border:1px solid #b29afd35;background:#b29afd0b;color:var(--purple);border-radius:11px;font-family:'Avenir Next',system-ui;font-size:17px}.bot-avatar.mean{color:var(--blue);background:#91baf90a;border-color:#91baf930}.bot-name{font-size:12px;font-weight:500;margin:0}.bot-strategy{font-size:10px;color:var(--muted);margin:3px 0 7px}.bot-info{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:10px;color:var(--muted)}.bot-bet{padding:2px 6px;background:var(--surface-soft);border-radius:4px;color:var(--text)}.bot-bet.red{color:var(--red)}.bot-bet.black{color:var(--blue)}.bot-bet.green{color:var(--green)}.bot-balance{text-align:right;font-family:'Avenir Next',system-ui;font-size:19px}.bot-balance small{display:block;color:var(--muted);font-family:system-ui;font-size:9px;margin-top:4px}.bottom-grid{display:grid;grid-template-columns:1.2fr 1fr;gap:22px;margin-top:22px}.history-panel,.feed-panel{padding:22px}.history-content{min-height:155px}.empty-state{display:flex;min-height:155px;flex-direction:column;align-items:center;justify-content:center;color:var(--muted)}.empty-state>span{font-family:'Avenir Next',system-ui;font-size:22px;color:#778098;letter-spacing:12px}.empty-state p{font-size:11px;margin:10px 0 0}.history-table{width:100%;border-collapse:collapse;font-size:11px}.history-table th{text-align:left;color:var(--muted);font-size:10px;font-weight:400;padding:0 0 9px}.history-table td{padding:10px 0;border-top:1px solid var(--border);font-variant-numeric:tabular-nums}.history-table th:last-child,.history-table td:last-child{text-align:right}.color-tag{display:inline-flex;align-items:center;gap:5px}.color-tag i{height:6px;width:6px;border-radius:50%}.color-tag.red{color:var(--red)}.color-tag.red i{background:var(--red)}.color-tag.black{color:var(--blue)}.color-tag.black i{background:var(--blue)}.color-tag.green{color:var(--green)}.color-tag.green i{background:var(--green)}.gain{color:var(--green)}.loss{color:var(--red)}.feed{padding:0;list-style:none;margin:0;min-height:155px}.feed li{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-top:1px solid var(--border);font-size:11px}.feed li:first-child{border-top:0;padding-top:0}.feed time{font-family:'Avenir Next',system-ui;font-size:10px;color:#77869e;flex-shrink:0;margin-top:1px;width:34px}.feed li span{color:#bdc6d7}.feed .feed-placeholder{color:var(--muted);padding-top:20px;font-size:11px}.feed-live{display:flex;align-items:center;gap:5px;font-family:'Avenir Next',system-ui;font-size:9px!important;letter-spacing:1px}.feed-live i{height:5px;width:5px;background:var(--green);border-radius:50%}footer{display:flex;justify-content:space-between;gap:15px;padding:27px 0 25px;color:#78859c;font-size:10px}footer i{font-style:normal;color:var(--purple);padding:0 9px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.flash .heat-number>strong{animation:heat-bump .22s ease}@keyframes heat-bump{50%{transform:translateY(-2px)}}
-@media(min-width:1450px){.shell{padding:0 48px}}
-@media(max-width:1000px){.shell{padding:0 24px}.simulation-label{display:none}.game-grid{grid-template-columns:minmax(0,1.2fr) minmax(315px,1fr);gap:16px}.arena,.prediction{padding:20px}.round-label{display:block}.round-label h2{margin-top:3px}.overview>div{padding:16px 18px}.overview strong{font-size:22px}.overview small{font-size:9px}.action-zone{display:block}.action-buttons{margin-top:13px}.action-button{flex:1}.bot-strategy{max-width:220px}}
-@media(max-width:760px){.shell{padding:0 18px}.topbar{height:76px}.brand{font-size:16px}.brand-mark{width:36px;height:36px;font-size:33px;border-radius:10px}.top-actions{gap:15px}.demo-tag{font-size:8px;letter-spacing:.5px}.quiet-button{font-size:11px}main{padding-top:25px}h1{font-size:27px}.intro-copy{font-size:12px;max-width:480px}.overview{grid-template-columns:1fr 1fr;margin:23px 0 18px}.overview>div{padding:14px 17px}.overview>div:nth-child(3),.overview>div:nth-child(4){border-top:1px solid var(--border)}.overview>div:nth-child(3):before{display:none}.overview strong{font-size:25px}.overview small{font-size:10px}.game-grid{grid-template-columns:1fr;gap:18px}.prediction{grid-row:2}.arena{padding:20px}.round-label{display:flex}.round-label h2{margin:0}.arena-readout{padding-top:22px}.heat-number>strong{font-size:60px}.chart-wrap{margin-top:12px}.action-zone{display:flex}.action-buttons{margin-top:0}.action-button{padding:11px 13px}.arena-note{min-height:0}.prediction .panel-header{margin-bottom:16px}.color-choice{padding:16px 4px}.color-choice strong{font-size:13px}.color-choice small{font-size:11px}.stake-presets button{min-height:40px;font-size:12px}.primary-button{font-size:13px;min-height:51px}.bet-hint{font-size:11px}.rules{font-size:12px}.rules ol{font-size:12px}.simulation-label small,.small-label,.chart-foot,.action-zone p,.arena-note,.bot-strategy,.bot-info,.bot-balance small,.section-heading>span,.overview span,.overview small,.countdown span,.stake-heading span,.stake-control>span,footer{font-size:11px}.opponents{gap:12px}.opponent{grid-template-columns:auto 1fr;gap:10px;padding:15px}.bot-balance{grid-column:2;text-align:left;font-size:17px}.bot-balance small{display:inline;margin-left:7px}.bot-strategy{font-size:11px}.bot-info{gap:6px}.bot-info span{font-size:10px}.bottom-grid{grid-template-columns:1fr;gap:18px}.section-heading>span{font-size:10px}.history-table{font-size:12px}.history-table th{font-size:11px}.feed li{font-size:12px}.feed time{font-size:11px;width:39px}footer{flex-direction:column;gap:6px;padding-top:24px}}
-@media(max-width:400px){.shell{padding:0 13px}.brand{font-size:14px;gap:8px}.brand small{font-size:9px}.demo-tag{display:none}h1{font-size:25px;letter-spacing:-1px}.overview>div{padding:13px 14px}.overview strong{font-size:23px}.overview small{font-size:10px}.arena,.prediction{padding:17px}.round-label{gap:8px}.round-label>span{font-size:9px}.action-zone{display:block}.action-buttons{margin-top:12px}.opponents{grid-template-columns:1fr}.opponent{grid-template-columns:auto 1fr auto;padding:15px}.bot-balance{grid-column:auto;text-align:right}.bot-balance small{display:block;margin-left:0}.chart-wrap{margin:10px -9px 0}.bot-info span{font-size:11px}.chart-foot{font-size:10px}.color-choices{gap:8px}}
-.quiet-button{min-height:44px}.stake-presets button{min-height:44px}
-@media(max-width:1000px){.intro{flex-wrap:wrap}.simulation-label{display:flex}}
-@media(max-width:760px){.intro{flex-direction:column;align-items:flex-start;gap:14px}.simulation-label{margin:0}.simulation-label small{font-size:11px}}
-@media(max-width:760px){.prediction{grid-row:1}.arena{grid-row:2;scroll-margin-top:16px}.result-box{scroll-margin-top:20px}}
-@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+:root {
+  color-scheme: dark;
+  --bg: #0e121d;
+  --surface: #171d2b;
+  --surface-soft: #202738;
+  --border: #2b3346;
+  --muted: #9ca8bd;
+  --text: #edf0fa;
+  --purple: #bba5ff;
+  --red: #ff8c9d;
+  --green: #7ed9bb;
+  --blue: #9dbdfb;
+  --warm: #edc393;
+  --font-body: 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-display: 'Avenir Next', 'Trebuchet MS', var(--font-body);
+  --font-data: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+body {
+  margin: 0;
+  background: radial-gradient(ellipse at 65% 0, #30254248, transparent 40%), var(--bg);
+}
+button, input { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+a { color: inherit; text-decoration: none; }
+button, a, input, summary { -webkit-tap-highlight-color: transparent; }
+button, a, summary { touch-action: manipulation; }
+button { transition: background 160ms, border-color 160ms, box-shadow 160ms, transform 160ms; }
+button:not(:disabled):active { transform: translateY(1px); }
+button:focus-visible, a:focus-visible, input:focus-visible, summary:focus-visible {
+  outline: 3px solid var(--purple);
+  outline-offset: 4px;
+}
+[hidden] { display: none !important; }
+h1, h2, h3, p { margin: 0; }
+.shell { width: min(100%, 1320px); margin: 0 auto; padding: 0 40px; }
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+  height: 92px;
+  border-bottom: 1px solid #ffffff0d;
+}
+.brand { display: flex; align-items: center; gap: 12px; font-family: var(--font-display); font-size: 19px; font-weight: 700; letter-spacing: 1px; }
+.brand-light { color: #b5b7c8; font-weight: 400; }
+.brand small { display: block; color: var(--muted); font-family: var(--font-body); font-size: 9px; font-weight: 400; letter-spacing: 4px; margin-top: 1px; }
+.brand-mark { display: grid; place-items: center; width: 43px; height: 43px; background: #bba5ff; border-radius: 13px; box-shadow: 0 0 28px #bba5ff12; }
+.brand-mark svg { width: 29px; height: 29px; fill: none; stroke: #251e3b; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.topnav { display: flex; align-items: center; align-self: stretch; gap: 30px; }
+.topnav a { position: relative; display: flex; align-items: center; color: var(--muted); font-size: 12px; transition: color 160ms; white-space: nowrap; }
+.topnav a:hover, .topnav .current { color: var(--text); }
+.topnav .current::after { position: absolute; right: 0; bottom: -1px; left: 0; height: 2px; background: var(--purple); content: ''; }
+.topnav a span { margin-left: 6px; color: var(--purple); }
+.top-actions { display: flex; align-items: center; gap: 20px; }
+.demo-tag { display: flex; align-items: center; gap: 7px; color: #bcb1d8; font-size: 11px; white-space: nowrap; }
+.demo-tag span { width: 6px; height: 6px; background: var(--purple); border-radius: 50%; box-shadow: 0 0 0 4px #bba5ff0c; }
+.quiet-button { display: flex; align-items: center; gap: 7px; min-height: 44px; padding: 0; color: var(--muted); border: 0; background: none; font-size: 12px; white-space: nowrap; }
+.quiet-button span { font-size: 20px; }
+.quiet-button:hover { color: var(--text); }
+
+main { padding-top: 36px; }
+.intro { display: flex; align-items: center; justify-content: space-between; gap: 32px; }
+.eyebrow { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; color: var(--purple); font-family: var(--font-data); font-size: 10px; letter-spacing: 1.4px; }
+.eyebrow span { width: 19px; height: 1px; background: var(--purple); }
+h1 { font-size: clamp(28px, 3vw, 40px); font-weight: 600; line-height: 1.45; letter-spacing: -1.5px; }
+h1 span { color: var(--purple); }
+.intro-copy { margin-top: 9px; color: var(--muted); font-size: 12px; }
+.round-guide { display: flex; flex-shrink: 0; align-items: center; gap: 23px; padding: 14px 21px; border: 1px solid #bba5ff18; border-radius: 14px; background: #bba5ff04; }
+.round-guide > div + div { padding-left: 23px; border-left: 1px solid #ffffff10; }
+.round-guide strong { display: block; font-family: var(--font-display); font-size: 25px; font-weight: 500; line-height: 1.3; }
+.round-guide strong span { margin-left: 4px; color: var(--muted); font-family: var(--font-body); font-size: 11px; }
+.round-guide small { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
+
+.overview { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin: 29px 0 24px; }
+.score-card { position: relative; padding: 18px 21px; border: 1px solid #ffffff0b; border-radius: 14px; background: #171d2b91; }
+.score-card > span { display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 11px; }
+.metric-mark { color: #8e93b1; font-family: var(--font-display); font-size: 14px; font-style: normal; }
+.score-card > strong { display: block; margin: 8px 0 4px; font-family: var(--font-data); font-size: 27px; font-weight: 500; line-height: 1.3; letter-spacing: -1px; font-variant-numeric: tabular-nums; }
+.score-card > small { display: block; color: var(--muted); font-size: 11px; }
+.score-card .block-value { font-size: 22px; line-height: 1.6; letter-spacing: -.5px; }
+.balance-card { background: linear-gradient(110deg, #30254070, #211d3370); border-color: #bba5ff35; }
+.balance-card > strong, .balance-card .metric-mark { color: #d0bfff; }
+
+.game-grid { display: grid; grid-template-columns: minmax(0, 1.62fr) minmax(340px, 1fr); gap: 22px; align-items: stretch; }
+.panel { min-width: 0; border: 1px solid var(--border); border-radius: 22px; background: var(--surface); box-shadow: inset 0 1px 0 #ffffff03; }
+.arena { display: flex; flex-direction: column; padding: 26px; overflow: hidden; }
+.panel-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+h2 { font-size: 17px; font-weight: 500; line-height: 1.5; }
+.round-label { display: flex; align-items: center; gap: 12px; }
+.round-label > span { padding: 4px 7px; border: 1px solid #bba5ff24; border-radius: 5px; color: var(--purple); background: #bba5ff09; font-family: var(--font-data); font-size: 9px; letter-spacing: .4px; }
+.phase-pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; color: var(--muted); background: #ffffff05; border: 1px solid #ffffff08; border-radius: 20px; font-size: 10px; white-space: nowrap; }
+.phase-pill::before { width: 5px; height: 5px; border-radius: 50%; background: currentColor; content: ''; }
+.phase-pill.active { color: var(--green); background: #7ed9bb08; border-color: #7ed9bb28; }
+.phase-pill.settled { color: var(--warm); background: #edc39308; border-color: #edc39328; }
+.arena-readout { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 27px 0 20px; }
+.small-label { margin: 0 0 6px; color: var(--muted); font-size: 11px; letter-spacing: .5px; }
+.heat-number { display: flex; align-items: center; gap: 17px; }
+.heat-number > strong { font-family: var(--font-display); font-size: 82px; font-weight: 500; line-height: 1.1; letter-spacing: -4px; font-variant-numeric: tabular-nums; }
+.direction { padding: 4px 8px; font-family: var(--font-data); font-size: 11px; border-radius: 5px; }
+.direction.up { color: var(--red); background: #ff8c9d12; }
+.direction.down { color: var(--blue); background: #9dbdfb12; }
+.direction.flat { color: var(--green); background: #7ed9bb10; }
+.countdown { display: grid; justify-items: center; gap: 7px; }
+.countdown-dial { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 76px; height: 76px; border-radius: 50%; background: conic-gradient(from 0deg, var(--purple) var(--remaining, 100%), #ffffff0c 0); }
+.countdown-dial::before { position: absolute; inset: 3px; background: var(--surface); border-radius: 50%; content: ''; }
+.countdown-dial strong { z-index: 1; font-family: var(--font-data); font-size: 22px; font-weight: 400; line-height: 1.25; letter-spacing: -1px; }
+.countdown-dial > span { z-index: 1; color: var(--muted); font-size: 9px; }
+.countdown-label { color: var(--muted); font-size: 10px; }
+body[data-phase="active"] .countdown-dial { box-shadow: 0 0 25px #bba5ff0c; }
+.countdown-dial.urgent { background: conic-gradient(from 0deg, var(--red) var(--remaining, 100%), #ffffff0c 0); }
+.countdown-dial.urgent strong { color: var(--red); }
+.time-track { height: 3px; border-radius: 2px; overflow: hidden; background: #ffffff08; }
+.time-track > span { display: block; width: 100%; height: 100%; background: var(--purple); transition: width 100ms linear; }
+.time-track.urgent > span { background: var(--red); }
+.chart-wrap { position: relative; flex: 1; margin: 14px -3px 0; }
+.chart-wrap svg { display: block; width: 100%; height: 224px; overflow: visible; }
+.chart-grid { stroke: #ffffff07; stroke-width: 1; }
+.chart-baseline { stroke: #68748f; stroke-width: 1; stroke-dasharray: 4 6; }
+.chart-text { fill: #96a2ba; font-family: var(--font-data); font-size: 10px; }
+.chart-path { fill: none; stroke: var(--purple); stroke-width: 3; stroke-linejoin: round; stroke-linecap: round; }
+.chart-area { fill: url(#heat-fill); }
+.chart-dot { fill: var(--purple); stroke: var(--surface); stroke-width: 3; }
+.chart-prompt { position: absolute; top: 22px; right: 15px; left: 34px; text-align: center; pointer-events: none; }
+.chart-prompt > span { display: block; color: #c4c9d9; font-size: 13px; letter-spacing: .3px; }
+.chart-prompt > small { display: block; margin-top: 5px; color: #8c98b0; font-size: 11px; }
+.chart-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 0 19px; color: var(--muted); font-size: 10px; border-bottom: 1px solid var(--border); }
+.chart-foot > span:first-child { display: flex; align-items: center; gap: 6px; }
+.chart-foot i { display: block; width: 15px; border-top: 1px dashed #8992aa; }
+.action-zone { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding-top: 22px; }
+h3 { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; font-size: 13px; font-weight: 500; }
+.ticket-dots { display: flex; gap: 4px; }
+.ticket-dots i { width: 10px; height: 14px; border: 1px solid #bba5ff75; border-radius: 2px; background: #bba5ff22; transition: background 160ms; }
+.ticket-dots .used { background: transparent; border-color: #4d566c; }
+.action-zone p { color: var(--muted); font-size: 10px; }
+.action-buttons { display: flex; flex-shrink: 0; gap: 9px; }
+.action-button { min-height: 46px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px; background: #202738; color: #7e8aa2; font-size: 12px; white-space: nowrap; }
+.action-button span { margin-right: 3px; font-size: 17px; }
+.action-button b { margin-left: 4px; font-family: var(--font-data); font-size: 11px; font-weight: 400; }
+.action-button.warm:not(:disabled) { color: var(--red); background: #ff8c9d0e; border-color: #ff8c9d40; }
+.action-button.cool:not(:disabled) { color: var(--blue); background: #9dbdfb0e; border-color: #9dbdfb40; }
+.action-button:hover:not(:disabled) { background: #ffffff0a; border-color: currentColor; }
+.arena-note { margin-top: 17px; color: #9ca8bd; font-size: 11px; }
+
+.prediction {
+  --text: #292238;
+  --muted: #706a7f;
+  --border: #dcd6e8;
+  --surface-soft: #e7e1f1;
+  --purple: #7755cf;
+  --red: #bf4963;
+  --green: #267d65;
+  --blue: #4f6c9d;
+  padding: 26px;
+  color: var(--text);
+  color-scheme: light;
+  background: linear-gradient(145deg, #f5f2fc, #ece7f5);
+  border-color: #ece7f5;
+  box-shadow: 0 15px 45px #00000012, inset 0 1px 0 #ffffff;
+}
+.prediction .small-label { margin-bottom: 4px; color: #847499; font-family: var(--font-data); font-size: 9px; letter-spacing: 1.2px; }
+.prediction h2 { font-size: 23px; font-weight: 600; letter-spacing: -.6px; }
+.choice-arrow { display: grid; place-items: center; width: 39px; height: 39px; border: 1px solid #d5c7ee; border-radius: 50%; color: #8a6ac8; font-size: 25px; }
+.prediction-intro { margin: 7px 0 23px; color: var(--muted); font-size: 12px; }
+.control-label { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; font-weight: 500; }
+.control-label > span { color: #8b79a0; font-family: var(--font-data); font-size: 10px; font-weight: 400; }
+.color-choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-top: 11px; }
+.color-choice { position: relative; display: flex; flex-direction: column; align-items: center; min-width: 0; min-height: 109px; padding: 15px 3px 12px; border: 1px solid #d9d2e4; border-radius: 12px; color: var(--text); background: #ffffff57; }
+.color-choice .color-symbol { display: grid; place-items: center; width: 32px; height: 32px; margin-bottom: 8px; font-family: var(--font-display); font-size: 25px; line-height: 1; }
+.color-choice.red .color-symbol { color: var(--red); }
+.color-choice.black .color-symbol { color: var(--blue); }
+.color-choice.green .color-symbol { color: var(--green); }
+.color-choice strong { font-size: 12px; font-weight: 600; white-space: nowrap; }
+.color-choice small { margin-top: 4px; color: var(--muted); font-family: var(--font-data); font-size: 11px; }
+.color-choice:hover:not(:disabled) { transform: translateY(-2px); background: #fff; }
+.color-choice.selected { border-color: #9272cd; background: #ffffffb8; box-shadow: 0 0 0 1px #9272cd, 0 4px 13px #7654960d; }
+.color-choice.red.selected { border-color: #d37b91; box-shadow: 0 0 0 1px #d37b91, 0 4px 13px #c4607a0d; background: #fff5f7; }
+.color-choice.black.selected { border-color: #7e9ec6; box-shadow: 0 0 0 1px #7e9ec6; background: #f3f7ff; }
+.color-choice.green.selected { border-color: #64a78e; box-shadow: 0 0 0 1px #64a78e; background: #f0faf5; }
+.color-choice:disabled { opacity: .72; }
+.color-choice.selected:disabled { opacity: 1; }
+.selection-dot { position: absolute; top: 6px; right: 7px; color: var(--purple); opacity: 0; font-size: 10px; }
+.selected .selection-dot { opacity: 1; }
+.color-choice.red .selection-dot { color: var(--red); }
+.color-choice.black .selection-dot { color: var(--blue); }
+.color-choice.green .selection-dot { color: var(--green); }
+.stake-heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 23px; }
+.stake-heading > span { color: var(--muted); font-size: 10px; }
+.stake-control { display: flex; align-items: center; gap: 15px; margin-top: 11px; padding: 11px 15px; border: 1px solid #dcd4e9; border-radius: 10px; background: #ffffff7d; }
+.stake-control input { width: 100%; min-width: 0; padding: 0; border: 0; color: #302541; background: transparent; font-family: var(--font-data); font-size: 29px; font-weight: 400; line-height: 1.3; appearance: textfield; }
+.stake-control input::-webkit-inner-spin-button, .stake-control input::-webkit-outer-spin-button { appearance: none; }
+.stake-control > span { flex-shrink: 0; color: #80748e; font-size: 10px; }
+.stake-presets { display: flex; gap: 7px; margin-top: 8px; }
+.stake-presets button { flex: 1; min-height: 42px; border: 1px solid #d9d1e6; border-radius: 8px; background: #ffffff24; color: #6e607f; font-family: var(--font-data); font-size: 13px; }
+.stake-presets button > span { font-family: var(--font-body); font-size: 9px; }
+.stake-presets button:hover:not(:disabled) { background: #ffffff9e; }
+.stake-presets button.selected { border-color: #a18ac9; color: #6e49a8; background: #ded3f0; }
+.stake-presets button:disabled { color: #9a90a8; background: #dcd5e233; }
+.primary-button { display: flex; align-items: center; justify-content: space-between; gap: 9px; width: 100%; min-height: 53px; margin-top: 22px; padding: 14px 17px; border: 1px solid #7551c2; border-radius: 11px; color: #ffffff; background: #7755c7; box-shadow: 0 5px 14px #6c489b22; font-size: 12px; font-weight: 500; }
+.primary-button b { font-size: 22px; font-weight: 400; line-height: 1; }
+.primary-button:hover:not(:disabled) { background: #6846b7; border-color: #6846b7; box-shadow: 0 7px 18px #6c489b35; }
+.primary-button:disabled { color: #766886; background: #dfd5ed; border-color: #dfd5ed; box-shadow: none; }
+.bet-hint { min-height: 34px; margin-top: 10px; color: var(--muted); font-size: 11px; line-height: 1.8; }
+.error-message { margin-top: 10px; padding: 9px 11px; border: 1px solid #d991a8; border-radius: 7px; color: #9e3650; background: #fff0f4; font-size: 11px; }
+.rules { margin-top: 18px; padding-top: 16px; border-top: 1px solid #d9d1e5; color: #655570; font-size: 11px; }
+.rules summary { display: flex; align-items: center; justify-content: space-between; min-height: 24px; cursor: pointer; list-style: none; }
+.rules summary::-webkit-details-marker { display: none; }
+.rules summary > span { color: #937ba8; font-size: 16px; }
+.rules[open] summary > span { transform: rotate(45deg); }
+.rules ol { margin: 12px 0 0; padding-left: 17px; color: #70657e; font-size: 11px; line-height: 1.9; }
+.rules li + li { margin-top: 6px; }
+.simulation-label { display: flex; align-items: center; justify-content: center; gap: 7px; margin-top: 17px; color: #81758e; font-size: 11px; }
+.live-dot { width: 5px; height: 5px; background: #7b9c8c; border-radius: 50%; }
+.result-box { margin-top: 18px; padding: 15px; border: 1px solid #d8cde7; border-radius: 11px; background: #ffffff5c; scroll-margin-top: 24px; }
+.result-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.result-head strong { font-size: 13px; font-weight: 600; }
+.result-head > span { color: var(--green); font-family: var(--font-data); font-size: 23px; letter-spacing: -1px; }
+.result-head > span.loss { color: var(--red); }
+.result-box p { margin-top: 6px; color: var(--muted); font-size: 10px; line-height: 1.8; }
+.result-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 13px; }
+.result-stats span { display: block; color: var(--muted); font-size: 9px; }
+.result-stats b { display: block; margin-top: 4px; font-family: var(--font-data); font-size: 15px; font-weight: 400; }
+
+.opponents-section { margin-top: 31px; }
+.section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+.section-heading > span { color: var(--muted); font-size: 10px; }
+.section-heading .small-label { margin-bottom: 4px; color: #8d91ac; font-family: var(--font-data); font-size: 9px; letter-spacing: 1.1px; }
+.opponents { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.opponent { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 15px; padding: 20px 22px; border: 1px solid #ffffff0d; border-radius: 15px; background: #171d2bb3; }
+.bot-avatar { display: grid; place-items: center; width: 46px; height: 46px; border: 1px solid #bba5ff27; border-radius: 13px; color: var(--purple); background: #bba5ff0b; font-family: var(--font-display); font-size: 24px; }
+.bot-avatar.mean { color: var(--blue); border-color: #9dbdfb27; background: #9dbdfb0b; }
+.bot-name { color: #e1e5f1; font-size: 13px; font-weight: 500; }
+.bot-strategy { margin: 3px 0 9px; color: var(--muted); font-size: 10px; }
+.bot-info { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--muted); font-size: 10px; }
+.bot-bet { padding: 2px 6px; border-radius: 4px; background: #ffffff05; color: #b7bfd1; }
+.bot-bet.red { color: var(--red); background: #ff8c9d09; }
+.bot-bet.black { color: var(--blue); background: #9dbdfb09; }
+.bot-bet.green { color: var(--green); background: #7ed9bb09; }
+.bot-balance { text-align: right; font-family: var(--font-data); font-size: 23px; letter-spacing: -.8px; }
+.bot-balance small { display: block; margin-top: 3px; color: var(--muted); font-family: var(--font-body); font-size: 9px; letter-spacing: 0; }
+.bottom-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 22px; margin-top: 24px; }
+.history-panel, .feed-panel { padding: 23px; border-color: #ffffff0e; border-radius: 16px; background: #151b27; }
+.history-panel h2, .feed-panel h2 { font-size: 15px; }
+.history-content { min-height: 158px; }
+.empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 158px; border: 1px dashed #ffffff0b; border-radius: 10px; color: var(--muted); }
+.empty-state > span { color: #8b85a6; font-family: var(--font-display); font-size: 23px; letter-spacing: 12px; }
+.empty-state p { margin-top: 10px; font-size: 11px; }
+.history-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.history-table th { padding: 0 0 10px; color: var(--muted); text-align: left; font-size: 10px; font-weight: 400; }
+.history-table td { padding: 11px 0; border-top: 1px solid #ffffff08; font-variant-numeric: tabular-nums; }
+.history-table th:last-child, .history-table td:last-child { text-align: right; }
+.color-tag { display: inline-flex; align-items: center; gap: 6px; }
+.color-tag i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.color-tag.red { color: var(--red); }
+.color-tag.black { color: var(--blue); }
+.color-tag.green { color: var(--green); }
+.gain { color: var(--green); }
+.loss { color: var(--red); }
+.feed { min-height: 158px; margin: 0; padding: 0; list-style: none; }
+.feed li { display: flex; align-items: flex-start; gap: 11px; padding: 10px 0; border-top: 1px solid #ffffff08; font-size: 11px; line-height: 1.8; }
+.feed li:first-child { padding-top: 0; border-top: 0; }
+.feed time { flex-shrink: 0; width: 35px; margin-top: 2px; color: #8d99b0; font-family: var(--font-data); font-size: 10px; }
+.feed li span { color: #bcc5d8; }
+.feed .feed-placeholder { color: var(--muted); }
+.feed-live { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-data); font-size: 9px !important; letter-spacing: 1px; }
+.feed-live i { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+footer { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 26px 0; color: #8590a7; font-size: 10px; }
+footer > span:first-child { font-family: var(--font-display); letter-spacing: .5px; }
+footer i { margin: 0 8px; color: #7c6c9a; font-style: normal; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+.flash .heat-number > strong { animation: heat-bump 220ms ease; }
+@keyframes heat-bump { 50% { transform: translateY(-3px); } }
+
+@media (min-width: 1450px) {
+  .shell { padding-right: 48px; padding-left: 48px; }
+}
+
+@media (max-width: 1100px) {
+  .shell { padding: 0 26px; }
+  .topnav { gap: 20px; }
+  .top-actions { gap: 14px; }
+  .demo-tag { display: none; }
+  .round-guide { gap: 17px; padding: 13px 16px; }
+  .round-guide > div + div { padding-left: 17px; }
+  .game-grid { grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr); gap: 18px; }
+  .arena, .prediction { padding: 22px; }
+  .round-label { display: block; }
+  .round-label > span { display: inline-block; margin-bottom: 5px; }
+  .arena-readout { padding-top: 20px; }
+  .heat-number > strong { font-size: 74px; }
+  .action-zone { align-items: stretch; flex-direction: column; gap: 14px; }
+  .action-button { flex: 1; }
+  .score-card { padding: 16px; }
+  .score-card > small { font-size: 10px; }
+  .score-card .block-value { font-size: 19px; line-height: 1.85; }
+  .opponent { gap: 12px; padding: 18px; }
+  .bot-balance { font-size: 20px; }
+}
+
+@media (max-width: 900px) {
+  .topnav { display: none; }
+  .demo-tag { display: flex; }
+  .intro { align-items: flex-start; flex-direction: column; gap: 20px; }
+  .round-guide { gap: 20px; padding: 0; border: 0; border-radius: 0; background: none; }
+  .round-guide > div { display: flex; align-items: baseline; gap: 8px; }
+  .round-guide > div + div { padding-left: 20px; }
+  .round-guide strong { font-size: 19px; }
+  .round-guide strong span { font-size: 10px; }
+  .round-guide small { margin: 0; }
+  .overview { gap: 10px; margin-top: 24px; }
+  .score-card > strong { font-size: 25px; }
+  .score-card .block-value { font-size: 16px; line-height: 2.05; }
+  .score-card > span { gap: 5px; font-size: 10px; }
+  .metric-mark { display: none; }
+  .heat-number { gap: 10px; }
+  .heat-number > strong { font-size: 66px; }
+  .countdown-dial { width: 66px; height: 66px; }
+  .countdown-dial strong { font-size: 20px; }
+  .chart-prompt > span { font-size: 12px; }
+  .chart-prompt > small { max-width: 160px; margin: 5px auto 0; font-size: 10px; }
+  .opponents { gap: 12px; }
+  .opponent { grid-template-columns: auto minmax(0, 1fr); }
+  .bot-balance { grid-column: 2; text-align: left; font-size: 19px; }
+  .bot-balance small { display: inline; margin-left: 8px; }
+}
+
+@media (max-width: 760px) {
+  .shell { padding: 0 20px; }
+  .topbar { height: 76px; gap: 16px; }
+  .brand { gap: 10px; font-size: 17px; }
+  .brand-mark { width: 38px; height: 38px; border-radius: 11px; }
+  .brand-mark svg { width: 26px; height: 26px; }
+  .brand small { font-size: 8px; letter-spacing: 3px; }
+  .quiet-button { font-size: 11px; }
+  .demo-tag { display: none; }
+  main { padding-top: 27px; }
+  h1 { font-size: clamp(25px, 5.9vw, 35px); line-height: 1.5; letter-spacing: -1px; }
+  .eyebrow { font-size: 9px; letter-spacing: 1px; }
+  .intro-copy { max-width: 480px; font-size: 12px; line-height: 1.9; }
+  .round-guide { flex-wrap: wrap; gap: 16px; }
+  .round-guide > div { gap: 7px; }
+  .round-guide > div + div { padding-left: 16px; }
+  .round-guide strong { font-size: 19px; }
+  .round-guide small { font-size: 10px; }
+  .overview { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 23px 0 20px; }
+  .score-card { padding: 14px 16px; border-radius: 12px; }
+  .score-card > span { font-size: 11px; }
+  .score-card > strong { margin: 6px 0 3px; font-size: 25px; }
+  .score-card > small { font-size: 10px; }
+  .score-card .block-value { font-size: 19px; line-height: 1.71; }
+  .game-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .prediction { grid-row: 1; padding: 24px; border-radius: 19px; }
+  .prediction h2 { font-size: 24px; }
+  .prediction-intro { font-size: 12px; }
+  .control-label { font-size: 13px; }
+  .color-choice { min-height: 111px; padding-top: 14px; }
+  .color-choice strong { font-size: 13px; }
+  .color-choice small { font-size: 10px; }
+  .stake-heading > span { font-size: 11px; }
+  .stake-control { display: none; }
+  .stake-presets { margin-top: 12px; }
+  .stake-presets button { min-height: 44px; font-size: 14px; }
+  .stake-presets button > span { font-size: 10px; }
+  .primary-button { min-height: 54px; font-size: 13px; }
+  .bet-hint, .rules, .rules ol, .result-box p { font-size: 11px; }
+  .simulation-label { font-size: 10px; }
+  .arena { grid-row: 2; padding: 22px; border-radius: 19px; scroll-margin-top: 16px; }
+  .round-label { display: flex; gap: 10px; }
+  .round-label > span { margin: 0; }
+  .round-label h2 { font-size: 16px; }
+  .arena-readout { padding: 24px 0 18px; }
+  .heat-number > strong { font-size: 78px; }
+  .countdown-dial { width: 74px; height: 74px; }
+  .countdown-dial strong { font-size: 22px; }
+  .chart-wrap svg { height: 204px; }
+  .chart-prompt > span { font-size: 13px; }
+  .chart-prompt > small { max-width: none; font-size: 11px; }
+  .action-zone { flex-direction: row; align-items: center; gap: 12px; }
+  .action-zone p { max-width: 190px; font-size: 11px; }
+  .action-button { min-height: 46px; padding: 10px 13px; font-size: 12px; }
+  .arena-note { font-size: 11px; }
+  .opponents-section { margin-top: 28px; }
+  .section-heading h2 { font-size: 16px; }
+  .section-heading > span { font-size: 10px; }
+  .opponents { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .opponent { grid-template-columns: auto minmax(0, 1fr) auto; padding: 18px; }
+  .bot-name { font-size: 13px; }
+  .bot-strategy, .bot-info { font-size: 11px; }
+  .bot-balance { grid-column: auto; text-align: right; font-size: 21px; }
+  .bot-balance small { display: block; margin-left: 0; font-size: 10px; }
+  .bottom-grid { grid-template-columns: minmax(0, 1fr); gap: 18px; margin-top: 20px; }
+  .history-panel, .feed-panel { padding: 21px; }
+  .history-table, .feed li { font-size: 12px; }
+  .history-table th { font-size: 10px; }
+  .feed time { font-size: 10px; }
+  footer { align-items: flex-start; flex-direction: column; gap: 7px; font-size: 10px; }
+}
+
+@media (max-width: 450px) {
+  .action-zone { flex-direction: column; align-items: stretch; gap: 14px; }
+  .action-zone p { max-width: none; }
+  .action-button { font-size: 13px; }
+  .section-heading > span { max-width: 96px; text-align: right; }
+  .opponent { gap: 11px; padding: 16px; }
+  .bot-avatar { width: 38px; height: 38px; font-size: 20px; border-radius: 10px; }
+  .bot-strategy { font-size: 10px; }
+  .bot-info { gap: 4px; font-size: 10px; }
+  .bot-balance { font-size: 19px; }
+  .round-guide { gap: 12px; }
+  .round-guide > div { gap: 5px; }
+  .round-guide > div + div { padding-left: 12px; }
+}
+
+@media (max-width: 360px) {
+  .shell { padding: 0 14px; }
+  .brand { gap: 8px; font-size: 15px; }
+  .top-actions { gap: 0; }
+  .prediction, .arena { padding: 19px; }
+  .color-choices { gap: 7px; }
+  .color-choice strong { font-size: 12px; }
+  .round-label { display: block; }
+  .round-label > span { margin-bottom: 4px; }
+  .round-guide { gap: 9px; }
+  .round-guide > div + div { padding-left: 9px; }
+  .round-guide small { font-size: 9px; }
+  .opponent { grid-template-columns: auto minmax(0, 1fr); }
+  .bot-balance { grid-column: 2; text-align: left; }
+  .bot-balance small { display: inline; margin-left: 7px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
 
 </style>
 </head>
 <body>
   <div class="shell">
     <header class="topbar">
-      <a class="brand" href="#" aria-label="BlockPulse 首页"><span class="brand-mark" aria-hidden="true">⌁</span><span>BLOCK<span class="brand-light">PULSE</span><small>区块预言家</small></span></a>
-      <div class="top-actions"><span class="demo-tag"><span></span> PLAYGROUND</span><button id="reset" class="quiet-button" type="button">重置试玩 ↻</button></div>
+      <a class="brand" href="#" aria-label="BlockPulse 首页"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M3 17h7l4-10 5 19 4-9h6"></path></svg></span><span>BLOCK<span class="brand-light">PULSE</span><small>区块预言家</small></span></a>
+      <nav class="topnav" aria-label="页面导航"><a class="current" href="#game">竞技场</a><a href="#history-section">对局记录</a><a id="rules-link" href="#rules">玩法说明 <span aria-hidden="true">↗</span></a></nav>
+      <div class="top-actions"><span class="demo-tag"><span></span> 模拟试玩</span><button id="reset" class="quiet-button" type="button"><span aria-hidden="true">↻</span> 重置试玩</button></div>
     </header>
 
     <main>
       <section class="intro">
-        <div><p class="eyebrow">PREDICT. INFLUENCE. REPEAT.</p><h1>猜中方向，<span>也改变方向。</span></h1><p class="intro-copy">先押红黑绿，再用有限的行动影响热度。和量化 Bot 同场，看看谁能读懂谁。</p></div>
-        <div class="simulation-label"><span class="live-dot"></span><span>本地玩法模拟<small>未连接钱包 · 未部署链上 · 积分不可兑换</small></span></div>
+        <div><p class="eyebrow"><span></span> HUMAN × QUANT PLAYGROUND</p><h1>猜中方向，<span>也改变方向。</span></h1><p class="intro-copy">预测红黑绿，用最多三次行动影响最终热度。</p></div>
+        <div class="round-guide" aria-label="每轮 15 秒，最多 3 张行动券，2 位 Bot 对手"><div><strong>15<span>s</span></strong><small>每轮时间</small></div><div><strong>3<span>张</span></strong><small>行动额度</small></div><div><strong>2<span>位</span></strong><small>Bot 对手</small></div></div>
       </section>
 
       <div class="overview" aria-label="本局概览">
-        <div><span>你的可用积分</span><strong id="balance">1,000</strong><small id="locked">本轮未下注</small></div>
-        <div><span id="pool-label">本轮积分池</span><strong id="pool">0</strong><small id="pool-context">命中者按下注比例分配</small></div>
-        <div><span>模拟区块</span><strong id="block">R01 / B00</strong><small>每 0.5 秒推进一块</small></div>
-        <div><span>你的累计净盈亏</span><strong id="total-profit">0</strong><small>所有玩家总积分始终为 3,000</small></div>
+        <div class="score-card balance-card"><span><i class="metric-mark" aria-hidden="true">◈</i> 你的可用积分</span><strong id="balance">1,000</strong><small id="locked">本轮未下注</small></div>
+        <div class="score-card"><span><i class="metric-mark" aria-hidden="true">◇</i> <span id="pool-label">本轮积分池</span></span><strong id="pool">0</strong><small id="pool-context">命中者按下注比例分配</small></div>
+        <div class="score-card"><span><i class="metric-mark" aria-hidden="true">▦</i> 模拟区块</span><strong id="block" class="block-value">R01 / B00</strong><small>每 0.5 秒推进一块</small></div>
+        <div class="score-card"><span><i class="metric-mark" aria-hidden="true">↗</i> 累计净盈亏</span><strong id="total-profit">0</strong><small>三位玩家总积分恒为 3,000</small></div>
       </div>
 
-      <div class="game-grid">
-        <section class="panel arena" aria-label="热度竞技场">
+      <div id="game" class="game-grid">
+        <section id="arena" class="panel arena" aria-label="热度竞技场">
           <div class="panel-header"><div class="round-label"><span id="round">ROUND 01</span><h2>热度竞技场</h2></div><span id="phase" class="phase-pill">等待下注</span></div>
-          <div class="arena-readout"><div><span class="small-label">本轮热度指数</span><div class="heat-number"><strong id="heat">100</strong><span id="heat-direction" class="direction flat">平盘</span></div></div><div class="countdown"><strong id="time">15.0</strong><span>秒 / 行动窗口</span></div></div>
+          <div class="arena-readout"><div><span class="small-label">本轮热度指数</span><div class="heat-number"><strong id="heat">100</strong><span id="heat-direction" class="direction flat">平盘</span></div></div><div class="countdown"><div id="countdown-dial" class="countdown-dial"><strong id="time">15.0</strong><span>秒</span></div><span class="countdown-label">行动倒计时</span></div></div>
           <div id="timer" class="time-track" role="progressbar" aria-label="行动时间剩余" aria-valuemin="0" aria-valuemax="15" aria-valuenow="15"><span id="time-bar"></span></div>
-          <div class="chart-wrap"><svg id="chart" viewBox="0 0 620 220" role="img" aria-label="本轮模拟热度变化曲线"></svg></div>
+          <div class="chart-wrap"><svg id="chart" viewBox="0 0 620 220" role="img" aria-label="本轮模拟热度变化曲线"></svg><div id="chart-prompt" class="chart-prompt" aria-hidden="true"><span>每一次行动，都让曲线不同。</span><small>锁定预测后，热度曲线将在这里展开</small></div></div>
           <div class="chart-foot"><span><i></i> 基准 100</span><span id="action-count">等待第一笔行动</span></div>
-          <div class="action-zone"><div><h3>轮到你影响结果</h3><p id="tickets">每轮最多 3 张行动券，可以保留不用</p></div><div class="action-buttons"><button id="heat-up" class="action-button warm" type="button" disabled><span>↗</span> 加热 <b>+1</b></button><button id="heat-down" class="action-button cool" type="button" disabled><span>↘</span> 降温 <b>−1</b></button></div></div>
+          <div class="action-zone"><div><h3>你的行动 <span id="ticket-dots" class="ticket-dots" aria-hidden="true"><i></i><i></i><i></i></span></h3><p id="tickets">每轮最多 3 张行动券，可以保留不用</p></div><div class="action-buttons"><button id="heat-up" class="action-button warm" type="button" disabled><span>↗</span> 加热 <b>+1</b></button><button id="heat-down" class="action-button cool" type="button" disabled><span>↘</span> 降温 <b>−1</b></button></div></div>
           <p class="arena-note" id="phase-note">选好方向后开始。封盘后无法改注，15 秒里你和 Bot 都能行动。</p>
         </section>
 
         <aside class="panel prediction" aria-label="下注控制">
-          <div class="panel-header"><div><p class="small-label">MAKE YOUR CALL</p><h2>你的预测</h2></div><span class="choice-arrow">↗</span></div>
+          <div class="panel-header"><div><p class="small-label">YOUR NEXT MOVE</p><h2>做出你的预测</h2></div><span class="choice-arrow" aria-hidden="true">↗</span></div>
+          <p class="prediction-intro">猜收盘方向，再决定何时出手。</p>
+          <div class="control-label"><span>01</span> 选择一个方向</div>
           <div class="color-choices" role="group" aria-label="选择预测颜色">
-            <button class="color-choice red selected" type="button" data-color="red" aria-pressed="true"><span class="color-symbol">↗</span><strong>红 · 看涨</strong><small>收盘 &gt; 100</small><span class="selection-dot"></span></button>
-            <button class="color-choice black" type="button" data-color="black" aria-pressed="false"><span class="color-symbol">↘</span><strong>黑 · 看跌</strong><small>收盘 &lt; 100</small><span class="selection-dot"></span></button>
-            <button class="color-choice green" type="button" data-color="green" aria-pressed="false"><span class="color-symbol">＝</span><strong>绿 · 持平</strong><small>收盘 = 100</small><span class="selection-dot"></span></button>
+            <button class="color-choice red selected" type="button" data-color="red" aria-pressed="true"><span class="color-symbol">↗</span><strong>红 · 看涨</strong><small>收盘 &gt; 100</small><span class="selection-dot" aria-hidden="true">✓</span></button>
+            <button class="color-choice black" type="button" data-color="black" aria-pressed="false"><span class="color-symbol">↘</span><strong>黑 · 看跌</strong><small>收盘 &lt; 100</small><span class="selection-dot" aria-hidden="true">✓</span></button>
+            <button class="color-choice green" type="button" data-color="green" aria-pressed="false"><span class="color-symbol">＝</span><strong>绿 · 持平</strong><small>收盘 = 100</small><span class="selection-dot" aria-hidden="true">✓</span></button>
           </div>
-          <div class="stake-heading"><label for="stake">投入积分（20 / 50 / 100）</label><span id="stake-max">可用 1,000</span></div>
-          <div class="stake-control"><input id="stake" type="number" inputmode="numeric" min="1" step="1" value="50" aria-describedby="stake-max"><span>POINTS</span></div>
-          <div class="stake-presets"><button type="button" data-stake="20">20</button><button type="button" data-stake="50" class="selected">50</button><button type="button" data-stake="100">100</button></div>
+          <div class="stake-heading"><label class="control-label" for="stake"><span>02</span> 选择投入积分</label><span id="stake-max">可用 1,000</span></div>
+          <div class="stake-control"><input id="stake" type="number" value="50" readonly aria-describedby="stake-max"><span>模拟积分</span></div>
+          <div class="stake-presets" role="group" aria-label="选择投入积分"><button type="button" data-stake="20" aria-pressed="false">20 <span>积分</span></button><button type="button" data-stake="50" class="selected" aria-pressed="true">50 <span>积分</span></button><button type="button" data-stake="100" aria-pressed="false">100 <span>积分</span></button></div>
           <div id="error" class="error-message" role="alert" hidden></div>
           <button id="primary-action" class="primary-button" type="button"><span>锁定 50 积分，开始本轮</span><b>→</b></button>
           <p id="bet-hint" class="bet-hint">两位 Bot 用同样的积分和行动额度与你对局。</p>
           <div id="result" class="result-box" aria-live="polite" hidden></div>
-          <details class="rules"><summary>30 秒学会怎么玩 <span>＋</span></summary><ol><li>选择红、黑或绿，输入积分开始。下注后封盘，不能改注。</li><li>15 秒行动期内，每人最多用 3 张券加热或降温；也可以不动。</li><li>热度从 100 开始，按所有参与者的有效行动变化。轮盘不随机开奖。</li><li>命中者按下注占比分配积分池，到账含本金；无人命中原额退款。</li><li>这是本地游戏指数，模拟区块与积分均无真实资产价值。规则还未经平衡验证。</li></ol></details>
+          <details id="rules" class="rules"><summary>30 秒学会怎么玩 <span>＋</span></summary><ol><li>选择红、黑或绿，再选择 20、50 或 100 积分开始。下注后封盘，不能改注。</li><li>15 秒行动期内，每人最多用 3 张券加热或降温；也可以不动。</li><li>热度从 100 开始，按所有参与者的有效行动变化。轮盘不随机开奖。</li><li>命中者按下注占比分配积分池，到账含本金；无人命中原额退款。</li><li>这是本地游戏指数，模拟区块与积分均无真实资产价值。规则还未经平衡验证。</li></ol></details>
+          <div class="simulation-label"><span class="live-dot"></span> 单人模拟 · 积分不可兑换</div>
         </aside>
       </div>
 
-      <section class="opponents-section" aria-labelledby="opponents-title"><div class="section-heading"><div><p class="small-label">HUMAN × QUANT</p><h2 id="opponents-title">量化对手</h2></div><span>相同额度 · 相同规则 · 无未来信息</span></div><div id="opponents" class="opponents"></div></section>
+      <section class="opponents-section" aria-labelledby="opponents-title"><div class="section-heading"><div><p class="small-label">MEET YOUR OPPONENTS</p><h2 id="opponents-title">同一场博弈，两种策略。</h2></div><span>相同积分 · 相同行动额度</span></div><div id="opponents" class="opponents"></div></section>
 
-      <div class="bottom-grid"><section class="panel history-panel"><div class="section-heading"><h2>对局记录</h2><span id="record-count">0 局</span></div><div id="history" class="history-content"><div class="empty-state"><span>↗ ↘ ＝</span><p>第一局，从你的判断开始。</p></div></div></section><section class="panel feed-panel"><div class="section-heading"><h2>场内动态</h2><span class="feed-live"><i></i> LIVE</span></div><ol id="feed" class="feed"><li class="feed-placeholder">准备就绪，等待玩家入场。</li></ol></section></div>
+      <div id="history-section" class="bottom-grid"><section class="panel history-panel"><div class="section-heading"><h2>对局记录</h2><span id="record-count">0 局</span></div><div id="history" class="history-content"><div class="empty-state"><span>↗ ↘ ＝</span><p>第一局，从你的判断开始。</p></div></div></section><section class="panel feed-panel"><div class="section-heading"><h2>场内动态</h2><span class="feed-live"><i></i> LIVE</span></div><ol id="feed" class="feed"><li class="feed-placeholder">准备就绪，等待玩家入场。</li></ol></section></div>
       <div id="announcement" class="sr-only" aria-live="polite"></div>
     </main>
-    <footer><span>BLOCKPULSE <i>/</i> 把预测变成一场互动博弈。</span><span>玩法原型 v0.1 · 所有结果在本地计算</span></footer>
+    <footer><span>BLOCKPULSE <i>/</i> 判断之后，还有行动。</span><span>玩法原型 · 无钱包连接 · 无真实资产</span></footer>
   </div>
   <script>
 (() => {
@@ -382,6 +817,7 @@ let feedKey = '';
 let historyKey = '';
 let opponentsKey = '';
 let chartKey = '';
+let previousResult;
 
 try {
   const saved = JSON.parse(localStorage.getItem(KEY));
@@ -472,6 +908,8 @@ function drawHistory() {
 
 function drawResult() {
   const result = state.result;
+  if (result === previousResult) return;
+  previousResult = result;
   $('result').hidden = !result;
   if (!result) return;
   const stake = result.stakes.player;
@@ -490,6 +928,8 @@ function render() {
   const active = state.phase === 'active';
   const settled = state.phase === 'settled';
   const outcome = state.heat > 100 ? 'red' : state.heat < 100 ? 'black' : 'green';
+  document.body.dataset.phase = state.phase;
+  $('chart-prompt').hidden = !betting;
   $('balance').textContent = number(player.balance);
   $('locked').textContent = player.bet ? `本轮${settled ? '已结算' : '锁定'} ${player.bet.stake} 积分` : '本轮未下注';
   $('pool').textContent = number(settled ? state.result.pool : state.pool);
@@ -506,12 +946,17 @@ function render() {
   $('heat-direction').textContent = `${COLORS[outcome].symbol} ${state.heat === 100 ? '平盘' : (state.heat > 100 ? '+' : '') + (state.heat - 100)}`;
   $('heat-direction').className = `direction ${COLORS[outcome].css}`;
   $('time').textContent = (state.remainingMs / 1000).toFixed(1);
+  $('countdown-dial').style.setProperty('--remaining', `${100 * state.remainingMs / state.durationMs}%`);
+  $('countdown-dial').classList.toggle('urgent', active && state.remainingMs < 4000);
   $('time-bar').style.width = `${100 * state.remainingMs / state.durationMs}%`;
   $('timer').setAttribute('aria-valuenow', (state.remainingMs / 1000).toFixed(1));
   $('timer').classList.toggle('urgent', active && state.remainingMs < 4000);
   const actions = state.events.filter(e => e.type === 'action').length;
   $('action-count').textContent = `${actions} 次有效行动 · 游戏指数`;
   $('tickets').textContent = active ? `你的行动券 ${player.tickets} / 3 · 可保留不用` : settled ? `你使用了 ${3 - player.tickets} 张行动券` : '每轮最多 3 张行动券，可以保留不用';
+  $('ticket-dots').querySelectorAll('i').forEach((ticket, index) => {
+    ticket.classList.toggle('used', index >= player.tickets);
+  });
   $('heat-up').disabled = $('heat-down').disabled = !active || player.tickets <= 0;
   $('phase-note').textContent = active ? '预测已锁定。观察 Bot 的动作，选择加热、降温，或按兵不动。' : settled ? '结果来自本轮所有有效行动。你可以查看结算，或继续下一轮。' : '选好方向后开始。封盘后无法改注，15 秒里你和 Bot 都能行动。';
   document.querySelectorAll('[data-color]').forEach(button => {
@@ -521,7 +966,9 @@ function render() {
   });
   document.querySelectorAll('[data-stake]').forEach(button => {
     button.disabled = !betting || Number(button.dataset.stake) > player.balance;
-    button.classList.toggle('selected', Number(button.dataset.stake) === Number($('stake').value));
+    const selected = Number(button.dataset.stake) === Number($('stake').value);
+    button.classList.toggle('selected', selected);
+    button.setAttribute('aria-pressed', String(selected));
   });
   $('stake').disabled = !betting;
   $('stake').max = player.balance;
@@ -603,9 +1050,13 @@ function freshGame() {
   showError(''); persist(); render(); announce('试玩已重置，所有参与者回到一千积分。');
 }
 $('reset').addEventListener('click', freshGame);
+$('rules-link').addEventListener('click', () => { $('rules').open = true; });
 window.addEventListener('resize', () => { chartKey = ''; drawChart(); });
 window.addEventListener('pagehide', persist);
-setInterval(() => { flushTime(); render(); }, 100);
+setInterval(() => {
+  if (state.phase !== 'active') return;
+  flushTime(); render();
+}, 100);
 render();
 
 })();

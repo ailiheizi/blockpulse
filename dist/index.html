@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#10131c">
+  <meta name="theme-color" content="#0e121d">
   <meta name="description" content="预测热度，用有限的行动改变结果。和量化 Bot 同场玩的区块预言家原型，使用不可兑换模拟积分。">
   <title>BlockPulse · 区块预言家</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23a68bfa'/%3E%3Cpath d='M7 22h8l4-11 5 20 4-9h5' fill='none' stroke='%2310131c' stroke-width='3'/%3E%3C/svg%3E">
@@ -12,58 +12,62 @@
 <body>
   <div class="shell">
     <header class="topbar">
-      <a class="brand" href="./" aria-label="BlockPulse 首页"><span class="brand-mark" aria-hidden="true">⌁</span><span>BLOCK<span class="brand-light">PULSE</span><small>区块预言家</small></span></a>
-      <div class="top-actions"><span class="demo-tag"><span></span> PLAYGROUND</span><button id="reset" class="quiet-button" type="button">重置试玩 ↻</button></div>
+      <a class="brand" href="./" aria-label="BlockPulse 首页"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M3 17h7l4-10 5 19 4-9h6"></path></svg></span><span>BLOCK<span class="brand-light">PULSE</span><small>区块预言家</small></span></a>
+      <nav class="topnav" aria-label="页面导航"><a class="current" href="#game">竞技场</a><a href="#history-section">对局记录</a><a id="rules-link" href="#rules">玩法说明 <span aria-hidden="true">↗</span></a></nav>
+      <div class="top-actions"><span class="demo-tag"><span></span> 模拟试玩</span><button id="reset" class="quiet-button" type="button"><span aria-hidden="true">↻</span> 重置试玩</button></div>
     </header>
 
     <main>
       <section class="intro">
-        <div><p class="eyebrow">PREDICT. INFLUENCE. REPEAT.</p><h1>猜中方向，<span>也改变方向。</span></h1><p class="intro-copy">先押红黑绿，再用有限的行动影响热度。和量化 Bot 同场，看看谁能读懂谁。</p></div>
-        <div class="simulation-label"><span class="live-dot"></span><span>本地玩法模拟<small>未连接钱包 · 未部署链上 · 积分不可兑换</small></span></div>
+        <div><p class="eyebrow"><span></span> HUMAN × QUANT PLAYGROUND</p><h1>猜中方向，<span>也改变方向。</span></h1><p class="intro-copy">预测红黑绿，用最多三次行动影响最终热度。</p></div>
+        <div class="round-guide" aria-label="每轮 15 秒，最多 3 张行动券，2 位 Bot 对手"><div><strong>15<span>s</span></strong><small>每轮时间</small></div><div><strong>3<span>张</span></strong><small>行动额度</small></div><div><strong>2<span>位</span></strong><small>Bot 对手</small></div></div>
       </section>
 
       <div class="overview" aria-label="本局概览">
-        <div><span>你的可用积分</span><strong id="balance">1,000</strong><small id="locked">本轮未下注</small></div>
-        <div><span id="pool-label">本轮积分池</span><strong id="pool">0</strong><small id="pool-context">命中者按下注比例分配</small></div>
-        <div><span>模拟区块</span><strong id="block">R01 / B00</strong><small>每 0.5 秒推进一块</small></div>
-        <div><span>你的累计净盈亏</span><strong id="total-profit">0</strong><small>所有玩家总积分始终为 3,000</small></div>
+        <div class="score-card balance-card"><span><i class="metric-mark" aria-hidden="true">◈</i> 你的可用积分</span><strong id="balance">1,000</strong><small id="locked">本轮未下注</small></div>
+        <div class="score-card"><span><i class="metric-mark" aria-hidden="true">◇</i> <span id="pool-label">本轮积分池</span></span><strong id="pool">0</strong><small id="pool-context">命中者按下注比例分配</small></div>
+        <div class="score-card"><span><i class="metric-mark" aria-hidden="true">▦</i> 模拟区块</span><strong id="block" class="block-value">R01 / B00</strong><small>每 0.5 秒推进一块</small></div>
+        <div class="score-card"><span><i class="metric-mark" aria-hidden="true">↗</i> 累计净盈亏</span><strong id="total-profit">0</strong><small>三位玩家总积分恒为 3,000</small></div>
       </div>
 
-      <div class="game-grid">
-        <section class="panel arena" aria-label="热度竞技场">
+      <div id="game" class="game-grid">
+        <section id="arena" class="panel arena" aria-label="热度竞技场">
           <div class="panel-header"><div class="round-label"><span id="round">ROUND 01</span><h2>热度竞技场</h2></div><span id="phase" class="phase-pill">等待下注</span></div>
-          <div class="arena-readout"><div><span class="small-label">本轮热度指数</span><div class="heat-number"><strong id="heat">100</strong><span id="heat-direction" class="direction flat">平盘</span></div></div><div class="countdown"><strong id="time">15.0</strong><span>秒 / 行动窗口</span></div></div>
+          <div class="arena-readout"><div><span class="small-label">本轮热度指数</span><div class="heat-number"><strong id="heat">100</strong><span id="heat-direction" class="direction flat">平盘</span></div></div><div class="countdown"><div id="countdown-dial" class="countdown-dial"><strong id="time">15.0</strong><span>秒</span></div><span class="countdown-label">行动倒计时</span></div></div>
           <div id="timer" class="time-track" role="progressbar" aria-label="行动时间剩余" aria-valuemin="0" aria-valuemax="15" aria-valuenow="15"><span id="time-bar"></span></div>
-          <div class="chart-wrap"><svg id="chart" viewBox="0 0 620 220" role="img" aria-label="本轮模拟热度变化曲线"></svg></div>
+          <div class="chart-wrap"><svg id="chart" viewBox="0 0 620 220" role="img" aria-label="本轮模拟热度变化曲线"></svg><div id="chart-prompt" class="chart-prompt" aria-hidden="true"><span>每一次行动，都让曲线不同。</span><small>锁定预测后，热度曲线将在这里展开</small></div></div>
           <div class="chart-foot"><span><i></i> 基准 100</span><span id="action-count">等待第一笔行动</span></div>
-          <div class="action-zone"><div><h3>轮到你影响结果</h3><p id="tickets">每轮最多 3 张行动券，可以保留不用</p></div><div class="action-buttons"><button id="heat-up" class="action-button warm" type="button" disabled><span>↗</span> 加热 <b>+1</b></button><button id="heat-down" class="action-button cool" type="button" disabled><span>↘</span> 降温 <b>−1</b></button></div></div>
+          <div class="action-zone"><div><h3>你的行动 <span id="ticket-dots" class="ticket-dots" aria-hidden="true"><i></i><i></i><i></i></span></h3><p id="tickets">每轮最多 3 张行动券，可以保留不用</p></div><div class="action-buttons"><button id="heat-up" class="action-button warm" type="button" disabled><span>↗</span> 加热 <b>+1</b></button><button id="heat-down" class="action-button cool" type="button" disabled><span>↘</span> 降温 <b>−1</b></button></div></div>
           <p class="arena-note" id="phase-note">选好方向后开始。封盘后无法改注，15 秒里你和 Bot 都能行动。</p>
         </section>
 
         <aside class="panel prediction" aria-label="下注控制">
-          <div class="panel-header"><div><p class="small-label">MAKE YOUR CALL</p><h2>你的预测</h2></div><span class="choice-arrow">↗</span></div>
+          <div class="panel-header"><div><p class="small-label">YOUR NEXT MOVE</p><h2>做出你的预测</h2></div><span class="choice-arrow" aria-hidden="true">↗</span></div>
+          <p class="prediction-intro">猜收盘方向，再决定何时出手。</p>
+          <div class="control-label"><span>01</span> 选择一个方向</div>
           <div class="color-choices" role="group" aria-label="选择预测颜色">
-            <button class="color-choice red selected" type="button" data-color="red" aria-pressed="true"><span class="color-symbol">↗</span><strong>红 · 看涨</strong><small>收盘 &gt; 100</small><span class="selection-dot"></span></button>
-            <button class="color-choice black" type="button" data-color="black" aria-pressed="false"><span class="color-symbol">↘</span><strong>黑 · 看跌</strong><small>收盘 &lt; 100</small><span class="selection-dot"></span></button>
-            <button class="color-choice green" type="button" data-color="green" aria-pressed="false"><span class="color-symbol">＝</span><strong>绿 · 持平</strong><small>收盘 = 100</small><span class="selection-dot"></span></button>
+            <button class="color-choice red selected" type="button" data-color="red" aria-pressed="true"><span class="color-symbol">↗</span><strong>红 · 看涨</strong><small>收盘 &gt; 100</small><span class="selection-dot" aria-hidden="true">✓</span></button>
+            <button class="color-choice black" type="button" data-color="black" aria-pressed="false"><span class="color-symbol">↘</span><strong>黑 · 看跌</strong><small>收盘 &lt; 100</small><span class="selection-dot" aria-hidden="true">✓</span></button>
+            <button class="color-choice green" type="button" data-color="green" aria-pressed="false"><span class="color-symbol">＝</span><strong>绿 · 持平</strong><small>收盘 = 100</small><span class="selection-dot" aria-hidden="true">✓</span></button>
           </div>
-          <div class="stake-heading"><label for="stake">投入积分（20 / 50 / 100）</label><span id="stake-max">可用 1,000</span></div>
-          <div class="stake-control"><input id="stake" type="number" inputmode="numeric" min="1" step="1" value="50" aria-describedby="stake-max"><span>POINTS</span></div>
-          <div class="stake-presets"><button type="button" data-stake="20">20</button><button type="button" data-stake="50" class="selected">50</button><button type="button" data-stake="100">100</button></div>
+          <div class="stake-heading"><label class="control-label" for="stake"><span>02</span> 选择投入积分</label><span id="stake-max">可用 1,000</span></div>
+          <div class="stake-control"><input id="stake" type="number" value="50" readonly aria-describedby="stake-max"><span>模拟积分</span></div>
+          <div class="stake-presets" role="group" aria-label="选择投入积分"><button type="button" data-stake="20" aria-pressed="false">20 <span>积分</span></button><button type="button" data-stake="50" class="selected" aria-pressed="true">50 <span>积分</span></button><button type="button" data-stake="100" aria-pressed="false">100 <span>积分</span></button></div>
           <div id="error" class="error-message" role="alert" hidden></div>
           <button id="primary-action" class="primary-button" type="button"><span>锁定 50 积分，开始本轮</span><b>→</b></button>
           <p id="bet-hint" class="bet-hint">两位 Bot 用同样的积分和行动额度与你对局。</p>
           <div id="result" class="result-box" aria-live="polite" hidden></div>
-          <details class="rules"><summary>30 秒学会怎么玩 <span>＋</span></summary><ol><li>选择红、黑或绿，输入积分开始。下注后封盘，不能改注。</li><li>15 秒行动期内，每人最多用 3 张券加热或降温；也可以不动。</li><li>热度从 100 开始，按所有参与者的有效行动变化。轮盘不随机开奖。</li><li>命中者按下注占比分配积分池，到账含本金；无人命中原额退款。</li><li>这是本地游戏指数，模拟区块与积分均无真实资产价值。规则还未经平衡验证。</li></ol></details>
+          <details id="rules" class="rules"><summary>30 秒学会怎么玩 <span>＋</span></summary><ol><li>选择红、黑或绿，再选择 20、50 或 100 积分开始。下注后封盘，不能改注。</li><li>15 秒行动期内，每人最多用 3 张券加热或降温；也可以不动。</li><li>热度从 100 开始，按所有参与者的有效行动变化。轮盘不随机开奖。</li><li>命中者按下注占比分配积分池，到账含本金；无人命中原额退款。</li><li>这是本地游戏指数，模拟区块与积分均无真实资产价值。规则还未经平衡验证。</li></ol></details>
+          <div class="simulation-label"><span class="live-dot"></span> 单人模拟 · 积分不可兑换</div>
         </aside>
       </div>
 
-      <section class="opponents-section" aria-labelledby="opponents-title"><div class="section-heading"><div><p class="small-label">HUMAN × QUANT</p><h2 id="opponents-title">量化对手</h2></div><span>相同额度 · 相同规则 · 无未来信息</span></div><div id="opponents" class="opponents"></div></section>
+      <section class="opponents-section" aria-labelledby="opponents-title"><div class="section-heading"><div><p class="small-label">MEET YOUR OPPONENTS</p><h2 id="opponents-title">同一场博弈，两种策略。</h2></div><span>相同积分 · 相同行动额度</span></div><div id="opponents" class="opponents"></div></section>
 
-      <div class="bottom-grid"><section class="panel history-panel"><div class="section-heading"><h2>对局记录</h2><span id="record-count">0 局</span></div><div id="history" class="history-content"><div class="empty-state"><span>↗ ↘ ＝</span><p>第一局，从你的判断开始。</p></div></div></section><section class="panel feed-panel"><div class="section-heading"><h2>场内动态</h2><span class="feed-live"><i></i> LIVE</span></div><ol id="feed" class="feed"><li class="feed-placeholder">准备就绪，等待玩家入场。</li></ol></section></div>
+      <div id="history-section" class="bottom-grid"><section class="panel history-panel"><div class="section-heading"><h2>对局记录</h2><span id="record-count">0 局</span></div><div id="history" class="history-content"><div class="empty-state"><span>↗ ↘ ＝</span><p>第一局，从你的判断开始。</p></div></div></section><section class="panel feed-panel"><div class="section-heading"><h2>场内动态</h2><span class="feed-live"><i></i> LIVE</span></div><ol id="feed" class="feed"><li class="feed-placeholder">准备就绪，等待玩家入场。</li></ol></section></div>
       <div id="announcement" class="sr-only" aria-live="polite"></div>
     </main>
-    <footer><span>BLOCKPULSE <i>/</i> 把预测变成一场互动博弈。</span><span>玩法原型 v0.1 · 所有结果在本地计算</span></footer>
+    <footer><span>BLOCKPULSE <i>/</i> 判断之后，还有行动。</span><span>玩法原型 · 无钱包连接 · 无真实资产</span></footer>
   </div>
   <script type="module" src="./app.js"></script>
 </body>

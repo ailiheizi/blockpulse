@@ -24,3 +24,35 @@
 .how-to-play{margin:15px 0 24px;padding:17px 20px;border:1px solid #b29afd26;border-radius:12px;background:linear-gradient(110deg,#b29afd0d,#171c270a);color:var(--text)}.how-to-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:13px}.how-to-heading strong{font-size:13px;font-weight:600}.how-to-heading a{font-size:10px;color:#c7b5fa;text-decoration:none}.how-to-heading a:hover{text-decoration:underline}.how-to-play ol{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:0;margin:0;list-style:none;counter-reset:step}.how-to-play li{counter-increment:step;display:flex;flex-direction:column;gap:5px;min-width:0;padding:10px 12px;border:1px solid #ffffff0b;border-radius:8px;background:#171c2770}.how-to-play li b{font-size:11px;color:#d9ccfa}.how-to-play li b:before{content:counter(step) " · ";color:#aa8cea}.how-to-play li span,.how-to-play>p{font-size:10px;line-height:1.65;color:#9ba9c0}.how-to-play>p{margin:11px 0 0}.rules[open] summary>span{transform:rotate(45deg)}.rules-goal{color:#d9ccfa!important;font-size:12px!important}
 @media(max-width:740px){.how-to-play{padding:14px;margin:13px 0 19px}.how-to-play ol{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.how-to-play li{padding:9px}.how-to-heading{align-items:flex-start;flex-direction:column;gap:6px}.how-to-play li span,.how-to-play>p{font-size:9px}}
 @media(max-width:740px){.event-card{padding:15px;margin-top:14px}.event-bounds{gap:5px}.bound{padding:8px}.bound span{font-size:8px}.bound strong{font-size:11px}.event-actions{align-items:flex-start;flex-direction:column}.event-actions .outline-button{align-self:flex-end}.compare-line{font-size:7px}.compare-line b{font-size:8px}}
+/* Local points event and personal strategy UI (kept inside #game). */
+#game .event-card{grid-column:1/-1;padding:17px 20px;background:linear-gradient(120deg,#201e30,#191e2c);border-color:#b29afd35}
+#game .event-head,.event-actions,.automation-head{display:flex;align-items:center;justify-content:space-between;gap:14px}
+#game .event-head h2,#game .automation-head h3{margin:2px 0 0;font-size:17px;font-weight:550}
+#game .event-badge{border:1px solid #b29afd42;border-radius:999px;padding:6px 10px;color:#d0c2f1;font-size:10px}
+#game .event-question{margin:9px 0 12px;color:#c1cce0;font-size:11px}
+#game .event-bounds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+#game .bound{padding:9px 12px;border:1px solid var(--border);border-radius:7px;background:#ffffff05;display:flex;justify-content:space-between;gap:8px;align-items:center}
+#game .bound span{font-size:10px;color:var(--muted)}#game .bound strong{font-size:13px;font-weight:550;font-variant-numeric:tabular-nums}
+#game .bound.red strong{color:var(--red)}#game .bound.green strong{color:var(--green)}#game .bound.black strong{color:var(--blue)}
+#game .event-range,#game .event-source,#game .event-observation,.event-contract-note{font-size:10px;line-height:1.65;color:#93a2bc;margin:9px 0 0}
+#game .event-source-row{display:flex;gap:7px;flex-wrap:wrap}
+#game .event-source-row button{border:1px solid var(--border);background:#ffffff06;color:var(--muted);border-radius:6px;padding:8px 11px;font-size:10px}
+#game .event-source-row button.selected{border-color:#b29afd80;background:#b29afd17;color:#ded2ff}
+#game .event-actions{margin-top:10px;font-size:10px;color:#c7b9e6}
+#game .event-actions>div{display:flex;gap:7px}
+#game .event-actions .outline-button{min-height:31px;padding:5px 9px;font-size:9px}
+#game .event-progress-track{height:4px;background:#ffffff12;border-radius:5px;margin-top:8px;overflow:hidden}
+#game #event-progress-bar{display:block;width:0;height:100%;background:var(--purple);transition:width .2s}
+#game .event-contract-note{opacity:.78;margin-top:5px}
+#game .action-preview{display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:10px 12px;border:1px solid #b29afd22;border-radius:7px;margin-top:12px;font-size:9px;color:#a6b3ca}
+#game .action-preview>strong{color:#d4c6ef;font-weight:500}.action-preview b{color:#d5c8f0;font-weight:500}.action-preview small{flex-basis:100%;color:#8c9bb4}
+#game .automation-panel{margin-top:16px;padding:13px;border:1px solid #b29afd29;border-radius:8px;background:#b29afd08}
+#game .automation-head h3{font-size:14px}
+#game .automation-toggle{display:flex;align-items:center;gap:6px;font-size:10px;color:#b5a6d0}
+#game .automation-toggle input{accent-color:#9c78dc}
+#game .automation-config{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:11px}
+#game .automation-config label{font-size:9px;color:#9ba9bf;display:flex;flex-direction:column;gap:5px}
+#game .automation-config input,#game .automation-config select{min-width:0;width:100%;border:1px solid #39445c;border-radius:5px;background:#151a25;color:#e4e9f4;padding:7px;font-size:10px}
+#game .automation-decision{font-size:9px;line-height:1.6;color:#a2b0c6;margin:10px 0 0}
+#game .automation-count{font-size:9px;color:#8777a2;display:block;margin-top:5px}
+@media(max-width:740px){#game .event-card{padding:15px;margin-top:14px}#game .bound{padding:8px}#game .bound span{font-size:8px}#game .bound strong{font-size:11px}#game .event-actions{align-items:flex-start}#game .event-contract-note{font-size:9px}}

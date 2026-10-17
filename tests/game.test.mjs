@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import { performance } from 'node:perf_hooks';
 import {
   createGame, resetGame, startRound, advance, executeTrade, quoteTrade,
-  playerAction, nextRound, marketPrices, scenarioOdds, participantStats, quoteBudget, GameError,
+  playerAction, nextRound, marketPrices, scenarioOdds, participantStats, quoteBudget, actionPreview,
+  configureEvent, observeEvent, configureAutomation, GameError,
 } from '../dist/game.js';
 
 const trader = (state, id = 'player') => state.participants.find(item => item.id === id);
@@ -28,7 +29,7 @@ function invariants(state) {
 
 test('new sessions expose schema, modes and an explicit independent maker reserve', () => {
   const state = createGame(0);
-  assert.equal(state.schemaVersion, 2);
+  assert.equal(state.schemaVersion, 3);
   assert.equal(state.phase, 'ready');
   assert.equal(state.initialTotal, 4000);
   assert.equal(state.participants.length, 3);
@@ -170,6 +171,118 @@ test('budget quotes maximize whole shares without exceeding the requested spend'
   assert.ok(quoteTrade(createGame(28), 'player', 'green', 'short', preview.shares + 1).total > 50);
 });
 
+const monadSpec = () => ({ mode: 'monad', title: '未来目标区块交易笔数', chainId: 10143, source: 'Monad Testnet RPC',
+  startBlock: 100, closeBlock: 110, targetBlock: 120, baseline: 100, lower: 90, upper: 110, confirmations: 2 });
+const verifiedObservation = (txCount = 91) => ({ mode: 'monad', chainId: 10143, headBlock: 122, verified: true,
+  blockNumber: 120, txCount, blockHash: `0x${'a'.repeat(64)}` });
+
+test('local event settles from target-block traffic and reports ranking/support counts', () => {
+  let state = startRound(createGame(38));
+  state = executeTrade(state, 'player', 'green', 'buy', 10);
+  state = advance(state, 60000);
+  assert.equal(state.phase, 'settled');
+  assert.equal(state.event.status, 'simulated');
+  assert.equal(state.event.headBlock, state.event.targetBlock);
+  assert.equal(state.result.eventMode, 'simulation');
+  assert.equal(state.result.eventValue, state.event.txCount);
+  assert.equal(state.result.color, state.event.txCount > state.event.upper ? 'red' : state.event.txCount < state.event.lower ? 'black' : 'green');
+  assert.ok(state.result.supportCounts.green >= 1);
+  assert.equal(state.result.ranking.length, state.participants.length);
+  assert.equal(state.result.ranking[0].rank, 1);
+});
+
+test('settlement ranking uses competition ranks for three-way and two-way ties', () => {
+  let state = startRound(createGame(46));
+  state.phase = 'locked';
+  state = advance(state, 60000);
+  assert.deepEqual(state.result.ranking.map(item => item.rank), [1, 1, 1]);
+
+  state = startRound(createGame(47));
+  state.phase = 'locked';
+  state._roundStartBalances.value -= 100;
+  state = advance(state, 60000);
+  const tied = state.result.ranking.filter(item => item.profit === 0);
+  assert.equal(tied.length, 2);
+  assert.deepEqual(tied.map(item => item.rank), [2, 2]);
+  assert.equal(state.result.ranking[0].rank, 1);
+});
+
+test('real Monad observation locks at close and settles only verified exact target block data', () => {
+  let state = configureEvent(createGame(39), monadSpec());
+  assert.equal(scenarioOdds(state).red, 1 / 3);
+  state = startRound(state);
+  state = observeEvent(state, { mode: 'monad', headBlock: 110, observedAt: Date.now(), verified: false });
+  assert.equal(state.phase, 'locked');
+  assert.equal(state.result, null);
+  state = advance(state, 60000);
+  assert.equal(state.phase, 'locked');
+  assert.equal(state.result, null);
+  const settled = observeEvent(state, verifiedObservation(91));
+  assert.equal(settled.phase, 'settled');
+  assert.equal(settled.result.color, 'green');
+  assert.equal(settled.result.eventValue, 91);
+  assert.equal(settled.result.eventHash, `0x${'a'.repeat(64)}`);
+  assert.equal(settled.result.eventMode, 'monad');
+  assert.equal(actionPreview(state, 1).canExecute, false);
+  assert.match(actionPreview(state, 1).reason, /真实链事件/);
+  rejects(() => playerAction(state, 1), 'REAL_EVENT_CONTROL_DISABLED');
+  assert.equal(observeEvent(settled, verifiedObservation(91)), settled);
+});
+
+test('real event that reaches close while ready cannot be opened with a stale target', () => {
+  let state = configureEvent(createGame(40), monadSpec());
+  state = observeEvent(state, { mode: 'monad', chainId: 10143, headBlock: 110, verified: false });
+  assert.equal(state.event.status, 'expired');
+  rejects(() => startRound(state), 'EVENT_EXPIRED');
+});
+
+test('bots cannot apply local heat actions during a real-chain event', () => {
+  const state = advance(startRound(configureEvent(createGame(48), monadSpec())), 20000);
+  assert.equal(state.event.mode, 'monad');
+  assert.equal(state.events.some(item => item.type === 'action'), false);
+});
+
+test('real event interval includes both bounds and rejects events outside them', () => {
+  const spec = monadSpec();
+  for (const [txCount, color] of [[spec.lower - 1, 'black'], [spec.lower, 'green'], [spec.upper, 'green'], [spec.upper + 1, 'red']]) {
+    let state = startRound(configureEvent(createGame(43), spec));
+    state = observeEvent(state, verifiedObservation(txCount));
+    assert.equal(state.result.eventValue, txCount);
+    assert.equal(state.result.color, color);
+  }
+  const real = configureEvent(createGame(44), monadSpec());
+  assert.equal(configureEvent(real, { mode: 'simulation' }).event.mode, 'simulation');
+});
+
+test('player automation places real fills, records decisions, and stops on manual exit or lock', () => {
+  let state = startRound(createGame(41));
+  state = configureAutomation(state, { enabled: true, strategy: 'value', orderShares: 10, maxPosition: 50, edge: 0.01 });
+  state = advance(state, 4000);
+  assert.ok(trader(state).holdings.green > 0);
+  assert.ok(state.automation.tradeCount > 0);
+  assert.ok(state.trades.some(item => item.source === 'strategy'));
+  assert.ok(state.automation.decisions.some(item => item.action === 'buy'));
+  let fine = configureAutomation(startRound(createGame(45)), { enabled: true, strategy: 'value', orderShares: 10, maxPosition: 50, edge: 0.01 });
+  let remaining = 4000;
+  while (remaining > 0) {
+    const step = Math.min(137, remaining);
+    fine = advance(fine, step);
+    remaining -= step;
+  }
+  const coarse = advance(configureAutomation(startRound(createGame(45)), { enabled: true, strategy: 'value', orderShares: 10, maxPosition: 50, edge: 0.01 }), 4000);
+  assert.deepEqual(coarse, fine);
+  const color = ['red', 'black', 'green'].find(item => trader(state).holdings[item] > 0);
+  state = executeTrade(state, 'player', color, 'sell', 1);
+  assert.equal(state.automation.enabled, false);
+
+  let locked = startRound(createGame(42));
+  locked = configureAutomation(locked, { enabled: true });
+  locked = advance(locked, 55000);
+  assert.equal(locked.phase, 'locked');
+  assert.equal(locked.automation.enabled, false);
+  assert.equal(locked.automation.lastDecision.action, 'stop');
+});
+
 test('extreme legal inventory cannot create zero-cost positive buy shares', () => {
   let state = startRound(createGame(42, { botCount: 20 }));
   for (const { id } of state.participants) state = executeTrade(state, id, 'red', 'buy', 995);
@@ -275,19 +388,35 @@ test('tickets are limited, quotes do not draw randomness, and all actions close 
   invariants(almostDone);
 });
 
-test('scenario odds count discrete green band and legal actions cannot force a color', () => {
+test('scenario odds model the fixed event interval and local controls preview pressure', () => {
   const state = createGame();
   assert.deepEqual(scenarioOdds(state), { red: 10 / 25, black: 10 / 25, green: 5 / 25 });
+  const preview = actionPreview(state, 1);
+  assert.equal(preview.canExecute, false);
+  assert.notDeepEqual(preview.before, preview.after);
+  state.participants.find(item => item.id === 'player').tickets = 0;
+  const exhaustedPreview = actionPreview(state, 1);
+  assert.equal(exhaustedPreview.canExecute, false);
+  assert.equal(exhaustedPreview.reason, '本轮行动券已用完');
   for (const botCount of [2, 20]) {
-    const game = createGame(3, { botCount });
+    let game = startRound(createGame(3, { botCount }));
     for (const delta of [-1, 1]) {
-      game.heat = game.baseline + delta * game.participants.length * 3;
-      const odds = scenarioOdds(game);
+      let pressured = game;
+      for (let count = 0; count < 3; count += 1) pressured = playerAction(pressured, delta);
+      const odds = scenarioOdds(pressured);
       close(odds.red + odds.black + odds.green, 1);
       assert.ok(odds.red > 0 && odds.black > 0 && odds.green > 0);
       assert.ok(odds.red < 1 && odds.black < 1 && odds.green < 1);
     }
   }
+  let capped = startRound(createGame(49));
+  for (let i = 0; i < 3; i += 1) capped = playerAction(capped, 1);
+  const tickets = trader(capped).tickets;
+  const cappedPreview = actionPreview(capped, 1);
+  assert.equal(cappedPreview.canExecute, false);
+  assert.match(cappedPreview.reason, /上限/);
+  rejects(() => playerAction(capped, 1), 'ACTION_LIMIT');
+  assert.equal(trader(capped).tickets, tickets);
 });
 
 test('settlement noise is independent of quote, trade and bot RNG consumption', () => {
@@ -298,6 +427,7 @@ test('settlement noise is independent of quote, trade and bot RNG consumption', 
   const left = advance(base, 60000);
   const right = advance(traded, 60000);
   assert.equal(left.result.noise, right.result.noise);
+  assert.equal(left.result.eventValue, right.result.eventValue);
   assert.ok(!('noise' in base));
 });
 
@@ -395,7 +525,7 @@ test('multiple seeds and rounds preserve collateral, inventories and all funding
         state = startRound(state);
         if (quoteTrade(state, 'player', 'red', 'buy', 20).canExecute) state = executeTrade(state, 'player', 'red', 'buy', 20);
         state = advance(state, 18000);
-        if (trader(state).tickets > 0) state = playerAction(state, round % 2 ? 1 : -1);
+        if (actionPreview(state, round % 2 ? 1 : -1).canExecute) state = playerAction(state, round % 2 ? 1 : -1);
         invariants(state);
         state = advance(state, 37000);
         invariants(state);

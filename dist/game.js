@@ -29,6 +29,8 @@ const MAX_RECORDS = 400;
 const MAX_HISTORY = 700;
 const DEFAULT_B = 150;
 const DEFAULT_PRIORS = Object.freeze({ red: 0.45, black: 0.45, green: 0.10 });
+const SIM_EVENT = Object.freeze({ mode: 'simulation', title: '未来目标区块交易笔数', startBlock: 0, closeBlock: 110,
+  targetBlock: 120, headBlock: 0, baseline: 100, lower: 98, upper: 102, txCount: null, status: 'ready', source: '本地模拟事件' });
 const MIN_ROUND_RESERVE = 1;
 
 function findTrader(state, id) {
@@ -99,10 +101,12 @@ export function marketPrices(state) {
 /** Exact discrete probabilities conditional on no further participant actions. */
 export function scenarioOdds(state) {
   if (state.phase === 'settled' && state.result) return marketPrices(state);
+  if (state.event.mode === 'monad') return { red: 1 / 3, black: 1 / 3, green: 1 / 3 };
   const odds = emptyPosition();
   for (let noise = -state.noiseRange; noise <= state.noiseRange; noise += 1) {
-    const finalHeat = state.heat + noise;
-    odds[finalHeat > state.greenBand[1] ? 'red' : finalHeat < state.greenBand[0] ? 'black' : 'green'] += 1;
+    const pressure = Math.max(-3, Math.min(3, state.heat - state.baseline));
+    const projectedCount = Math.max(0, Math.round(state.event.baseline + pressure * 3) + noise);
+    odds[projectedCount > state.event.upper ? 'red' : projectedCount < state.event.lower ? 'black' : 'green'] += 1;
   }
   const count = 2 * state.noiseRange + 1;
   return Object.fromEntries(COLORS.map(color => [color, odds[color] / count]));
@@ -164,7 +168,7 @@ export function createGame(seed = 20261017, options = {}) {
       `${momentum ? '动量' : '价值'} Bot${index > 1 ? ` ${index + 1}` : ''}`, momentum ? 'momentum' : 'value'));
   }
   const state = {
-    schemaVersion: 2, phase: 'ready', round: 1, seed: normalizedSeed, botCount,
+    schemaVersion: 3, phase: 'ready', round: 1, seed: normalizedSeed, botCount,
     durationMs: ROUND_DURATION_MS, tradingDurationMs: TRADING_DURATION_MS,
     elapsedMs: 0, remainingMs: ROUND_DURATION_MS, block: 0,
     heat: 100, baseline: 100, greenBand: [98, 102], actionLimit: 3,
@@ -172,8 +176,11 @@ export function createGame(seed = 20261017, options = {}) {
     market: { q: emptyPosition(), cash: 1000, initialReserve: 1000, b: DEFAULT_B, feeRate: 0.003, priors: { ...DEFAULT_PRIORS } },
     participants, initialTotal: participants.length * 1000 + 1000,
     history: [], events: [], trades: [], results: [], result: null, tradeCount: 0,
-    _rngState: normalizedSeed, _noiseRngState: (normalizedSeed ^ 0x9e3779b9) >>> 0,
-    _nextTickMs: BLOCK_DURATION_MS, _nextEventId: 1, _nextTradeId: 1,
+    event: { ...SIM_EVENT }, _rngState: normalizedSeed, _noiseRngState: (normalizedSeed ^ 0x9e3779b9) >>> 0,
+    _eventRngState: (normalizedSeed ^ 0x85ebca6b) >>> 0,
+    automation: { enabled: false, strategy: 'value', orderShares: 10, maxPosition: 150, edge: 0.04, tradeCount: 0,
+      lastDecision: { timeMs: 0, action: 'idle', reason: '尚未启用' }, decisions: [] },
+    _nextAutomationMs: 1000, _nextTickMs: BLOCK_DURATION_MS, _nextEventId: 1, _nextTradeId: 1,
     _roundStartBalances: Object.fromEntries(participants.map(trader => [trader.id, trader.balance])),
   };
   snapshot(state);
@@ -185,8 +192,114 @@ export function resetGame(seed = 20261017, options = {}) {
   return createGame(seed, options);
 }
 
+export function configureEvent(state, spec) {
+  if (state.phase !== 'ready') fail('INVALID_PHASE', '只有准备中的回合可以更换事件');
+  if (spec?.mode === 'simulation') {
+    const next = copy(state);
+    next.event = { ...SIM_EVENT };
+    event(next, 'event_configured', '已切换到本地模拟事件');
+    return next;
+  }
+  if (!spec || spec.mode !== 'monad' || spec.chainId !== 10143 || !Number.isSafeInteger(spec.startBlock) ||
+      !Number.isSafeInteger(spec.closeBlock) || !Number.isSafeInteger(spec.targetBlock) ||
+      spec.closeBlock < spec.startBlock || spec.targetBlock <= spec.closeBlock ||
+      !Number.isFinite(spec.baseline) || !Number.isSafeInteger(spec.lower) || !Number.isSafeInteger(spec.upper) ||
+      spec.lower < 0 || spec.upper <= spec.lower || !Number.isSafeInteger(spec.confirmations) || spec.confirmations < 1 ||
+      typeof spec.title !== 'string' || typeof spec.source !== 'string') {
+    fail('INVALID_EVENT_SPEC', '真实事件规格无效，请重新读取 Monad 目标区块');
+  }
+  const next = copy(state);
+  next.event = { ...spec, mode: 'monad', headBlock: spec.startBlock, txCount: null, blockHash: null, status: 'ready' };
+  event(next, 'event_configured', `已配置真实事件：${spec.title}`, { targetBlock: spec.targetBlock, lower: spec.lower, upper: spec.upper });
+  return next;
+}
+
+function classifyEvent(eventSpec, txCount) {
+  return txCount > eventSpec.upper ? 'red' : txCount < eventSpec.lower ? 'black' : 'green';
+}
+
+export function observeEvent(state, observation) {
+  if (state.phase === 'settled') return state;
+  const spec = state.event;
+  if (spec.mode !== 'monad' || !observation || observation.mode !== 'monad' ||
+      (observation.chainId !== undefined && observation.chainId !== spec.chainId) ||
+      !Number.isSafeInteger(observation.headBlock) || observation.headBlock < spec.headBlock) {
+    fail('INVALID_EVENT_OBSERVATION', '事件观察与当前 Monad 目标不匹配');
+  }
+  const next = copy(state);
+  next.event.headBlock = observation.headBlock;
+  if (next.phase === 'ready' && observation.headBlock >= spec.closeBlock && observation.verified !== true) {
+    next.event.status = 'expired';
+    return next;
+  }
+  if (observation.headBlock >= spec.closeBlock && next.phase === 'trading') {
+    next.phase = 'locked';
+    next.automation.enabled = false;
+    recordDecision(next, 'stop', '真实事件达到封盘区块，自动策略已停止');
+    event(next, 'locked', '已到真实事件封盘区块，停止交易并等待目标区块确认');
+  }
+  if (observation.verified === true) {
+    if (observation.chainId !== spec.chainId || observation.blockNumber !== spec.targetBlock || observation.headBlock < spec.targetBlock + spec.confirmations ||
+        !Number.isSafeInteger(observation.txCount) || observation.txCount < 0 ||
+        typeof observation.blockHash !== 'string' || !/^0x[0-9a-fA-F]{64}$/.test(observation.blockHash)) {
+      fail('INVALID_EVENT_OBSERVATION', '目标区块结果缺少有效区块号、交易笔数、哈希或确认数');
+    }
+    if (next.phase === 'trading') {
+      next.phase = 'locked';
+      next.automation.enabled = false;
+      recordDecision(next, 'stop', '目标区块已确认，自动策略已停止');
+      event(next, 'locked', '目标区块已确认，停止交易并按链上笔数结算');
+    }
+    next.event = { ...next.event, txCount: observation.txCount, blockHash: observation.blockHash, status: 'verified' };
+    if (next.phase !== 'ready') settle(next, { txCount: observation.txCount, blockHash: observation.blockHash });
+  }
+  return next;
+}
+
+function recordDecision(state, action, reason, detail = {}) {
+  const decision = { timeMs: state.elapsedMs, action, reason, ...detail };
+  state.automation.lastDecision = decision;
+  state.automation.decisions.push(decision);
+  if (state.automation.decisions.length > MAX_RECORDS) state.automation.decisions.splice(0, state.automation.decisions.length - MAX_RECORDS);
+}
+
+export function configureAutomation(state, patch) {
+  if (!patch || typeof patch !== 'object') fail('INVALID_AUTOMATION', '自动策略设置无效');
+  const next = copy(state);
+  const config = { ...next.automation, ...patch };
+  if (typeof config.enabled !== 'boolean' || !['value', 'momentum'].includes(config.strategy) ||
+      !Number.isInteger(config.orderShares) || config.orderShares < 1 || config.orderShares > 50 ||
+      !Number.isInteger(config.maxPosition) || config.maxPosition < 10 || config.maxPosition > 500 ||
+      !Number.isFinite(config.edge) || config.edge < 0.01 || config.edge > 0.2) {
+    fail('INVALID_AUTOMATION', '策略、份数、持仓上限或触发优势超出范围');
+  }
+  if (config.enabled && (state.phase !== 'trading' || state.event.mode === 'monad' && state.event.headBlock >= state.event.closeBlock)) {
+    fail('AUTOMATION_CLOSED', '仅可在本轮开放交易时启用自动策略');
+  }
+  next.automation = { ...config };
+  if (!config.enabled) recordDecision(next, 'stop', '已手动停止自动策略');
+  else recordDecision(next, 'start', `自动策略已启用：${config.strategy}`);
+  return next;
+}
+
+export function actionPreview(state, delta) {
+  if (delta !== 1 && delta !== -1) fail('INVALID_ACTION', '行动只支持 +1 加热或 −1 降温');
+  const before = scenarioOdds(state);
+  if (state.event.mode === 'monad') return { delta, before, after: before, canExecute: false, reason: '本地操作不会改变真实链事件' };
+  if ((delta > 0 && state.heat >= state.baseline + 3) || (delta < 0 && state.heat <= state.baseline - 3)) {
+    return { delta, before, after: before, canExecute: false, reason: '本地事件压力已达到 +3 / −3 上限' };
+  }
+  if (findTrader(state, 'player').tickets <= 0) return { delta, before, after: before, canExecute: false, reason: '本轮行动券已用完' };
+  const simulated = copy(state);
+  simulated.heat += delta;
+  return { delta, before, after: scenarioOdds(simulated), canExecute: state.phase === 'trading' && state.elapsedMs < state.tradingDurationMs,
+    reason: state.phase === 'trading' ? '' : '当前不能行动' };
+}
+
 export function startRound(state) {
   if (state.phase !== 'ready') fail('INVALID_PHASE', '只有准备中的回合可以开始');
+  if (state.event.mode === 'monad' && (state.event.status === 'expired' || state.event.status === 'verified' ||
+      state.event.headBlock >= state.event.closeBlock)) fail('EVENT_EXPIRED', '真实事件已到封盘区块，请重新准备目标区块');
   if (state.market.cash < MIN_ROUND_RESERVE) fail('RESERVE_EXHAUSTED', '做市储备不足 1 积分，请重置试玩');
   const next = copy(state);
   next.phase = 'trading';
@@ -290,10 +403,11 @@ function applyTrade(state, traderId, quote) {
     id: state._nextTradeId++, timeMs: state.elapsedMs, traderId, participantId: traderId,
     color, side, shares, gross: quote.gross, fee: quote.fee, total,
     averagePrice: quote.averagePrice, spotPrice: quote.spotPrice,
-    removedBasis, realizedPnl: realizedChange,
+    removedBasis, realizedPnl: realizedChange, source: quote.source ?? 'manual',
     ...(quote.comboColor ? { comboColor: quote.comboColor, comboSide: quote.comboSide, groupId: quote.groupId } : {}),
   };
   state.trades.push(entry);
+  if (quote.source === 'strategy' && traderId === 'player') state.automation.tradeCount += 1;
   if (state.trades.length > MAX_RECORDS) state.trades.splice(0, state.trades.length - MAX_RECORDS);
   event(state, 'trade', `${trader.name}${side === 'buy' ? '买入' : '卖出'} ${shares} 份${{ red: '红', black: '黑', green: '绿' }[color]}`, entry);
   updateStats(state);
@@ -305,6 +419,10 @@ export function executeTrade(state, traderId, color, side, shares) {
   if (!quote.canExecute) fail(quote.code || 'TRADE_REJECTED', quote.reason);
   if (side === 'short' || side === 'cover') {
     const next = copy(state);
+    if (traderId === 'player' && side === 'cover' && next.automation.enabled) {
+      next.automation.enabled = false;
+      recordDecision(next, 'stop', '手动平仓，自动策略已停止');
+    }
     const groupId = next._nextTradeId;
     for (const legColor of COLORS.filter(item => item !== color)) {
       const legSide = side === 'short' ? 'buy' : 'sell';
@@ -315,6 +433,10 @@ export function executeTrade(state, traderId, color, side, shares) {
     return next;
   }
   const next = copy(state);
+  if (traderId === 'player' && side === 'sell' && next.automation.enabled) {
+    next.automation.enabled = false;
+    recordDecision(next, 'stop', '手动卖出，自动策略已停止');
+  }
   applyTrade(next, traderId, quote);
   return next;
 }
@@ -342,16 +464,22 @@ export function quoteBudget(state, traderId, color, budget, side = 'buy') {
 }
 
 function applyAction(state, trader, delta) {
+  if ((delta > 0 && state.heat >= state.baseline + 3) || (delta < 0 && state.heat <= state.baseline - 3)) return false;
   trader.tickets -= 1;
   state.heat += delta;
   event(state, 'action', `${trader.name}${delta > 0 ? '加热 +1' : '降温 −1'}`, { traderId: trader.id, participantId: trader.id, delta, heat: state.heat });
   snapshot(state);
   updateStats(state);
+  return true;
 }
 
 export function playerAction(state, delta) {
-  if (state.phase !== 'trading' || state.elapsedMs >= state.tradingDurationMs) fail('ACTION_CLOSED', '当前已封盘，不能行动');
+  if (state.event.mode === 'monad') fail('REAL_EVENT_CONTROL_DISABLED', '本地操作不会改变真实链事件');
   if (delta !== 1 && delta !== -1) fail('INVALID_ACTION', '行动只支持 +1 加热或 −1 降温');
+  if (state.phase !== 'trading' || state.elapsedMs >= state.tradingDurationMs) fail('ACTION_CLOSED', '当前已封盘，不能行动');
+  if ((delta > 0 && state.heat >= state.baseline + 3) || (delta < 0 && state.heat <= state.baseline - 3)) {
+    fail('ACTION_LIMIT', '本地事件压力已达到 +3 / −3 上限');
+  }
   if (findTrader(state, 'player').tickets <= 0) fail('NO_TICKETS', '本轮行动券已用完');
   const next = copy(state);
   applyAction(next, findTrader(next, 'player'), delta);
@@ -385,19 +513,82 @@ function botDecision(state, bot) {
     const quote = quoteTrade(state, bot.id, color, side, shares);
     if (quote.canExecute && (side === 'sell' || quote.total <= Math.min(bot.balance * 0.12, 70))) applyTrade(state, bot.id, quote);
   }
-  if (bot.tickets > 0 && state.elapsedMs >= 10000 && random(state) < 0.025) {
+  if (state.event.mode !== 'monad' && bot.tickets > 0 && state.elapsedMs >= 10000 && random(state) < 0.025) {
     const preference = bot.holdings.red - bot.holdings.black;
     if (preference !== 0) applyAction(state, bot, Math.sign(preference));
     else if (bot.holdings.green > 0 && state.heat !== state.baseline) applyAction(state, bot, -Math.sign(state.heat - state.baseline));
   }
 }
 
-function settle(state) {
+function playerAutomationDecision(state) {
+  const automation = state.automation;
+  if (!automation.enabled || state.phase !== 'trading' || state.elapsedMs >= state.tradingDurationMs) return;
+  if (state.event.mode === 'monad') {
+    recordDecision(state, 'hold', '真实事件暂无校准概率模型，自动策略保持观望');
+    return;
+  }
+  const trader = findTrader(state, 'player');
+  const prices = marketPrices(state);
+  const estimates = scenarioOdds(state);
+  const forecast = { ...estimates };
+  if (automation.strategy === 'momentum') {
+    const previous = state.history.findLast(point => point.timeMs <= state.elapsedMs - 3000) ?? state.history[0];
+    for (const color of COLORS) {
+      const trend = prices[color] - (previous?.prices[color] ?? prices[color]);
+      forecast[color] = Math.max(0.005, estimates[color] + Math.max(-0.12, Math.min(0.12, trend * 2.4)));
+    }
+    const sum = COLORS.reduce((total, color) => total + forecast[color], 0);
+    for (const color of COLORS) forecast[color] /= sum;
+  }
+  const ranked = COLORS.map(color => ({ color, edge: forecast[color] - prices[color] })).sort((a, b) => b.edge - a.edge);
+  const heldToSell = COLORS.map(color => ({ color, edge: forecast[color] - prices[color] }))
+    .filter(item => trader.holdings[item.color] > 0 && item.edge < -automation.edge).sort((a, b) => a.edge - b.edge)[0];
+  if (heldToSell) {
+    const shares = Math.min(automation.orderShares, trader.holdings[heldToSell.color]);
+    const quote = quoteTrade(state, trader.id, heldToSell.color, 'sell', shares);
+    const netSalePrice = quote.total / shares;
+    if (quote.canExecute && netSalePrice > forecast[heldToSell.color] + automation.edge) {
+      applyTrade(state, trader.id, { ...quote, source: 'strategy' });
+      recordDecision(state, 'sell', '扣除费用后，卖出价格仍高于预估价值', { color: heldToSell.color, shares, edge: netSalePrice - forecast[heldToSell.color] });
+    } else recordDecision(state, 'hold', quote.reason || '卖出条件未满足', { color: heldToSell.color });
+    return;
+  }
+  const candidate = ranked[0];
+  if (candidate.edge < automation.edge) {
+    recordDecision(state, 'hold', '当前优势不足，继续观察', { color: candidate.color, edge: candidate.edge });
+    return;
+  }
+  const totalHeld = COLORS.reduce((sum, color) => sum + trader.holdings[color], 0);
+  const room = automation.maxPosition - totalHeld;
+  if (room < 1) {
+    recordDecision(state, 'hold', '该颜色已达到持仓上限', { color: candidate.color });
+    return;
+  }
+  const shares = Math.min(automation.orderShares, room);
+  const quote = quoteTrade(state, trader.id, candidate.color, 'buy', shares);
+  const netEdge = forecast[candidate.color] - quote.total / shares;
+  if (quote.canExecute && netEdge >= automation.edge) {
+    applyTrade(state, trader.id, { ...quote, source: 'strategy' });
+    recordDecision(state, 'buy', '扣除费用后仍有足够的预估优势，执行买入', { color: candidate.color, shares, edge: netEdge });
+  } else recordDecision(state, 'hold', quote.reason || '扣除费用后的预估优势不足或报价不可执行', { color: candidate.color, edge: netEdge });
+}
+
+function settle(state, verifiedEvent = null) {
   const actionHeat = state.heat;
   const closingPrices = marketPrices(state);
   const noise = Math.floor(random(state, '_noiseRngState') * (2 * state.noiseRange + 1)) - state.noiseRange;
   const finalHeat = actionHeat + noise;
-  const color = finalHeat > state.greenBand[1] ? 'red' : finalHeat < state.greenBand[0] ? 'black' : 'green';
+  let txCount = verifiedEvent?.txCount ?? state.event.txCount;
+  if (txCount === null || txCount === undefined) {
+    const pressure = Math.max(-3, Math.min(3, state.heat - state.baseline));
+    const expected = state.event.baseline + pressure * 3;
+    const eventNoise = Math.floor(random(state, '_eventRngState') * (2 * state.noiseRange + 1)) - state.noiseRange;
+    txCount = Math.max(0, Math.round(expected) + eventNoise);
+    state.event = { ...state.event, txCount, headBlock: state.event.targetBlock, status: 'simulated' };
+  }
+  const color = classifyEvent(state.event, txCount);
+  const supportCounts = Object.fromEntries(COLORS.map(item => [item,
+    state.participants.filter(trader => trader.holdings[item] > 0).length]));
   const totalPayout = state.participants.reduce((sum, trader) => sum + trader.holdings[color], 0);
   if (units(state.market.cash) < totalPayout * POINT_PRECISION) fail('INSUFFICIENT_RESERVE', '结算储备不足，无法兑付');
   const payouts = {};
@@ -415,10 +606,22 @@ function settle(state) {
   state.market.cash = points(units(state.market.cash) - totalPayout * POINT_PRECISION);
   state.market.q = emptyPosition();
   state.phase = 'settled';
+  state.automation.enabled = false;
   state.heat = finalHeat;
-  state.result = { round: state.round, color, finalHeat, actionHeat, noise, closingPrices, payouts, profits, totalPayout, tradeCount: state.tradeCount, marketCash: state.market.cash };
+  let rank = 0;
+  let previousProfit;
+  const ranking = state.participants.map(trader => ({ id: trader.id, name: trader.name, profit: profits[trader.id] }))
+    .sort((a, b) => b.profit - a.profit).map((entry, index) => {
+      if (index === 0 || entry.profit !== previousProfit) rank = index + 1;
+      previousProfit = entry.profit;
+      return { ...entry, rank };
+    });
+  state.result = { round: state.round, color, finalHeat, actionHeat, noise, closingPrices, payouts, profits, totalPayout,
+    tradeCount: state.tradeCount, marketCash: state.market.cash, eventTitle: state.event.title, eventMode: state.event.mode,
+    eventValue: txCount, eventLower: state.event.lower, eventUpper: state.event.upper, targetBlock: state.event.targetBlock,
+    eventSource: state.event.source, ...(verifiedEvent?.blockHash ? { eventHash: verifiedEvent.blockHash } : {}), supportCounts, ranking };
   state.results.push(copy(state.result));
-  event(state, 'settled', `结算完成：${{ red: '红', black: '黑', green: '绿' }[color]}命中，每份兑付 1 积分`, { color, noise, finalHeat, totalPayout });
+  event(state, 'settled', `结算完成：${{ red: '红', black: '黑', green: '绿' }[color]}命中，每份兑付 1 积分`, { color, noise, finalHeat, totalPayout, eventValue: txCount });
   updateStats(state);
   snapshot(state);
 }
@@ -434,18 +637,25 @@ export function advance(state, dtMs) {
     next._nextTickMs += BLOCK_DURATION_MS;
     if (next.elapsedMs >= next.tradingDurationMs && next.phase === 'trading') {
       next.phase = 'locked';
-      event(next, 'locked', '最后 5 秒已封盘：停止交易和行动，等待独立情景扰动');
+      next.automation.enabled = false;
+      recordDecision(next, 'stop', '到达封盘时间，自动策略已停止');
+      event(next, 'locked', next.event.mode === 'monad' ? '已到交易时限，停止交易并等待真实目标区块确认' : '最后 5 秒已封盘：停止交易和行动，等待事件结果');
     }
     if (next.phase === 'trading') {
       const bots = next.participants.slice(1);
       const offset = (next.block - 1) % bots.length;
       for (let index = 0; index < bots.length; index += 1) botDecision(next, bots[(index + offset) % bots.length]);
     }
+    if (next.event.mode === 'simulation') next.event.headBlock = next.block;
+    while (next._nextAutomationMs <= next.elapsedMs) {
+      if (next.phase === 'trading') playerAutomationDecision(next);
+      next._nextAutomationMs += 1000;
+    }
     updateStats(next);
     snapshot(next);
   }
   clock(next, end);
-  if (end >= next.durationMs) settle(next);
+  if (end >= next.durationMs && next.event.mode === 'simulation') settle(next);
   return next;
 }
 
@@ -461,12 +671,18 @@ export function nextRound(state) {
   next.block = 0;
   next.tradeCount = 0;
   next.result = null;
+  next.event = { ...SIM_EVENT };
+  next.automation.enabled = false;
+  next.automation.tradeCount = 0;
+  next.automation.lastDecision = { timeMs: 0, action: 'idle', reason: '尚未启用' };
+  next.automation.decisions = [];
   next.market.q = emptyPosition();
   next.market.b = Math.min(DEFAULT_B, 0.8 * next.market.cash / Math.log(10));
   next.history = [];
   next.events = [];
   next.trades = [];
   next._nextTickMs = BLOCK_DURATION_MS;
+  next._nextAutomationMs = 1000;
   for (const trader of next.participants) {
     trader.tickets = next.actionLimit;
     trader.holdings = emptyPosition();

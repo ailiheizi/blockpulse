@@ -8,6 +8,7 @@ const outputFile = pagesBuild ? '_site/index.html' : '本地试玩.html';
 const modules = [
   ['game.js', 'GameEngine'],
   ['monad.js', 'MonadNetwork'],
+  ['event-source.js', 'BlockEventSource'],
   ['monad-monitor.js', 'MonadMonitor'],
   ['monad-ui.js', 'MonadUI'],
   ['monad-market-artifact.js', 'MarketArtifact'],

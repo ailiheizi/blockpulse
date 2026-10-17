@@ -1,14 +1,12 @@
-/**
- * BlockPulse local simulator. No chain, money, redemption, or balance guarantee.
- * Reducers are immutable. Invalid actions throw GameError; harmless timer and
- * settlement repetitions return the same state. Bots use a seeded plan prepared
- * at round start, with at most three actions each. This is not a balanced game.
+/** Local-only three-outcome LMSR simulator. Points cannot be redeemed.
+ * Immutable reducers; bots run on deterministic 500 ms ticks, not frames.
+ * Seeded settlement noise is a simulation, not secure blockchain randomness.
  */
-
 export const COLORS = Object.freeze(['red', 'black', 'green']);
-export const STAKES = Object.freeze([20, 50, 100]);
-export const ROUND_DURATION_MS = 15000;
+export const ROUND_DURATION_MS = 60000;
+export const TRADING_DURATION_MS = 55000;
 export const BLOCK_DURATION_MS = 500;
+export const POINT_PRECISION = 1000000;
 
 export class GameError extends Error {
   constructor(code, reason) {
@@ -20,255 +18,404 @@ export class GameError extends Error {
 }
 
 const fail = (code, reason) => { throw new GameError(code, reason); };
-const copy = state => structuredClone(state);
-const colorOf = heat => heat > 100 ? 'red' : heat < 100 ? 'black' : 'green';
-const playerOf = state => state.participants.find(p => p.id === 'player');
+const copy = value => structuredClone(value);
+const emptyPosition = () => ({ red: 0, black: 0, green: 0 });
+const units = value => Math.round(value * POINT_PRECISION);
+const points = value => value / POINT_PRECISION;
+const money = value => points(units(value));
+const upUnits = value => Math.max(0, Math.ceil(value * POINT_PRECISION));
+const downUnits = value => Math.max(0, Math.floor(value * POINT_PRECISION));
+const MAX_RECORDS = 400;
+const MAX_HISTORY = 700;
+const DEFAULT_B = 150;
+const MIN_ROUND_RESERVE = 1;
 
-function random(state) {
-  state._rngState = (state._rngState + 0x6d2b79f5) >>> 0;
-  let value = state._rngState;
+function findTrader(state, id) {
+  const trader = state.participants.find(participant => participant.id === id);
+  if (!trader) fail('INVALID_TRADER', '找不到这位参与者');
+  return trader;
+}
+
+function random(state, field = '_rngState') {
+  state[field] = (state[field] + 0x6d2b79f5) >>> 0;
+  let value = state[field];
   value = Math.imul(value ^ (value >>> 15), value | 1);
   value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
   return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
 }
 
-function event(state, type, message, detail = {}) {
-  state.events.push({
-    id: state._nextEventId++, timeMs: state.elapsedMs, type, message, ...detail,
-  });
+function marketCost(q, b) {
+  const values = COLORS.map(color => q[color] / b);
+  const maximum = Math.max(...values);
+  return b * (maximum + Math.log(values.reduce((sum, value) => sum + Math.exp(value - maximum), 0)));
 }
 
-function point(state) {
-  state.history.push({ timeMs: state.elapsedMs, heat: state.heat, block: state.block });
+// Shared by execution quotes and portfolio valuation. Amounts are integer
+// micropoints, conservatively rounded in favor of the collateral reserve.
+function tradeAmounts(market, color, side, shares) {
+  const qAfter = { ...market.q, [color]: market.q[color] + (side === 'buy' ? shares : -shares) };
+  const beforeCost = marketCost(market.q, market.b);
+  const afterCost = marketCost(qAfter, market.b);
+  const rawGross = side === 'buy' ? afterCost - beforeCost : beforeCost - afterCost;
+  // Positive LMSR purchases always have positive cost. At extreme q spreads,
+  // subtracting two large C values can lose a tiny difference entirely.
+  const grossUnits = side === 'buy' ? Math.max(1, upUnits(rawGross)) : downUnits(rawGross);
+  const feeUnits = Math.ceil(grossUnits * market.feeRate);
+  const totalUnits = side === 'buy' ? grossUnits + feeUnits : Math.max(0, grossUnits - feeUnits);
+  return { qAfter, grossUnits, feeUnits, totalUnits };
+}
+
+// One portfolio cannot liquidate each color against the same unmodified q.
+// Simulate the actual red -> black -> green sale path, in legal <=1000 chunks.
+function liquidationValue(state, trader) {
+  let q = { ...state.market.q };
+  let receivedUnits = 0;
+  for (const color of COLORS) {
+    let remaining = trader.holdings[color];
+    while (remaining > 0) {
+      const shares = Math.min(1000, remaining);
+      const sale = tradeAmounts({ ...state.market, q }, color, 'sell', shares);
+      receivedUnits += sale.totalUnits;
+      q = sale.qAfter;
+      remaining -= shares;
+    }
+  }
+  return points(receivedUnits);
+}
+
+export function marketPrices(state) {
+  if (state.phase === 'settled' && state.result) {
+    return Object.fromEntries(COLORS.map(color => [color, color === state.result.color ? 1 : 0]));
+  }
+  const values = COLORS.map(color => state.market.q[color] / state.market.b);
+  const maximum = Math.max(...values);
+  const weights = values.map(value => Math.exp(value - maximum));
+  const total = weights.reduce((sum, weight) => sum + weight, 0);
+  return Object.fromEntries(COLORS.map((color, index) => [color, weights[index] / total]));
+}
+
+/** Exact discrete probabilities conditional on no further participant actions. */
+export function scenarioOdds(state) {
+  if (state.phase === 'settled' && state.result) return marketPrices(state);
+  const odds = emptyPosition();
+  for (let noise = -state.noiseRange; noise <= state.noiseRange; noise += 1) {
+    const finalHeat = state.heat + noise;
+    odds[finalHeat > state.greenBand[1] ? 'red' : finalHeat < state.greenBand[0] ? 'black' : 'green'] += 1;
+  }
+  const count = 2 * state.noiseRange + 1;
+  return Object.fromEntries(COLORS.map(color => [color, odds[color] / count]));
+}
+
+export function participantStats(state, traderId) {
+  const trader = findTrader(state, traderId);
+  const prices = marketPrices(state);
+  const markPositionValue = COLORS.reduce((sum, color) => sum + trader.holdings[color] * prices[color], 0);
+  const positionValue = liquidationValue(state, trader);
+  const basis = COLORS.reduce((sum, color) => sum + trader.costBasis[color], 0);
+  const equity = trader.balance + positionValue;
+  return {
+    equity, pnl: equity - 1000, realizedPnl: trader.realizedPnl,
+    unrealizedPnl: positionValue - basis, positionValue, markPositionValue,
+    maxDrawdown: trader.maxDrawdown, tradeCount: trader.tradeCount,
+  };
+}
+
+function updateStats(state) {
+  for (const trader of state.participants) {
+    const equity = trader.balance + liquidationValue(state, trader);
+    trader.peakEquity = Math.max(trader.peakEquity, equity);
+    if (trader.peakEquity > 0) trader.maxDrawdown = Math.max(trader.maxDrawdown, (trader.peakEquity - equity) / trader.peakEquity);
+  }
+}
+
+function event(state, type, message, detail = {}) {
+  state.events.push({ ...detail, id: state._nextEventId++, timeMs: state.elapsedMs, type, message });
+  if (state.events.length > MAX_RECORDS) state.events.splice(0, state.events.length - MAX_RECORDS);
+}
+
+function snapshot(state) {
+  state.history.push({ timeMs: state.elapsedMs, heat: state.heat, prices: marketPrices(state), block: state.block });
+  if (state.history.length > MAX_HISTORY) state.history.splice(0, state.history.length - MAX_HISTORY);
 }
 
 function clock(state, timeMs) {
   state.elapsedMs = timeMs;
-  state.timeMs = timeMs;
   state.remainingMs = Math.max(0, state.durationMs - timeMs);
 }
 
-function applyAction(state, participant, delta) {
-  participant.tickets -= 1;
-  state.heat += delta;
-  point(state);
-  event(state, 'action', `${participant.name}${delta > 0 ? '加热 +1' : '降温 −1'}，热度 ${state.heat}`, {
-    participantId: participant.id, delta, heat: state.heat,
-  });
-}
-
-function botAction(state, entry) {
-  const bot = state.participants.find(p => p.id === entry.participantId);
-  if (!entry.willAct || bot.tickets <= 0 || (bot.id === 'reversion' && state.heat === state.baseline)) {
-    event(state, 'hold', `${bot.name}选择保留行动券`, { participantId: bot.id });
-    return;
-  }
-  const trend = Math.sign(state.heat - state.baseline);
-  const delta = bot.id === 'momentum'
-    ? trend || (bot.bet?.color === 'black' ? -1 : 1)
-    : -trend;
-  applyAction(state, bot, delta);
-}
-
-/** Start a fresh deterministic simulation. All three accounts begin with 1000. */
-export function createGame(seed = 20261017) {
-  if (typeof seed !== 'number' || !Number.isFinite(seed)) fail('INVALID_SEED', '种子必须是有限数字');
-  const normalizedSeed = Math.trunc(seed) >>> 0;
-  const state = {
-    phase: 'betting', round: 1, seed: normalizedSeed,
-    heat: 100, baseline: 100, remainingMs: ROUND_DURATION_MS,
-    durationMs: ROUND_DURATION_MS, elapsedMs: 0, timeMs: 0, block: 0, pool: 0,
-    participants: [
-      { id: 'player', name: '你', balance: 1000, bet: null, tickets: 3 },
-      { id: 'momentum', name: '动量 Bot', balance: 1000, bet: null, tickets: 3 },
-      { id: 'reversion', name: '回归 Bot', balance: 1000, bet: null, tickets: 3 },
-    ],
-    history: [{ timeMs: 0, heat: 100, block: 0 }],
-    events: [], results: [], result: null,
-    _rngState: normalizedSeed, _botSchedule: [], _nextBlockMs: BLOCK_DURATION_MS,
-    _nextEventId: 1,
+function participant(id, name, strategy) {
+  return {
+    id, name, strategy, balance: 1000, holdings: emptyPosition(), costBasis: emptyPosition(),
+    realizedPnl: 0, tickets: 3, tradeCount: 0, peakEquity: 1000, maxDrawdown: 0,
   };
-  event(state, 'round_ready', '模拟回合已准备：选择预测和积分；所有积分均不可兑现');
+}
+
+export function createGame(seed = 20261017, options = {}) {
+  if (typeof seed !== 'number' || !Number.isFinite(seed)) fail('INVALID_SEED', '种子必须是有限数字');
+  const botCount = options.botCount ?? 2;
+  if (botCount !== 2 && botCount !== 20) fail('INVALID_BOT_COUNT', '请选择 2 或 20 位 Bot');
+  const normalizedSeed = Math.trunc(seed) >>> 0;
+  const participants = [participant('player', '你', 'player')];
+  for (let index = 0; index < botCount; index += 1) {
+    const momentum = index % 2 === 0;
+    participants.push(participant(index === 0 ? 'momentum' : index === 1 ? 'value' : `bot-${index + 1}`,
+      `${momentum ? '动量' : '价值'} Bot${index > 1 ? ` ${index + 1}` : ''}`, momentum ? 'momentum' : 'value'));
+  }
+  const state = {
+    schemaVersion: 2, phase: 'ready', round: 1, seed: normalizedSeed, botCount,
+    durationMs: ROUND_DURATION_MS, tradingDurationMs: TRADING_DURATION_MS,
+    elapsedMs: 0, remainingMs: ROUND_DURATION_MS, block: 0,
+    heat: 100, baseline: 100, greenBand: [98, 102], actionLimit: 3,
+    noiseRange: participants.length * 3 + 3,
+    market: { q: emptyPosition(), cash: 1000, initialReserve: 1000, b: DEFAULT_B, feeRate: 0.003 },
+    participants, initialTotal: participants.length * 1000 + 1000,
+    history: [], events: [], trades: [], results: [], result: null, tradeCount: 0,
+    _rngState: normalizedSeed, _noiseRngState: (normalizedSeed ^ 0x9e3779b9) >>> 0,
+    _nextTickMs: BLOCK_DURATION_MS, _nextEventId: 1, _nextTradeId: 1,
+    _roundStartBalances: Object.fromEntries(participants.map(trader => [trader.id, trader.balance])),
+  };
+  snapshot(state);
+  event(state, 'round_ready', '本地份额市场已准备：命中每份兑付 1 积分，积分不可兑换');
   return state;
 }
 
-/** Lock the player's selected stake. A locked bet cannot be changed. */
-export function placeBet(state, color, stake) {
-  if (state.phase !== 'betting') fail('BETTING_CLOSED', '当前已封盘，不能改注');
-  if (!COLORS.includes(color)) fail('INVALID_COLOR', '请选择红、黑或绿');
-  if (!STAKES.includes(stake)) fail('INVALID_STAKE', '押注积分只能是 20、50 或 100');
-  const player = playerOf(state);
-  if (player.bet) fail('BET_ALREADY_LOCKED', '本轮押注已锁定');
-  if (player.balance < stake) fail('INSUFFICIENT_BALANCE', '可用积分不足');
-  const next = copy(state);
-  const nextPlayer = playerOf(next);
-  nextPlayer.balance -= stake;
-  nextPlayer.bet = { color, stake };
-  next.pool += stake;
-  event(next, 'bet', `你锁定 ${stake} 模拟积分`, { participantId: 'player', color, stake });
-  return next;
+export function resetGame(seed = 20261017, options = {}) {
+  return createGame(seed, options);
 }
 
-/** Close betting, lock the bots' stakes, and precompute their action schedule. */
 export function startRound(state) {
-  if (state.phase !== 'betting') fail('INVALID_PHASE', '只有准备中的回合可以开始');
-  if (!playerOf(state).bet) fail('BET_REQUIRED', '请先选择并锁定押注');
+  if (state.phase !== 'ready') fail('INVALID_PHASE', '只有准备中的回合可以开始');
+  if (state.market.cash < MIN_ROUND_RESERVE) fail('RESERVE_EXHAUSTED', '做市储备不足 1 积分，请重置试玩');
   const next = copy(state);
-  const previous = next.results.at(-1);
-  const previousHeat = previous?.finalHeat ?? next.baseline;
-  const direction = Math.sign(previousHeat - next.baseline);
-  const momentumColor = direction > 0 ? 'red' : direction < 0 ? 'black'
-    : random(next) < 0.5 ? 'red' : 'black';
-  const reversionColor = Math.abs(previousHeat - next.baseline) <= 1 ? 'green'
-    : direction > 0 ? 'black' : 'red';
-  for (const bot of next.participants.filter(p => p.id !== 'player')) {
-    const stake = Math.min(playerOf(next).bet.stake, bot.balance);
-    if (stake > 0) {
-      const color = bot.id === 'momentum' ? momentumColor : reversionColor;
-      bot.balance -= stake;
-      bot.bet = { color, stake };
-      next.pool += stake;
-      event(next, 'bet', `${bot.name}锁定 ${stake} 模拟积分`, { participantId: bot.id, color, stake });
-    } else {
-      event(next, 'no_bet', `${bot.name}无积分，本轮不下注`, { participantId: bot.id });
-    }
-  }
-  const scheduled = [
-    ['momentum', 1800], ['reversion', 3300],
-    ['momentum', 6200], ['reversion', 8200],
-    ['momentum', 11200], ['reversion', 13700],
-  ];
-  next._botSchedule = scheduled.map(([participantId, center]) => ({
-    participantId,
-    timeMs: center + Math.floor(random(next) * 601) - 300,
-    // Decided now, independent of future player actions and frame rate.
-    willAct: random(next) < 0.78,
-    done: false,
-  })).sort((a, b) => a.timeMs - b.timeMs);
-  next.phase = 'active';
-  event(next, 'round_started', '封盘：15 秒行动开始，每人最多 3 张券，可以保留');
+  next.phase = 'trading';
+  next._roundStartBalances = Object.fromEntries(next.participants.map(trader => [trader.id, trader.balance]));
+  event(next, 'round_started', '交易开始：前 55 秒可买卖和行动，最后 5 秒封盘等待结算');
   return next;
 }
 
-/** Spend one action ticket. It never charges additional points. */
+/** Quote uses no RNG and never mutates state, including rejected previews. */
+export function quoteTrade(state, traderId, color, side, shares) {
+  const trader = findTrader(state, traderId);
+  if (!COLORS.includes(color)) fail('INVALID_COLOR', '请选择红、黑或绿');
+  if (side !== 'buy' && side !== 'sell') fail('INVALID_SIDE', '请选择买入或卖出');
+  if (!Number.isInteger(shares) || shares < 1 || shares > 1000) fail('INVALID_SHARES', '份数必须是 1 至 1000 的整数');
+  const prices = marketPrices(state);
+  const quote = {
+    side, color, shares, spotPrice: prices[color], averagePrice: 0, gross: 0,
+    fee: 0, total: 0, pricesAfter: prices, winPayout: 0, winProfit: 0, roi: 0,
+    canExecute: false, reason: '', code: '',
+  };
+  if (side === 'sell' && trader.holdings[color] < shares) {
+    return { ...quote, reason: '持仓不足，不能卖空', code: 'INSUFFICIENT_HOLDINGS' };
+  }
+  const { qAfter, grossUnits, feeUnits, totalUnits } = tradeAmounts(state.market, color, side, shares);
+  quote.gross = points(grossUnits);
+  quote.fee = points(feeUnits);
+  quote.total = points(totalUnits);
+  quote.averagePrice = quote.gross / shares;
+  quote.pricesAfter = marketPrices({ market: { ...state.market, q: qAfter } });
+  if (side === 'buy') {
+    quote.winPayout = shares;
+    quote.winProfit = shares - quote.total;
+    quote.roi = quote.total > 0 ? quote.winProfit / quote.total : 0;
+  }
+  if (state.phase !== 'trading' || state.elapsedMs >= state.tradingDurationMs) {
+    quote.reason = state.phase === 'ready' ? '请先开始本轮交易' : '当前已封盘，不能买卖';
+    quote.code = 'MARKET_CLOSED';
+  } else if (side === 'buy' && units(trader.balance) < totalUnits) {
+    quote.reason = '可用积分不足';
+    quote.code = 'INSUFFICIENT_BALANCE';
+  } else {
+    const cashAfter = units(state.market.cash) + (side === 'buy' ? totalUnits : -totalUnits);
+    const largestPayout = Math.max(...Object.values(qAfter)) * POINT_PRECISION;
+    if (cashAfter < largestPayout || cashAfter < 0) {
+      quote.reason = '做市储备不足以覆盖所有可能兑付，交易未执行';
+      quote.code = 'INSUFFICIENT_RESERVE';
+    } else quote.canExecute = true;
+  }
+  return quote;
+}
+
+function applyTrade(state, traderId, quote) {
+  const trader = findTrader(state, traderId);
+  const { color, side, shares, total } = quote;
+  const totalUnits = units(total);
+  let removedBasis = 0;
+  let realizedChange = 0;
+  if (side === 'buy') {
+    trader.balance = points(units(trader.balance) - totalUnits);
+    trader.costBasis[color] = money(trader.costBasis[color] + total);
+    trader.holdings[color] += shares;
+    state.market.q[color] += shares;
+    state.market.cash = points(units(state.market.cash) + totalUnits);
+  } else {
+    const removedUnits = shares === trader.holdings[color] ? units(trader.costBasis[color])
+      : Math.floor(units(trader.costBasis[color]) * shares / trader.holdings[color]);
+    removedBasis = points(removedUnits);
+    realizedChange = points(totalUnits - removedUnits);
+    trader.balance = points(units(trader.balance) + totalUnits);
+    trader.costBasis[color] = points(units(trader.costBasis[color]) - removedUnits);
+    trader.realizedPnl = money(trader.realizedPnl + realizedChange);
+    trader.holdings[color] -= shares;
+    state.market.q[color] -= shares;
+    state.market.cash = points(units(state.market.cash) - totalUnits);
+  }
+  trader.tradeCount += 1;
+  state.tradeCount += 1;
+  const entry = {
+    id: state._nextTradeId++, timeMs: state.elapsedMs, traderId, participantId: traderId,
+    color, side, shares, gross: quote.gross, fee: quote.fee, total,
+    averagePrice: quote.averagePrice, spotPrice: quote.spotPrice,
+    removedBasis, realizedPnl: realizedChange,
+  };
+  state.trades.push(entry);
+  if (state.trades.length > MAX_RECORDS) state.trades.splice(0, state.trades.length - MAX_RECORDS);
+  event(state, 'trade', `${trader.name}${side === 'buy' ? '买入' : '卖出'} ${shares} 份${{ red: '红', black: '黑', green: '绿' }[color]}`, entry);
+  updateStats(state);
+  snapshot(state);
+}
+
+export function executeTrade(state, traderId, color, side, shares) {
+  const quote = quoteTrade(state, traderId, color, side, shares);
+  if (!quote.canExecute) fail(quote.code || 'TRADE_REJECTED', quote.reason);
+  const next = copy(state);
+  applyTrade(next, traderId, quote);
+  return next;
+}
+
+function applyAction(state, trader, delta) {
+  trader.tickets -= 1;
+  state.heat += delta;
+  event(state, 'action', `${trader.name}${delta > 0 ? '加热 +1' : '降温 −1'}`, { traderId: trader.id, participantId: trader.id, delta, heat: state.heat });
+  snapshot(state);
+  updateStats(state);
+}
+
 export function playerAction(state, delta) {
-  if (state.phase !== 'active' || state.remainingMs <= 0) fail('ACTION_CLOSED', '当前不在行动时间内');
+  if (state.phase !== 'trading' || state.elapsedMs >= state.tradingDurationMs) fail('ACTION_CLOSED', '当前已封盘，不能行动');
   if (delta !== 1 && delta !== -1) fail('INVALID_ACTION', '行动只支持 +1 加热或 −1 降温');
-  if (playerOf(state).tickets <= 0) fail('NO_TICKETS', '本轮行动券已用完');
+  if (findTrader(state, 'player').tickets <= 0) fail('NO_TICKETS', '本轮行动券已用完');
   const next = copy(state);
-  applyAction(next, playerOf(next), delta);
+  applyAction(next, findTrader(next, 'player'), delta);
   return next;
 }
 
-/**
- * Advance simulated time. Bots run at scheduled times, never once per frame.
- * Every 500 ms adds a block/path point. At 15 seconds settlement is automatic.
- */
-export function advance(state, dtMs) {
-  if (typeof dtMs !== 'number' || !Number.isFinite(dtMs) || dtMs < 0) {
-    fail('INVALID_TIME', '时间增量必须是非负有限数字');
+function botDecision(state, bot) {
+  const activity = random(state);
+  if (activity > (state.botCount === 20 ? 0.38 : 0.67)) return;
+  const prices = marketPrices(state);
+  const odds = scenarioOdds(state);
+  const previous = state.history.findLast(point => point.timeMs <= state.elapsedMs - 3000) ?? state.history[0];
+  const forecast = { ...odds };
+  if (bot.strategy === 'momentum') {
+    const trend = prices.red - (previous?.prices.red ?? prices.red);
+    forecast.red = Math.max(0.005, odds.red + Math.max(-0.15, Math.min(0.15, trend * 2.4)));
+    forecast.black = Math.max(0.005, odds.black - Math.max(-0.15, Math.min(0.15, trend * 2.4)));
+    const sum = COLORS.reduce((total, color) => total + forecast[color], 0);
+    for (const color of COLORS) forecast[color] /= sum;
   }
-  if (state.phase !== 'active' || dtMs === 0) return state;
+  const ranked = COLORS.map(color => ({ color, edge: forecast[color] - prices[color] }));
+  const sells = ranked.filter(item => bot.holdings[item.color] > 0 && item.edge < -0.025)
+    .sort((a, b) => a.edge - b.edge);
+  const buy = [...ranked].sort((a, b) => b.edge - a.edge)[0];
+  const sale = sells[0];
+  const side = sale ? 'sell' : 'buy';
+  const color = sale?.color ?? buy.color;
+  const desired = 5 + Math.floor(random(state) * (state.botCount === 20 ? 13 : 22));
+  const shares = side === 'sell' ? Math.min(desired, bot.holdings[color]) : desired;
+  if (sale || (buy.edge > 0.017 && bot.holdings[color] < 160)) {
+    const quote = quoteTrade(state, bot.id, color, side, shares);
+    if (quote.canExecute && (side === 'sell' || quote.total <= Math.min(bot.balance * 0.12, 70))) applyTrade(state, bot.id, quote);
+  }
+  if (bot.tickets > 0 && state.elapsedMs >= 10000 && random(state) < 0.025) {
+    const preference = bot.holdings.red - bot.holdings.black;
+    if (preference !== 0) applyAction(state, bot, Math.sign(preference));
+    else if (bot.holdings.green > 0 && state.heat !== state.baseline) applyAction(state, bot, -Math.sign(state.heat - state.baseline));
+  }
+}
+
+function settle(state) {
+  const actionHeat = state.heat;
+  const closingPrices = marketPrices(state);
+  const noise = Math.floor(random(state, '_noiseRngState') * (2 * state.noiseRange + 1)) - state.noiseRange;
+  const finalHeat = actionHeat + noise;
+  const color = finalHeat > state.greenBand[1] ? 'red' : finalHeat < state.greenBand[0] ? 'black' : 'green';
+  const totalPayout = state.participants.reduce((sum, trader) => sum + trader.holdings[color], 0);
+  if (units(state.market.cash) < totalPayout * POINT_PRECISION) fail('INSUFFICIENT_RESERVE', '结算储备不足，无法兑付');
+  const payouts = {};
+  const profits = {};
+  for (const trader of state.participants) {
+    const payout = trader.holdings[color];
+    const residualBasis = COLORS.reduce((sum, item) => sum + units(trader.costBasis[item]), 0);
+    trader.balance = points(units(trader.balance) + payout * POINT_PRECISION);
+    trader.realizedPnl = points(units(trader.realizedPnl) + payout * POINT_PRECISION - residualBasis);
+    payouts[trader.id] = payout;
+    profits[trader.id] = money(trader.balance - state._roundStartBalances[trader.id]);
+    trader.holdings = emptyPosition();
+    trader.costBasis = emptyPosition();
+  }
+  state.market.cash = points(units(state.market.cash) - totalPayout * POINT_PRECISION);
+  state.market.q = emptyPosition();
+  state.phase = 'settled';
+  state.heat = finalHeat;
+  state.result = { round: state.round, color, finalHeat, actionHeat, noise, closingPrices, payouts, profits, totalPayout, tradeCount: state.tradeCount, marketCash: state.market.cash };
+  state.results.push(copy(state.result));
+  event(state, 'settled', `结算完成：${{ red: '红', black: '黑', green: '绿' }[color]}命中，每份兑付 1 积分`, { color, noise, finalHeat, totalPayout });
+  updateStats(state);
+  snapshot(state);
+}
+
+export function advance(state, dtMs) {
+  if (typeof dtMs !== 'number' || !Number.isFinite(dtMs) || dtMs < 0) fail('INVALID_TIME', '时间增量必须是非负有限数字');
+  if ((state.phase !== 'trading' && state.phase !== 'locked') || dtMs === 0) return state;
   const next = copy(state);
   const end = Math.min(next.durationMs, next.elapsedMs + dtMs);
-  for (;;) {
-    const scheduled = next._botSchedule.find(entry => !entry.done);
-    const actionTime = scheduled?.timeMs ?? Infinity;
-    const due = Math.min(next._nextBlockMs, actionTime);
-    if (due > end) break;
-    clock(next, due);
-    if (next._nextBlockMs <= actionTime) {
-      next.block += 1;
-      next._nextBlockMs += BLOCK_DURATION_MS;
-      point(next);
-    } else {
-      scheduled.done = true;
-      botAction(next, scheduled);
+  while (next._nextTickMs <= end) {
+    clock(next, next._nextTickMs);
+    next.block += 1;
+    next._nextTickMs += BLOCK_DURATION_MS;
+    if (next.elapsedMs >= next.tradingDurationMs && next.phase === 'trading') {
+      next.phase = 'locked';
+      event(next, 'locked', '最后 5 秒已封盘：停止交易和行动，等待独立情景扰动');
     }
+    if (next.phase === 'trading') {
+      const bots = next.participants.slice(1);
+      const offset = (next.block - 1) % bots.length;
+      for (let index = 0; index < bots.length; index += 1) botDecision(next, bots[(index + offset) % bots.length]);
+    }
+    updateStats(next);
+    snapshot(next);
   }
   clock(next, end);
-  if (end >= next.durationMs) return settleRound(next);
+  if (end >= next.durationMs) settle(next);
   return next;
 }
 
-/**
- * Distribute only the locked pool. Integer remainders go to winning stakes in
- * descending fractional-remainder order, then participant order for ties.
- * If nobody wins, refund every stake. Settlement is idempotent.
- */
-export function settleRound(state) {
-  if (state.phase === 'settled') return state;
-  if (state.phase !== 'active' || state.elapsedMs < state.durationMs) {
-    fail('ROUND_NOT_FINISHED', '行动时间结束后才能结算');
-  }
-  const next = copy(state);
-  const color = colorOf(next.heat);
-  const stakes = Object.fromEntries(next.participants.map(p => [p.id, p.bet?.stake ?? 0]));
-  const pool = Object.values(stakes).reduce((sum, amount) => sum + amount, 0);
-  const winners = next.participants.filter(p => p.bet?.color === color && p.bet.stake > 0);
-  const payouts = Object.fromEntries(next.participants.map(p => [p.id, 0]));
-  if (!winners.length) {
-    for (const p of next.participants) payouts[p.id] = stakes[p.id];
-  } else {
-    const winningStake = winners.reduce((sum, p) => sum + p.bet.stake, 0);
-    const shares = winners.map((p, index) => ({
-      id: p.id, index,
-      base: Math.floor(pool * p.bet.stake / winningStake),
-      remainder: (pool * p.bet.stake) % winningStake,
-    }));
-    for (const share of shares) payouts[share.id] = share.base;
-    let remainder = pool - shares.reduce((sum, share) => sum + share.base, 0);
-    shares.sort((a, b) => b.remainder - a.remainder || a.index - b.index);
-    for (let index = 0; remainder > 0; index += 1, remainder -= 1) {
-      payouts[shares[index % shares.length].id] += 1;
-    }
-  }
-  const profits = {};
-  for (const participant of next.participants) {
-    participant.balance += payouts[participant.id];
-    profits[participant.id] = payouts[participant.id] - stakes[participant.id];
-  }
-  next.phase = 'settled';
-  next.pool = 0;
-  next.remainingMs = 0;
-  next.result = {
-    round: next.round, color, finalHeat: next.heat, pool, stakes, payouts, profits,
-    refund: !winners.length, winnerIds: winners.map(p => p.id),
-    roundingPolicy: 'largest-remainder-then-participant-order',
-  };
-  next.results.push(copy(next.result));
-  event(next, 'settled', !winners.length ? '无人命中：所有押注积分原数退回'
-    : '回合结算：命中者按押注比例分享积分池；没有新增积分', {
-    color, pool, refund: !winners.length,
-  });
-  return next;
-}
-
-/** Keep bankrolls and completed results; reset this round's path and actions. */
 export function nextRound(state) {
   if (state.phase !== 'settled') fail('ROUND_NOT_SETTLED', '请先完成当前回合');
+  if (state.market.cash < MIN_ROUND_RESERVE) fail('RESERVE_EXHAUSTED', '做市储备不足 1 积分，请重置试玩');
   const next = copy(state);
   next.round += 1;
-  next.phase = 'betting';
+  next.phase = 'ready';
   next.heat = next.baseline;
-  next.remainingMs = next.durationMs;
   next.elapsedMs = 0;
-  next.timeMs = 0;
+  next.remainingMs = next.durationMs;
   next.block = 0;
-  next.pool = 0;
+  next.tradeCount = 0;
   next.result = null;
-  next.history = [{ timeMs: 0, heat: next.baseline, block: 0 }];
+  next.market.q = emptyPosition();
+  next.market.b = Math.min(DEFAULT_B, 0.8 * next.market.cash / Math.log(3));
+  next.history = [];
   next.events = [];
-  next._botSchedule = [];
-  next._nextBlockMs = BLOCK_DURATION_MS;
-  for (const participant of next.participants) {
-    participant.bet = null;
-    participant.tickets = 3;
+  next.trades = [];
+  next._nextTickMs = BLOCK_DURATION_MS;
+  for (const trader of next.participants) {
+    trader.tickets = next.actionLimit;
+    trader.holdings = emptyPosition();
+    trader.costBasis = emptyPosition();
   }
-  event(next, 'round_ready', `第 ${next.round} 轮已准备；积分余额与历史结果保留`);
+  next._roundStartBalances = Object.fromEntries(next.participants.map(trader => [trader.id, trader.balance]));
+  snapshot(next);
+  event(next, 'round_ready', `第 ${next.round} 轮已准备；余额、做市储备和累计盈亏保留`);
   return next;
-}
-
-export function resetGame(seed = 20261017) {
-  return createGame(seed);
 }

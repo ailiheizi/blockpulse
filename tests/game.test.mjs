@@ -1,224 +1,332 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { performance } from 'node:perf_hooks';
 import {
-  createGame, placeBet, startRound, advance, playerAction,
-  settleRound, nextRound, resetGame, GameError,
+  createGame, resetGame, startRound, advance, executeTrade, quoteTrade,
+  playerAction, nextRound, marketPrices, scenarioOdds, participantStats, GameError,
 } from '../dist/game.js';
 
-const find = (state, id = 'player') => state.participants.find(p => p.id === id);
-const begin = (seed = 42, color = 'red', stake = 100) => startRound(placeBet(createGame(seed), color, stake));
-const conserved = state => assert.equal(
-  state.participants.reduce((sum, p) => sum + p.balance, 0) + state.pool, 3000,
-);
-const rejects = (fn, code) => assert.throws(fn, error => error instanceof GameError && error.code === code);
+const trader = (state, id = 'player') => state.participants.find(item => item.id === id);
+const close = (actual, expected, tolerance = 0.000002) => assert.ok(Math.abs(actual - expected) <= tolerance, `${actual} != ${expected}`);
+const rejects = (fn, code) => assert.throws(fn, error => error instanceof GameError && error.code === code && Boolean(error.reason));
 
-test('initial and reset state contain three independent 1000-point participants', () => {
-  const first = createGame(0);
-  const second = createGame(0);
-  assert.equal(first.phase, 'betting');
-  assert.equal(first.round, 1);
-  assert.equal(first.heat, 100);
-  assert.equal(first.remainingMs, 15000);
-  assert.deepEqual(first, second);
-  assert.notEqual(first.participants, second.participants);
-  assert.deepEqual(resetGame(0), first);
-  conserved(first);
-});
-
-test('placing a bet locks only the stake and never mutates previous state', () => {
-  const before = createGame();
-  const snapshot = structuredClone(before);
-  const after = placeBet(before, 'green', 50);
-  assert.deepEqual(before, snapshot);
-  assert.equal(find(after).balance, 950);
-  assert.deepEqual(find(after).bet, { color: 'green', stake: 50 });
-  assert.equal(after.pool, 50);
-  rejects(() => placeBet(after, 'red', 20), 'BET_ALREADY_LOCKED');
-  rejects(() => placeBet(before, 'blue', 50), 'INVALID_COLOR');
-  rejects(() => placeBet(before, 'red', 25), 'INVALID_STAKE');
-  rejects(() => startRound(before), 'BET_REQUIRED');
-  conserved(after);
-});
-
-test('bots lock matching stakes capped by available points; betting closes', () => {
-  const state = createGame(2);
-  find(state, 'momentum').balance = 10;
-  find(state, 'reversion').balance = 1990;
-  const active = startRound(placeBet(state, 'black', 100));
-  assert.equal(active.phase, 'active');
-  assert.equal(find(active, 'momentum').bet.stake, 10);
-  assert.equal(find(active, 'momentum').balance, 0);
-  assert.equal(find(active, 'reversion').bet.stake, 100);
-  assert.equal(active.pool, 210);
-  assert.ok(active.participants.every(p => p.tickets === 3));
-  rejects(() => placeBet(active, 'red', 20), 'BETTING_CLOSED');
-  conserved(active);
-});
-
-test('actions use a maximum of three tickets and never charge points', () => {
-  const initial = begin();
-  const one = playerAction(initial, 1);
-  const two = playerAction(one, -1);
-  const three = playerAction(two, 1);
-  assert.equal(initial.heat, 100);
-  assert.equal(two.heat, 100);
-  assert.equal(three.heat, 101);
-  assert.equal(find(three).tickets, 0);
-  assert.equal(find(three).balance, find(initial).balance);
-  rejects(() => playerAction(three, -1), 'NO_TICKETS');
-  rejects(() => playerAction(initial, 0), 'INVALID_ACTION');
-  rejects(() => playerAction(createGame(), 1), 'ACTION_CLOSED');
-  conserved(three);
-});
-
-test('seeded schedules and settlement are independent of timer frame rate', () => {
-  const initial = begin(1234, 'black', 50);
-  const snapshot = structuredClone(initial);
-  const oneStep = advance(initial, 15000);
-  let manySteps = initial;
-  for (let time = 0; time < 15000; time += 37) {
-    manySteps = advance(manySteps, Math.min(37, 15000 - time));
+function invariants(state) {
+  close(state.participants.reduce((sum, item) => sum + item.balance, 0) + state.market.cash, state.initialTotal);
+  assert.ok(state.market.cash >= 0);
+  for (const color of ['red', 'black', 'green']) {
+    assert.equal(state.market.q[color], state.participants.reduce((sum, item) => sum + item.holdings[color], 0));
+    assert.ok(state.market.cash >= state.market.q[color]);
   }
-  assert.deepEqual(oneStep, manySteps);
-  assert.deepEqual(initial, snapshot);
-  assert.equal(oneStep.phase, 'settled');
-  assert.equal(oneStep.block, 30);
-  assert.equal(oneStep.history.filter(p => p.timeMs > 0 && p.timeMs % 500 === 0).length, 30);
-  assert.ok(oneStep.events.every((entry, index, list) => index === 0 || entry.timeMs >= list[index - 1].timeMs));
-  assert.ok(oneStep.participants.every(p => p.tickets >= 0 && p.tickets <= 3));
-  assert.ok(oneStep._botSchedule.every(entry => entry.done));
-  assert.ok(oneStep.events.some(entry => entry.type === 'hold'));
-  conserved(oneStep);
-});
-
-test('zero time and repeated settlement are idempotent; early settlement fails', () => {
-  const initial = begin();
-  assert.equal(advance(initial, 0), initial);
-  rejects(() => settleRound(initial), 'ROUND_NOT_FINISHED');
-  rejects(() => advance(initial, -1), 'INVALID_TIME');
-  const settled = advance(initial, 999999);
-  assert.equal(settleRound(settled), settled);
-  assert.equal(advance(settled, 1000), settled);
-  assert.equal(settled.results.length, 1);
-  rejects(() => playerAction(settled, 1), 'ACTION_CLOSED');
-  conserved(settled);
-});
-
-// Isolate distribution with already-locked stakes, including partial bot stakes.
-function payoutFixture(bets, finalHeat) {
-  const state = createGame(1);
-  state.phase = 'active';
-  state.elapsedMs = 15000;
-  state.timeMs = 15000;
-  state.remainingMs = 0;
-  state.heat = finalHeat;
-  state.pool = 0;
-  state.participants.forEach((p, index) => {
-    p.bet = bets[index];
-    p.balance -= p.bet.stake;
-    state.pool += p.bet.stake;
-  });
-  return state;
+  for (const item of state.participants) {
+    assert.ok(item.balance >= 0);
+    assert.ok(item.tickets >= 0 && item.tickets <= 3);
+    assert.ok(item.maxDrawdown >= 0 && item.maxDrawdown <= 1);
+    const stats = participantStats(state, item.id);
+    close(stats.pnl, stats.realizedPnl + stats.unrealizedPnl);
+  }
 }
 
-test('proportional payouts distribute integer remainders and conserve all 3000 points', () => {
-  const settled = settleRound(payoutFixture([
-    { color: 'red', stake: 20 },
-    { color: 'red', stake: 50 },
-    { color: 'black', stake: 20 },
-  ], 101));
-  assert.equal(settled.result.color, 'red');
-  assert.equal(settled.result.pool, 90);
-  assert.deepEqual(settled.result.payouts, { player: 26, momentum: 64, reversion: 0 });
-  assert.deepEqual(settled.result.profits, { player: 6, momentum: 14, reversion: -20 });
-  assert.equal(Object.values(settled.result.profits).reduce((a, b) => a + b, 0), 0);
-  assert.equal(settled.pool, 0);
-  conserved(settled);
+test('new sessions expose schema, modes and an explicit independent maker reserve', () => {
+  const state = createGame(0);
+  assert.equal(state.schemaVersion, 2);
+  assert.equal(state.phase, 'ready');
+  assert.equal(state.initialTotal, 4000);
+  assert.equal(state.participants.length, 3);
+  assert.equal(state.noiseRange, 12);
+  assert.equal(state.remainingMs, 60000);
+  assert.deepEqual(resetGame(0), state);
+  const crowd = createGame(0, { botCount: 20 });
+  assert.equal(crowd.participants.length, 21);
+  assert.equal(new Set(crowd.participants.map(item => item.id)).size, 21);
+  assert.equal(crowd.initialTotal, 22000);
+  assert.equal(crowd.noiseRange, 66);
+  assert.deepEqual(marketPrices(state), { red: 1 / 3, black: 1 / 3, green: 1 / 3 });
+  rejects(() => createGame(NaN), 'INVALID_SEED');
+  rejects(() => createGame(1, { botCount: 3 }), 'INVALID_BOT_COUNT');
+  invariants(state);
+  invariants(crowd);
 });
 
-test('equal fractional remainders resolve in participant order without burning points', () => {
-  const settled = settleRound(payoutFixture([
-    { color: 'black', stake: 20 },
-    { color: 'black', stake: 20 },
-    { color: 'green', stake: 1 },
-  ], 99));
-  assert.deepEqual(settled.result.payouts, { player: 21, momentum: 20, reversion: 0 });
-  conserved(settled);
+test('ready previews are pure and cost reflects depth, price impact and fees', () => {
+  const state = createGame(42);
+  const before = structuredClone(state);
+  const quote = quoteTrade(state, 'player', 'red', 'buy', 100);
+  assert.deepEqual(state, before);
+  assert.equal(quote.canExecute, false);
+  assert.equal(quote.code, 'MARKET_CLOSED');
+  assert.ok(quote.averagePrice > 1 / 3);
+  assert.ok(quote.pricesAfter.red > quote.spotPrice);
+  assert.ok(quote.fee > 0);
+  close(quote.total, quote.gross + quote.fee);
+  assert.equal(quote.winPayout, 100);
+  close(quote.winProfit, 100 - quote.total);
+  const huge = structuredClone(state);
+  huge.market.q.red = 1000000;
+  assert.ok(Number.isFinite(quoteTrade(huge, 'player', 'red', 'buy', 1).gross));
+  rejects(() => quoteTrade(state, 'unknown', 'red', 'buy', 1), 'INVALID_TRADER');
+  rejects(() => quoteTrade(state, 'player', 'blue', 'buy', 1), 'INVALID_COLOR');
+  rejects(() => quoteTrade(state, 'player', 'red', 'short', 1), 'INVALID_SIDE');
+  for (const value of [0, -1, 1.5, 1001, Infinity, NaN, '5']) rejects(() => quoteTrade(state, 'player', 'red', 'buy', value), 'INVALID_SHARES');
 });
 
-test('no winning color refunds every stake with zero profits', () => {
-  const settled = settleRound(payoutFixture([
-    { color: 'red', stake: 20 },
-    { color: 'red', stake: 50 },
-    { color: 'black', stake: 100 },
-  ], 100));
-  assert.equal(settled.result.color, 'green');
-  assert.equal(settled.result.refund, true);
-  assert.deepEqual(settled.result.payouts, settled.result.stakes);
-  assert.ok(Object.values(settled.result.profits).every(profit => profit === 0));
-  assert.ok(settled.participants.every(p => p.balance === 1000));
-  conserved(settled);
+test('buy/sell round trip loses its fees and cannot mint points; no short selling', () => {
+  const initial = startRound(createGame());
+  const before = structuredClone(initial);
+  const buyQuote = quoteTrade(initial, 'player', 'red', 'buy', 100);
+  const bought = executeTrade(initial, 'player', 'red', 'buy', 100);
+  assert.deepEqual(initial, before);
+  close(trader(bought).balance, 1000 - buyQuote.total);
+  close(trader(bought).costBasis.red, buyQuote.total);
+  assert.equal(bought.market.q.red, 100);
+  assert.equal(trader(bought).holdings.red, 100);
+  rejects(() => executeTrade(bought, 'player', 'red', 'sell', 101), 'INSUFFICIENT_HOLDINGS');
+  const sellQuote = quoteTrade(bought, 'player', 'red', 'sell', 100);
+  const sold = executeTrade(bought, 'player', 'red', 'sell', 100);
+  assert.ok(trader(sold).balance < 1000);
+  close(1000 - trader(sold).balance, buyQuote.total - sellQuote.total);
+  assert.ok(1000 - trader(sold).balance >= buyQuote.fee + sellQuote.fee - 0.000001);
+  assert.equal(trader(sold).costBasis.red, 0);
+  assert.equal(trader(sold).holdings.red, 0);
+  close(trader(sold).realizedPnl, trader(sold).balance - 1000);
+  assert.deepEqual(marketPrices(sold), marketPrices(initial));
+  invariants(bought);
+  invariants(sold);
 });
 
-test('green is reachable with no actions and with a +1/-1 pair, without forced nine actions', () => {
-  // Select a reproducible seed whose precommitted bots both hold all opportunities.
-  let initial;
-  for (let seed = 0; seed < 50000; seed += 1) {
-    const candidate = begin(seed, 'green', 20);
-    if (candidate._botSchedule.every(entry => !entry.willAct)) {
-      initial = candidate;
-      break;
+test('extreme legal inventory cannot create zero-cost positive buy shares', () => {
+  let state = startRound(createGame(42, { botCount: 20 }));
+  for (const { id } of state.participants) state = executeTrade(state, id, 'red', 'buy', 995);
+  assert.equal(state.market.q.red, 20895);
+  const quote = quoteTrade(state, 'player', 'black', 'buy', 1);
+  assert.equal(quote.canExecute, true);
+  assert.ok(quote.gross >= 0.000001);
+  assert.ok(quote.fee >= 0.000001);
+  assert.ok(quote.total > 0);
+  assert.ok(Number.isFinite(quote.roi));
+  const bought = executeTrade(state, 'player', 'black', 'buy', 1);
+  assert.ok(trader(bought).balance < trader(state).balance);
+  assert.ok(participantStats(bought, 'player').equity < participantStats(state, 'player').equity);
+  invariants(bought);
+});
+
+test('partial sales remove average cost and net liquidation is separate from realized profit', () => {
+  let state = startRound(createGame());
+  state = executeTrade(state, 'player', 'black', 'buy', 100);
+  const originalBasis = trader(state).costBasis.black;
+  state = executeTrade(state, 'player', 'black', 'sell', 40);
+  close(trader(state).costBasis.black, originalBasis * 0.6);
+  assert.equal(trader(state).holdings.black, 60);
+  const stats = participantStats(state, 'player');
+  assert.ok(stats.positionValue > 0);
+  close(stats.equity, trader(state).balance + stats.positionValue);
+  close(stats.pnl, stats.realizedPnl + stats.unrealizedPnl);
+  invariants(state);
+});
+
+test('own buying cannot fabricate a positive liquidation P&L or equity peak', () => {
+  const initial = startRound(createGame());
+  const bought = executeTrade(initial, 'player', 'red', 'buy', 100);
+  const stats = participantStats(bought, 'player');
+  const sale = quoteTrade(bought, 'player', 'red', 'sell', 100);
+  close(stats.positionValue, sale.total);
+  close(stats.equity, trader(bought).balance + sale.total);
+  assert.ok(stats.pnl < 0);
+  assert.ok(stats.markPositionValue > stats.positionValue);
+  assert.equal(trader(bought).peakEquity, 1000);
+  close(trader(bought).maxDrawdown, (1000 - stats.equity) / 1000, 0.00000001);
+  const sold = executeTrade(bought, 'player', 'red', 'sell', 100);
+  close(participantStats(sold, 'player').equity, stats.equity);
+  close(trader(sold).maxDrawdown, trader(bought).maxDrawdown, 0.00000001);
+  invariants(sold);
+});
+
+test('multi-color liquidation in legal chunks matches actual executable proceeds', () => {
+  let state = startRound(createGame(18));
+  for (const [color, shares] of [['red', 1000], ['red', 100], ['black', 25], ['green', 40]]) {
+    state = executeTrade(state, 'player', color, 'buy', shares);
+  }
+  const snapshot = structuredClone(state);
+  const estimate = participantStats(state, 'player');
+  assert.deepEqual(state, snapshot);
+  assert.equal(trader(state).holdings.red, 1100);
+  assert.ok(estimate.pnl < 0);
+  const startingCash = trader(state).balance;
+  for (const color of ['red', 'black', 'green']) {
+    while (trader(state).holdings[color] > 0) {
+      state = executeTrade(state, 'player', color, 'sell', Math.min(1000, trader(state).holdings[color]));
     }
   }
-  assert.ok(initial, 'a seeded all-hold round must be available');
-  const quiet = advance(initial, 15000);
-  const paired = advance(playerAction(playerAction(initial, 1), -1), 15000);
-  assert.equal(quiet.result.color, 'green');
-  assert.equal(paired.result.color, 'green');
-  assert.equal(find(quiet).tickets, 3);
-  assert.equal(find(paired).tickets, 1);
-  conserved(quiet);
-  conserved(paired);
+  close(trader(state).balance - startingCash, estimate.positionValue);
+  close(trader(state).balance, estimate.equity);
+  close(participantStats(state, 'player').pnl, estimate.pnl);
+  assert.deepEqual(trader(state).holdings, { red: 0, black: 0, green: 0 });
+  invariants(state);
 });
 
-test('next round preserves bankrolls and completed results while resetting heat and tickets', () => {
-  const settled = advance(playerAction(begin(22), 1), 15000);
+test('insufficient cash and collateral reject transactions before state changes', () => {
+  const state = startRound(createGame());
+  trader(state).balance = 0;
+  assert.equal(quoteTrade(state, 'player', 'red', 'buy', 1).code, 'INSUFFICIENT_BALANCE');
+  rejects(() => executeTrade(state, 'player', 'red', 'buy', 1), 'INSUFFICIENT_BALANCE');
+  trader(state).balance = 1000;
+  state.market.cash = 0;
+  const snapshot = structuredClone(state);
+  rejects(() => executeTrade(state, 'player', 'red', 'buy', 100), 'INSUFFICIENT_RESERVE');
+  assert.deepEqual(state, snapshot);
+});
+
+test('tickets are limited, quotes do not draw randomness, and all actions close at 55 seconds', () => {
+  const initial = startRound(createGame(5));
+  let state = initial;
+  for (let index = 0; index < 3; index += 1) state = playerAction(state, 1);
+  assert.equal(state.heat, 103);
+  assert.equal(trader(initial).tickets, 3);
+  rejects(() => playerAction(state, -1), 'NO_TICKETS');
+  rejects(() => playerAction(initial, 0), 'INVALID_ACTION');
+  const locked = advance(initial, 55000);
+  assert.equal(locked.phase, 'locked');
+  assert.equal(locked.remainingMs, 5000);
+  rejects(() => executeTrade(locked, 'player', 'red', 'buy', 1), 'MARKET_CLOSED');
+  rejects(() => playerAction(locked, 1), 'ACTION_CLOSED');
+  const before = structuredClone(locked);
+  quoteTrade(locked, 'player', 'red', 'buy', 10);
+  assert.deepEqual(locked, before);
+  const almostDone = advance(locked, 4999);
+  assert.equal(almostDone.tradeCount, locked.tradeCount);
+  assert.equal(almostDone.heat, locked.heat);
+  assert.equal(almostDone.phase, 'locked');
+  invariants(almostDone);
+});
+
+test('scenario odds count discrete green band and legal actions cannot force a color', () => {
+  const state = createGame();
+  assert.deepEqual(scenarioOdds(state), { red: 10 / 25, black: 10 / 25, green: 5 / 25 });
+  for (const botCount of [2, 20]) {
+    const game = createGame(3, { botCount });
+    for (const delta of [-1, 1]) {
+      game.heat = game.baseline + delta * game.participants.length * 3;
+      const odds = scenarioOdds(game);
+      close(odds.red + odds.black + odds.green, 1);
+      assert.ok(odds.red > 0 && odds.black > 0 && odds.green > 0);
+      assert.ok(odds.red < 1 && odds.black < 1 && odds.green < 1);
+    }
+  }
+});
+
+test('settlement noise is independent of quote, trade and bot RNG consumption', () => {
+  const base = startRound(createGame(1234));
+  let traded = executeTrade(base, 'player', 'red', 'buy', 10);
+  for (let index = 0; index < 20; index += 1) quoteTrade(traded, 'player', 'red', 'sell', 1);
+  traded._rngState = 933;
+  const left = advance(base, 60000);
+  const right = advance(traded, 60000);
+  assert.equal(left.result.noise, right.result.noise);
+  assert.ok(!('noise' in base));
+});
+
+test('settlement pays winning shares exactly one, clears inventory and books full P&L', () => {
+  let state = startRound(createGame(91));
+  state = executeTrade(state, 'player', 'red', 'buy', 40);
+  state = executeTrade(state, 'player', 'black', 'buy', 30);
+  state = executeTrade(state, 'player', 'green', 'buy', 20);
+  const locked = advance(state, 55000);
+  const beforeBalance = trader(locked).balance;
+  const beforeHoldings = structuredClone(trader(locked).holdings);
+  const beforeCash = locked.market.cash;
+  const closingPrices = marketPrices(locked);
+  const settled = advance(locked, 5000);
+  assert.equal(settled.phase, 'settled');
+  assert.equal(settled.result.payouts.player, beforeHoldings[settled.result.color]);
+  close(trader(settled).balance - beforeBalance, beforeHoldings[settled.result.color]);
+  close(beforeCash - settled.market.cash, settled.result.totalPayout);
+  assert.deepEqual(trader(settled).holdings, { red: 0, black: 0, green: 0 });
+  assert.deepEqual(trader(settled).costBasis, { red: 0, black: 0, green: 0 });
+  close(trader(settled).realizedPnl, trader(settled).balance - 1000);
+  assert.equal(settled.result.finalHeat, settled.result.actionHeat + settled.result.noise);
+  assert.deepEqual(settled.result.closingPrices, closingPrices);
+  assert.equal(marketPrices(settled)[settled.result.color], 1);
+  assert.deepEqual(scenarioOdds(settled), marketPrices(settled));
+  assert.deepEqual(settled.history.at(-1).prices, marketPrices(settled));
+  assert.equal(advance(settled, 1000), settled);
+  assert.equal(settled.results.length, 1);
+  invariants(settled);
+});
+
+test('seeded decisions, ledger, metrics and payout are invariant to frame step', () => {
+  const initial = executeTrade(startRound(createGame(8)), 'player', 'green', 'buy', 30);
+  const before = structuredClone(initial);
+  const coarse = advance(initial, 60000);
+  let fine = initial;
+  while (fine.phase !== 'settled') fine = advance(fine, Math.min(137, fine.remainingMs));
+  assert.deepEqual(coarse, fine);
+  assert.deepEqual(initial, before);
+  assert.equal(coarse.block, 120);
+  assert.equal(advance(initial, 0), initial);
+  rejects(() => advance(initial, -1), 'INVALID_TIME');
+  rejects(() => advance(initial, NaN), 'INVALID_TIME');
+  invariants(coarse);
+});
+
+test('new rounds retain actual funds/stats and adapt depth when maker capital shrinks', () => {
+  const settled = advance(startRound(createGame(21)), 60000);
   const next = nextRound(settled);
   assert.equal(next.round, 2);
-  assert.equal(next.phase, 'betting');
-  assert.equal(next.heat, 100);
-  assert.equal(next.remainingMs, 15000);
-  assert.equal(next.block, 0);
+  assert.equal(next.phase, 'ready');
+  assert.equal(next.market.cash, settled.market.cash);
   assert.equal(next.result, null);
+  assert.equal(next.tradeCount, 0);
   assert.deepEqual(next.results, settled.results);
-  assert.deepEqual(next.participants.map(p => p.balance), settled.participants.map(p => p.balance));
-  assert.ok(next.participants.every(p => p.bet === null && p.tickets === 3));
-  assert.deepEqual(next.history, [{ timeMs: 0, heat: 100, block: 0 }]);
+  assert.deepEqual(next.participants.map(item => [item.balance, item.realizedPnl, item.tradeCount]), settled.participants.map(item => [item.balance, item.realizedPnl, item.tradeCount]));
+  const depleted = structuredClone(settled);
+  const transfer = depleted.market.cash - 10;
+  depleted.market.cash = 10;
+  trader(depleted).balance += transfer;
+  const shallow = nextRound(depleted);
+  assert.equal(shallow.market.cash, 10);
+  assert.ok(shallow.market.b < 150);
+  assert.ok(shallow.market.b * Math.log(3) < 10);
+  let started = startRound(shallow);
+  started = executeTrade(started, 'player', 'red', 'buy', 5);
+  started = executeTrade(started, 'player', 'red', 'sell', 5);
+  close(started.participants.reduce((sum, item) => sum + item.balance, 0) + started.market.cash, started.initialTotal);
+  depleted.market.cash = 0.5;
+  rejects(() => nextRound(depleted), 'RESERVE_EXHAUSTED');
   rejects(() => nextRound(next), 'ROUND_NOT_SETTLED');
-  conserved(next);
+  invariants(next);
 });
 
-test('insufficient player bankroll cannot create an unfunded bet', () => {
-  const state = createGame();
-  find(state).balance = 10;
-  find(state, 'momentum').balance = 1990;
-  rejects(() => placeBet(state, 'red', 20), 'INSUFFICIENT_BALANCE');
-  conserved(state);
+test('crowd bots truly buy and sell with inventories, fees and bounded local performance', () => {
+  const start = performance.now();
+  const state = advance(startRound(createGame(42, { botCount: 20 })), 60000);
+  const elapsed = performance.now() - start;
+  assert.ok(elapsed < 5000, `20-bot round took ${elapsed.toFixed(0)} ms`);
+  assert.ok(state.tradeCount > 100);
+  assert.ok(state.participants.slice(1).every(item => item.tradeCount > 0));
+  assert.ok(state.trades.some(item => item.side === 'buy'));
+  assert.ok(state.trades.some(item => item.side === 'sell'));
+  assert.ok(state.trades.every(item => item.fee >= 0 && item.total >= 0));
+  assert.ok(state.trades.length <= 400 && state.history.length <= 700 && state.events.length <= 400);
+  assert.equal(state.participants.reduce((sum, item) => sum + item.tradeCount, 0), state.tradeCount);
+  invariants(state);
 });
 
-test('many seeds and rounds preserve integer nonnegative bankrolls without minting points', () => {
-  for (let seed = 1; seed <= 20; seed += 1) {
-    let state = createGame(seed);
-    for (let round = 0; round < 20; round += 1) {
-      if (find(state).balance < 20) break;
-      state = startRound(placeBet(state, ['red', 'black', 'green'][round % 3], 20));
-      state = advance(state, 7000);
-      state = playerAction(state, round % 2 ? 1 : -1);
-      state = advance(state, 8000);
-      conserved(state);
-      assert.ok(state.participants.every(p => Number.isInteger(p.balance) && p.balance >= 0));
-      assert.equal(Object.values(state.result.payouts).reduce((a, b) => a + b, 0), state.result.pool);
-      state = nextRound(state);
+test('multiple seeds and rounds preserve collateral, inventories and all funding', () => {
+  for (const botCount of [2, 20]) {
+    for (let seed = 1; seed <= 4; seed += 1) {
+      let state = createGame(seed, { botCount });
+      for (let round = 0; round < 5; round += 1) {
+        state = startRound(state);
+        if (quoteTrade(state, 'player', 'red', 'buy', 20).canExecute) state = executeTrade(state, 'player', 'red', 'buy', 20);
+        state = advance(state, 18000);
+        if (trader(state).tickets > 0) state = playerAction(state, round % 2 ? 1 : -1);
+        invariants(state);
+        state = advance(state, 37000);
+        invariants(state);
+        state = advance(state, 5000);
+        invariants(state);
+        if (state.market.cash < 1) break;
+        state = nextRound(state);
+      }
     }
   }
 });

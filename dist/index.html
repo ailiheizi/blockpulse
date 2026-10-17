@@ -1,70 +1,63 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#10131c">
-  <meta name="description" content="预测热度，用有限的行动改变结果。和量化 Bot 同场玩的区块预言家原型，使用不可兑换模拟积分。">
-  <title>BlockPulse · 区块预言家</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23a68bfa'/%3E%3Cpath d='M7 22h8l4-11 5 20 4-9h5' fill='none' stroke='%2310131c' stroke-width='3'/%3E%3C/svg%3E">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#10131c">
+  <meta name="description" content="一分钟的本地交易竞技场：买卖红黑绿份额，观察动态报价、有限控场与策略 Bot。所有积分不可兑换。">
+  <title>BlockPulse · 交易竞技场</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23b29afd'/%3E%3Cpath d='M7 22h8l4-11 5 20 4-9h5' fill='none' stroke='%2310131c' stroke-width='3'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-  <div class="shell">
-    <header class="topbar">
-      <a class="brand" href="./" aria-label="BlockPulse 首页"><span class="brand-mark" aria-hidden="true">⌁</span><span>BLOCK<span class="brand-light">PULSE</span><small>区块预言家</small></span></a>
-      <div class="top-actions"><span class="demo-tag"><span></span> PLAYGROUND</span><button id="reset" class="quiet-button" type="button">重置试玩 ↻</button></div>
-    </header>
-
-    <main>
-      <section class="intro">
-        <div><p class="eyebrow">PREDICT. INFLUENCE. REPEAT.</p><h1>猜中方向，<span>也改变方向。</span></h1><p class="intro-copy">先押红黑绿，再用有限的行动影响热度。和量化 Bot 同场，看看谁能读懂谁。</p></div>
-        <div class="simulation-label"><span class="live-dot"></span><span>本地玩法模拟<small>未连接钱包 · 未部署链上 · 积分不可兑换</small></span></div>
-      </section>
-
-      <div class="overview" aria-label="本局概览">
-        <div><span>你的可用积分</span><strong id="balance">1,000</strong><small id="locked">本轮未下注</small></div>
-        <div><span id="pool-label">本轮积分池</span><strong id="pool">0</strong><small id="pool-context">命中者按下注比例分配</small></div>
-        <div><span>模拟区块</span><strong id="block">R01 / B00</strong><small>每 0.5 秒推进一块</small></div>
-        <div><span>你的累计净盈亏</span><strong id="total-profit">0</strong><small>所有玩家总积分始终为 3,000</small></div>
-      </div>
-
-      <div class="game-grid">
-        <section class="panel arena" aria-label="热度竞技场">
-          <div class="panel-header"><div class="round-label"><span id="round">ROUND 01</span><h2>热度竞技场</h2></div><span id="phase" class="phase-pill">等待下注</span></div>
-          <div class="arena-readout"><div><span class="small-label">本轮热度指数</span><div class="heat-number"><strong id="heat">100</strong><span id="heat-direction" class="direction flat">平盘</span></div></div><div class="countdown"><strong id="time">15.0</strong><span>秒 / 行动窗口</span></div></div>
-          <div id="timer" class="time-track" role="progressbar" aria-label="行动时间剩余" aria-valuemin="0" aria-valuemax="15" aria-valuenow="15"><span id="time-bar"></span></div>
-          <div class="chart-wrap"><svg id="chart" viewBox="0 0 620 220" role="img" aria-label="本轮模拟热度变化曲线"></svg></div>
-          <div class="chart-foot"><span><i></i> 基准 100</span><span id="action-count">等待第一笔行动</span></div>
-          <div class="action-zone"><div><h3>轮到你影响结果</h3><p id="tickets">每轮最多 3 张行动券，可以保留不用</p></div><div class="action-buttons"><button id="heat-up" class="action-button warm" type="button" disabled><span>↗</span> 加热 <b>+1</b></button><button id="heat-down" class="action-button cool" type="button" disabled><span>↘</span> 降温 <b>−1</b></button></div></div>
-          <p class="arena-note" id="phase-note">选好方向后开始。封盘后无法改注，15 秒里你和 Bot 都能行动。</p>
-        </section>
-
-        <aside class="panel prediction" aria-label="下注控制">
-          <div class="panel-header"><div><p class="small-label">MAKE YOUR CALL</p><h2>你的预测</h2></div><span class="choice-arrow">↗</span></div>
-          <div class="color-choices" role="group" aria-label="选择预测颜色">
-            <button class="color-choice red selected" type="button" data-color="red" aria-pressed="true"><span class="color-symbol">↗</span><strong>红 · 看涨</strong><small>收盘 &gt; 100</small><span class="selection-dot"></span></button>
-            <button class="color-choice black" type="button" data-color="black" aria-pressed="false"><span class="color-symbol">↘</span><strong>黑 · 看跌</strong><small>收盘 &lt; 100</small><span class="selection-dot"></span></button>
-            <button class="color-choice green" type="button" data-color="green" aria-pressed="false"><span class="color-symbol">＝</span><strong>绿 · 持平</strong><small>收盘 = 100</small><span class="selection-dot"></span></button>
+<div class="shell">
+  <header class="topbar"><div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M3 17h7l4-10 5 19 4-9h6"></path></svg></span><span>BLOCK<span class="brand-light">PULSE</span><small>区块预言家 / 交易竞技场</small></span></div><nav class="topnav" aria-label="页面导航"><a class="current" href="#game">交易竞技场</a><a href="#history-section">成交与复盘</a><a id="rules-link" href="#rules">玩法说明 ↗</a></nav><div class="top-actions"><span class="local-tag"><i></i> 本地模拟</span><button id="reset" class="quiet-button" type="button">重置积分 ↻</button></div></header>
+  <main>
+    <section class="intro"><div><p class="eyebrow">一分钟，交易你的判断</p><h1>读懂价格，<span>把握下一步。</span></h1><p class="intro-copy">买低卖高，或者持有到收盘。与策略 Bot 同场，用有限的行动改变局势。</p></div><div class="mode-picker"><span>选择对手规模 <small>切换会重置余额与历史</small></span><div class="segmented" role="group" aria-label="对手数量，切换会重置场次"><button type="button" data-bots="2" class="selected" aria-pressed="true">2 位 Bot</button><button type="button" data-bots="20" aria-pressed="false">20 位 · 繁忙模式</button></div></div></section>
+    <div class="round-guide" aria-label="每轮五十五秒交易、五秒封盘、三张行动券"><div><strong>55<span>秒</span></strong><small>自由买卖 · 报价随成交变化</small></div><div><strong>5<span>秒</span></strong><small>封盘等待 · 不再交易或控场</small></div><div><strong>3<span>张</span></strong><small>行动额度 · 可以保留不用</small></div></div>
+    <div class="overview" aria-label="账户与模拟市场概览"><div><span>你的可用积分</span><strong id="balance">1,000.00</strong><small>未投入持仓的账户余额</small></div><div><span>预计清仓净值 / 累计盈亏</span><strong id="equity">1,000.00</strong><small id="total-pnl">+0.00 · 清仓估算口径</small></div><div><span>做市资金余额</span><strong id="reserve">1,000.00</strong><small>含交易收入与手续费 · 负责兑付</small></div><div><span>本地模拟成交</span><strong><b id="trade-count">0</b><em id="trade-rate">0 笔 / 近 1 秒</em></strong><small>已接受的模拟成交数，非链上 TPS</small></div></div>
+    <div id="game" class="arena-grid">
+      <div class="market-column">
+        <section class="panel arena" aria-labelledby="arena-title">
+          <div class="panel-header"><div><p class="small-label" id="round-label">第 01 轮 / 模拟区块 000</p><h2 id="arena-title">价格发现进行时</h2></div><span id="phase" class="phase-pill ready">准备开场</span></div>
+          <div class="round-controls"><div class="countdown"><div id="countdown-dial" class="countdown-dial"><strong id="time">60.0</strong><span>秒</span></div><span id="window-label">55 秒交易 + 5 秒封盘</span></div><button id="round-action" class="start-button" type="button"><span id="round-action-label">开始 60 秒交易</span><b aria-hidden="true">↗</b></button></div>
+          <div id="timer" class="time-track" role="progressbar" aria-label="本轮剩余时间" aria-valuemin="0" aria-valuemax="60" aria-valuenow="60"><span id="time-bar"></span><i title="最后 5 秒封盘"></i></div>
+          <div class="price-cards" role="group" aria-label="选择交易份额">
+            <button type="button" class="price-card red selected" data-color="red" aria-pressed="true"><span class="card-title"><b>↗ 红 · 上行</b><small>收盘热度 &gt; 102</small></span><strong id="price-red">0.333</strong><span class="price-unit">市场价格 · 积分 / 份</span><span class="scenario-line"><span class="scenario-label">当前热度场景概率</span> <b id="odds-red">—</b></span></button>
+            <button type="button" class="price-card black" data-color="black" aria-pressed="false"><span class="card-title"><b>↘ 黑 · 下行</b><small>收盘热度 &lt; 98</small></span><strong id="price-black">0.333</strong><span class="price-unit">市场价格 · 积分 / 份</span><span class="scenario-line"><span class="scenario-label">当前热度场景概率</span> <b id="odds-black">—</b></span></button>
+            <button type="button" class="price-card green" data-color="green" aria-pressed="false"><span class="card-title"><b>＝ 绿 · 区间</b><small>98 ≤ 收盘热度 ≤ 102</small></span><strong id="price-green">0.333</strong><span class="price-unit">市场价格 · 积分 / 份</span><span class="scenario-line"><span class="scenario-label">当前热度场景概率</span> <b id="odds-green">—</b></span></button>
           </div>
-          <div class="stake-heading"><label for="stake">投入积分（20 / 50 / 100）</label><span id="stake-max">可用 1,000</span></div>
-          <div class="stake-control"><input id="stake" type="number" inputmode="numeric" min="1" step="1" value="50" aria-describedby="stake-max"><span>POINTS</span></div>
-          <div class="stake-presets"><button type="button" data-stake="20">20</button><button type="button" data-stake="50" class="selected">50</button><button type="button" data-stake="100">100</button></div>
-          <div id="error" class="error-message" role="alert" hidden></div>
-          <button id="primary-action" class="primary-button" type="button"><span>锁定 50 积分，开始本轮</span><b>→</b></button>
-          <p id="bet-hint" class="bet-hint">两位 Bot 用同样的积分和行动额度与你对局。</p>
-          <div id="result" class="result-box" aria-live="polite" hidden></div>
-          <details class="rules"><summary>30 秒学会怎么玩 <span>＋</span></summary><ol><li>选择红、黑或绿，输入积分开始。下注后封盘，不能改注。</li><li>15 秒行动期内，每人最多用 3 张券加热或降温；也可以不动。</li><li>热度从 100 开始，按所有参与者的有效行动变化。轮盘不随机开奖。</li><li>命中者按下注占比分配积分池，到账含本金；无人命中原额退款。</li><li>这是本地游戏指数，模拟区块与积分均无真实资产价值。规则还未经平衡验证。</li></ol></details>
-        </aside>
+          <p id="scenario-note" class="scenario-note">场景概率假设后续无人再用行动券，只计算结算噪声；它不同于交易价格，也不代表最终胜率。结算噪声仅为本地模拟随机。</p>
+          <div class="chart-header"><span>三色份额价格</span><div class="chart-legend"><span><i class="red-dot"></i>红</span><span><i class="black-dot"></i>黑</span><span><i class="green-dot"></i>绿</span></div></div>
+          <div class="chart-wrap"><svg id="price-chart" viewBox="0 0 650 220" role="img" aria-label="本轮三色份额价格曲线"></svg><div id="chart-prompt" class="chart-prompt"><span>每一笔交易，都让价格不同。</span><small>开始一轮，观察三色份额怎样从 1/3 出发</small></div></div><div class="chart-foot"><span>每份命中兑付 1 积分；未命中兑付 0</span><span>阴影区：最后 5 秒封盘</span></div>
+          <div class="influence-zone"><div class="heat-readout"><span>场内热度</span><strong id="heat">100</strong><small id="noise-label">结算噪声 ±12</small></div><div class="influence-controls"><div class="ticket-heading"><b>你的有限控场</b><span id="ticket-dots" class="ticket-dots" aria-hidden="true"><i></i><i></i><i></i></span></div><p id="tickets">你的行动券 3 / 3 · 可保留不用</p><div class="action-buttons"><button id="heat-up" class="action-button warm" type="button" disabled>↗ 加热 +1</button><button id="heat-down" class="action-button cool" type="button" disabled>↘ 降温 −1</button></div></div></div>
+          <p id="phase-note" class="phase-note">先开始一轮。前 55 秒可反复买卖及使用行动券，最后 5 秒等待结算。</p>
+        </section>
+        <section class="panel portfolio" aria-labelledby="portfolio-title">
+          <div class="panel-header"><div><p class="small-label">持仓与收益</p><h2 id="portfolio-title">你的交易账本</h2></div><button id="sell-all" class="outline-button" type="button" disabled>一键卖出全部持仓</button></div>
+          <div class="pnl-strip"><div><span>已实现盈亏</span><strong id="realized-pnl">0.00</strong></div><div><span>持仓清仓估算盈亏</span><strong id="unrealized-pnl">0.00</strong></div><div><span>预计清仓收入</span><strong id="position-value">0.00</strong></div></div>
+          <div class="table-scroll"><table class="position-table"><thead><tr><th>持仓</th><th>份数</th><th>平均成本</th><th>参考市价估值</th><th>市价盈亏</th><th>操作</th></tr></thead><tbody>
+            <tr><td><span class="color-tag red"><i></i>红</span></td><td id="holding-red">0</td><td id="basis-red">—</td><td id="value-red">0.00</td><td id="pnl-red">0.00</td><td><button id="sell-red" data-sell="red" type="button" class="table-button" disabled>全部卖出</button></td></tr>
+            <tr><td><span class="color-tag black"><i></i>黑</span></td><td id="holding-black">0</td><td id="basis-black">—</td><td id="value-black">0.00</td><td id="pnl-black">0.00</td><td><button id="sell-black" data-sell="black" type="button" class="table-button" disabled>全部卖出</button></td></tr>
+            <tr><td><span class="color-tag green"><i></i>绿</span></td><td id="holding-green">0</td><td id="basis-green">—</td><td id="value-green">0.00</td><td id="pnl-green">0.00</td><td><button id="sell-green" data-sell="green" type="button" class="table-button" disabled>全部卖出</button></td></tr>
+          </tbody></table></div><p class="subtle-note">上方清仓估算含滑点及卖出费用；下表参考市价估值 = 份数 × 现价，不是可立即到账的金额。平均成本已计入买入费用。</p>
+        </section>
       </div>
-
-      <section class="opponents-section" aria-labelledby="opponents-title"><div class="section-heading"><div><p class="small-label">HUMAN × QUANT</p><h2 id="opponents-title">量化对手</h2></div><span>相同额度 · 相同规则 · 无未来信息</span></div><div id="opponents" class="opponents"></div></section>
-
-      <div class="bottom-grid"><section class="panel history-panel"><div class="section-heading"><h2>对局记录</h2><span id="record-count">0 局</span></div><div id="history" class="history-content"><div class="empty-state"><span>↗ ↘ ＝</span><p>第一局，从你的判断开始。</p></div></div></section><section class="panel feed-panel"><div class="section-heading"><h2>场内动态</h2><span class="feed-live"><i></i> LIVE</span></div><ol id="feed" class="feed"><li class="feed-placeholder">准备就绪，等待玩家入场。</li></ol></section></div>
-      <div id="announcement" class="sr-only" aria-live="polite"></div>
-    </main>
-    <footer><span>BLOCKPULSE <i>/</i> 把预测变成一场互动博弈。</span><span>玩法原型 v0.1 · 所有结果在本地计算</span></footer>
-  </div>
-  <script type="module" src="./app.js"></script>
+      <aside class="panel order-panel" aria-labelledby="order-title">
+        <div class="panel-header"><div><p class="small-label">每一笔，都看清楚</p><h2 id="order-title">交易订单</h2></div><span id="selected-chip" class="color-tag red"><i></i>红 · 上行</span></div>
+        <div class="trade-tabs" role="group" aria-label="买入或卖出"><button id="buy-tab" data-side="buy" class="selected" type="button" aria-pressed="true">买入份额</button><button id="sell-tab" data-side="sell" type="button" aria-pressed="false">卖出份额</button></div>
+        <div class="quantity-heading"><label for="shares">交易份数</label><span id="available">可用 1,000.00 积分</span></div><div class="quantity-control"><input id="shares" type="number" inputmode="numeric" min="1" max="1000" step="1" value="50" autocomplete="off" aria-describedby="quantity-help"><span>份</span></div>
+        <div class="quantity-presets"><button type="button" data-shares="25">25 份</button><button type="button" data-shares="50" class="selected">50 份</button><button type="button" data-shares="100">100 份</button><button id="max-shares" type="button">最多</button></div><p id="quantity-help" class="input-help">单笔 1–1,000 整数份；可买入后再卖出，无需等到结算。</p>
+        <div class="quote-summary"><span id="quote-total-label">预计支付</span><strong><b id="quote-total">—</b><small>模拟积分</small></strong></div><dl class="quote-details"><div><dt>当前价格</dt><dd id="quote-spot">—</dd></div><div><dt>成交平均价</dt><dd id="quote-average">—</dd></div><div><dt>份额成交金额</dt><dd id="quote-gross">—</dd></div><div><dt>手续费 <small>0.3%</small></dt><dd id="quote-fee">—</dd></div><div><dt>本单对价格的影响</dt><dd id="quote-impact">—</dd></div></dl>
+        <div id="win-preview" class="win-preview"><div><span id="win-label">若红盘命中，持有到结算</span><b id="quote-win-payout">—</b></div><div><span>扣除本单成本后净收益</span><strong id="quote-win-profit">—</strong></div><small id="quote-roi">—</small></div>
+        <div id="error" class="error-message" role="alert" hidden></div><button id="submit-trade" class="primary-button" type="button" disabled><span id="submit-label">买入红色份额</span><b aria-hidden="true">→</b></button><p id="quote-note" class="quote-note">开始本轮后可交易。买卖份数决定成交价，没有固定赔付赔率。</p><div id="result" class="result-box" aria-live="polite" hidden></div>
+        <details id="rules" class="rules"><summary>一分钟，怎样玩？<span>＋</span></summary><ol><li>开始后有 55 秒交易时间。买卖红、黑、绿份额，价格随实际模拟成交变化。</li><li>可卖出已有份额，无做空或杠杆。每笔买卖收取 0.3% 手续费。</li><li>每人最多 3 张行动券，可加热 +1 或降温 −1；也可以不用。</li><li>最后 5 秒封盘。60 秒时热度叠加本地模拟随机噪声，按红 &gt;102、黑 &lt;98、绿 98–102 结算。</li><li>赢色每份兑付 1 积分，其他兑付 0；由做市账户支付，没有固定分池赔率。</li><li>Bot 有实际模拟买卖、费用与盈亏，不读取未来结果。此原型未经策略平衡或公平性验证。</li></ol></details>
+      </aside>
+    </div>
+    <section class="panel bots-panel" aria-labelledby="bots-title"><div class="panel-header"><div><p class="small-label">规则策略，同场交易</p><h2 id="bots-title">Bot 交易观察</h2></div><span id="bot-summary" class="section-caption">2 位对手 · 无未来信息</span></div><div class="bot-explainer"><span><i>↗</i><b>动量策略</b> 观察价格趋势与当前信号</span><span><i>⇄</i><b>价值策略</b> 比较场景概率与市场价格</span><span>都受余额、持仓与行动券约束</span></div><div class="table-scroll bot-table-wrap"><table class="bot-table"><thead><tr><th>参与者 / 当前持仓</th><th>策略</th><th>成交笔数</th><th>预计清仓净值</th><th>清仓估算盈亏</th><th>最大回撤</th><th>行动券</th></tr></thead><tbody id="bots-body"></tbody></table></div></section>
+    <div id="history-section" class="bottom-grid"><section class="panel trades-panel"><div class="panel-header"><h2>最近成交</h2><span class="section-caption">实际模拟账本 · 非展示动画</span></div><div class="table-scroll"><table class="trade-table"><thead><tr><th>时间 / 参与者</th><th>方向</th><th>份数</th><th>平均价</th><th>手续费</th><th>支付 / 到账</th></tr></thead><tbody id="trades-body"><tr><td colspan="6" class="empty-cell">开场后，这里记录每一笔实际成交。</td></tr></tbody></table></div></section><section class="panel history-panel"><div class="panel-header"><h2>收盘记录</h2><span id="record-count" class="section-caption">0 轮</span></div><div id="results-list" class="results-list"><p class="empty-message">第一轮，从你的判断开始。</p></div><div class="feed-heading"><span>场内动态</span><i></i></div><ol id="feed" class="feed"></ol></section></div>
+    <div id="notice" class="notice" role="status" aria-live="polite">纯本地模拟，积分不可兑现。准备好后，开始第一轮。</div>
+  </main>
+  <footer><span>BLOCKPULSE <i>/</i> 观察 · 交易 · 复盘</span><span>本地原型 v2 · 未接钱包或区块链 · 不构成真实赔率或收益承诺</span></footer>
+</div>
+<script type="module" src="./app.js"></script>
 </body>
 </html>

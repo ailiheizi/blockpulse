@@ -199,8 +199,30 @@ export function startRound(state) {
 export function quoteTrade(state, traderId, color, side, shares) {
   const trader = findTrader(state, traderId);
   if (!COLORS.includes(color)) fail('INVALID_COLOR', '请选择红、黑或绿');
-  if (side !== 'buy' && side !== 'sell') fail('INVALID_SIDE', '请选择买入或卖出');
+  if (!['buy', 'sell', 'short', 'cover'].includes(side)) fail('INVALID_SIDE', '请选择买入、卖出、做空或平仓');
   if (!Number.isInteger(shares) || shares < 1 || shares > 1000) fail('INVALID_SHARES', '份数必须是 1 至 1000 的整数');
+  if (side === 'short' || side === 'cover') {
+    const legs = COLORS.filter(item => item !== color);
+    let simulated = copy(state);
+    const quotes = [];
+    let firstFailure = null;
+    for (const legColor of legs) {
+      const leg = quoteTrade(simulated, traderId, legColor, side === 'short' ? 'buy' : 'sell', shares);
+      quotes.push({ color: legColor, side: leg.side, shares, gross: leg.gross, fee: leg.fee, total: leg.total, canExecute: leg.canExecute, reason: leg.reason, code: leg.code });
+      if (!leg.canExecute && !firstFailure) firstFailure = leg;
+      // Price both legs for a useful preview even when the overall order is
+      // closed or underfunded. This simulation is isolated from caller state.
+      if (leg.code !== 'INSUFFICIENT_HOLDINGS') applyTrade(simulated, traderId, leg);
+    }
+    const gross = quotes.reduce((sum, leg) => sum + leg.gross, 0);
+    const fee = quotes.reduce((sum, leg) => sum + leg.fee, 0);
+    const total = quotes.reduce((sum, leg) => sum + leg.total, 0);
+    const spotPrice = 1 - marketPrices(state)[color];
+    return { side, color, shares, legs: quotes, spotPrice, averagePrice: gross / shares, gross, fee, total,
+      pricesAfter: marketPrices(simulated), winPayout: shares, winProfit: shares - total,
+      roi: total > 0 ? (shares - total) / total : 0, canExecute: !firstFailure,
+      reason: firstFailure?.reason ?? '', code: firstFailure?.code ?? '' };
+  }
   const prices = marketPrices(state);
   const quote = {
     side, color, shares, spotPrice: prices[color], averagePrice: 0, gross: 0,
@@ -269,6 +291,7 @@ function applyTrade(state, traderId, quote) {
     color, side, shares, gross: quote.gross, fee: quote.fee, total,
     averagePrice: quote.averagePrice, spotPrice: quote.spotPrice,
     removedBasis, realizedPnl: realizedChange,
+    ...(quote.comboColor ? { comboColor: quote.comboColor, comboSide: quote.comboSide, groupId: quote.groupId } : {}),
   };
   state.trades.push(entry);
   if (state.trades.length > MAX_RECORDS) state.trades.splice(0, state.trades.length - MAX_RECORDS);
@@ -280,9 +303,42 @@ function applyTrade(state, traderId, quote) {
 export function executeTrade(state, traderId, color, side, shares) {
   const quote = quoteTrade(state, traderId, color, side, shares);
   if (!quote.canExecute) fail(quote.code || 'TRADE_REJECTED', quote.reason);
+  if (side === 'short' || side === 'cover') {
+    const next = copy(state);
+    const groupId = next._nextTradeId;
+    for (const legColor of COLORS.filter(item => item !== color)) {
+      const legSide = side === 'short' ? 'buy' : 'sell';
+      const leg = quoteTrade(next, traderId, legColor, legSide, shares);
+      if (!leg.canExecute) fail(leg.code || 'TRADE_REJECTED', leg.reason);
+      applyTrade(next, traderId, { ...leg, comboColor: color, comboSide: side, groupId });
+    }
+    return next;
+  }
   const next = copy(state);
   applyTrade(next, traderId, quote);
   return next;
+}
+
+/** Find the largest whole-share opening order that stays within a points budget. */
+export function quoteBudget(state, traderId, color, budget, side = 'buy') {
+  findTrader(state, traderId);
+  if (!COLORS.includes(color)) fail('INVALID_COLOR', '请选择红、黑或绿');
+  if (side !== 'buy' && side !== 'short') fail('INVALID_SIDE', '预算只支持买入或做空 NO 组合');
+  if (typeof budget !== 'number' || !Number.isFinite(budget) || budget < 1 || budget > 1000) fail('INVALID_BUDGET', '预算必须是 1 至 1000 积分');
+  let low = 0;
+  let high = 1000;
+  while (low < high) {
+    const middle = Math.ceil((low + high) / 2);
+    if (quoteTrade(state, traderId, color, side, middle).total <= budget) low = middle;
+    else high = middle - 1;
+  }
+  if (low === 0) {
+    const minimum = quoteTrade(state, traderId, color, side, 1);
+    return { ...minimum, shares: 0, total: 0, gross: 0, fee: 0, winPayout: 0, winProfit: 0, roi: 0,
+      canExecute: false, reason: '预算不足以买入 1 份', code: 'BUDGET_TOO_SMALL', budget, unusedBudget: budget };
+  }
+  const quote = quoteTrade(state, traderId, color, side, low);
+  return { ...quote, budget, unusedBudget: points(units(budget) - units(quote.total)) };
 }
 
 function applyAction(state, trader, delta) {

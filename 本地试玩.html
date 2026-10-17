@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#10131c">
-  <meta name="description" content="一分钟的本地交易竞技场：买卖红黑绿份额，观察动态报价、有限控场与策略 Bot。所有积分不可兑换。">
+  <meta name="description" content="本地事件预测练习：选择红黑绿份额，查看报价并盘中卖出或持有到模拟结算。积分不可兑换。">
   <title>BlockPulse · 交易竞技场</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23b29afd'/%3E%3Cpath d='M7 22h8l4-11 5 20 4-9h5' fill='none' stroke='%2310131c' stroke-width='3'/%3E%3C/svg%3E">
   <style>
@@ -27,6 +27,9 @@
 .order-panel{--text:#30263e;--muted:#7d718d;--border:#d9cfe5;background:linear-gradient(145deg,#f5f2fc,#ece7f5);border-color:#e2d9ec;color:#30263e;box-shadow:0 12px 35px #08081122}.order-panel .small-label{color:#8b74a9}.order-panel .color-tag.red{color:#c64d6c}.order-panel .color-tag.black{color:#5777b7}.order-panel .color-tag.green{color:#32846c}.order-panel .trade-tabs{background:#e5deed;border-color:#d6cbe2}.order-panel .trade-tabs>button{color:#7b6c8c}.order-panel .trade-tabs>button.selected{background:#f7f4fd;color:#6945a3;box-shadow:0 1px 5px #46315b12}.order-panel .quantity-heading>span,.order-panel .input-help{color:#80738f}.order-panel .quantity-control{background:#ffffff69;border-color:#d7cae6}.order-panel .quantity-control input{color:#352741}.order-panel .quantity-presets button{background:#f2edf9;color:#766184;border-color:#dbcee8}.order-panel .quantity-presets button.selected{background:#ded2ef;color:#7350a7;border-color:#b798d9}.order-panel .quote-summary>span,.order-panel .quote-summary small{color:#7b6b89}.order-panel .quote-summary b{color:#3b2b4a}.order-panel .quote-details dt{color:#7d6c8a}.order-panel .quote-details dt small{color:#9a8ba5}.order-panel .quote-details dd{color:#55425f}.order-panel .win-preview{border-color:#d8c8e9;background:#e9e1f32e}.order-panel .win-preview>div{color:#7c688c}.order-panel .win-preview b{color:#72559a}.order-panel .win-preview strong{color:#2d8669}.order-panel .win-preview>small{color:#897391}.order-panel .primary-button{background:#8056c5;border-color:#8056c5;color:#fff;box-shadow:0 6px 12px #8056c51c}.order-panel .primary-button:not(:disabled):hover{background:#7044b4}.order-panel .quote-note{color:#81718b}.order-panel .error-message{color:#ad3e5d;background:#be315b08;border-color:#be315b2b}.order-panel .rules,.order-panel .rules ol{color:#83718e}.order-panel .rules summary{color:#6e567f}.order-panel .rules summary>span{color:#9374b5}.order-panel .gain{color:#2d8669!important}.order-panel .loss{color:#ba4969!important}.order-panel .result-box{border-color:#c8bad9;background:#ffffff5c}.order-panel .result-box p{color:#7b688b}.order-panel .result-profit small{color:#93829c}.order-panel .result-symbol{background:#32846c15;color:#32846c}.order-panel .outcome-red .result-symbol{background:#c64d6c12;color:#c64d6c}.order-panel .outcome-black .result-symbol{background:#5777b712;color:#5777b7}
 @media(max-width:740px){.overview{gap:10px}.overview>div:first-child{border-radius:12px}.overview>div:nth-child(n+3){border-top:1px solid #ffffff0b}.overview>div{padding:14px 15px}}
 @media(max-width:340px){.overview{gap:8px}.overview>div{padding:12px}.overview small{font-size:7px}}
+.how-to-play{margin:15px 0 24px;padding:17px 20px;border:1px solid #b29afd26;border-radius:12px;background:linear-gradient(110deg,#b29afd0d,#171c270a);color:var(--text)}.how-to-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:13px}.how-to-heading strong{font-size:13px;font-weight:600}.how-to-heading a{font-size:10px;color:#c7b5fa;text-decoration:none}.how-to-heading a:hover{text-decoration:underline}.how-to-play ol{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:0;margin:0;list-style:none;counter-reset:step}.how-to-play li{counter-increment:step;display:flex;flex-direction:column;gap:5px;min-width:0;padding:10px 12px;border:1px solid #ffffff0b;border-radius:8px;background:#171c2770}.how-to-play li b{font-size:11px;color:#d9ccfa}.how-to-play li b:before{content:counter(step) " · ";color:#aa8cea}.how-to-play li span,.how-to-play>p{font-size:10px;line-height:1.65;color:#9ba9c0}.how-to-play>p{margin:11px 0 0}.rules[open] summary>span{transform:rotate(45deg)}.rules-goal{color:#d9ccfa!important;font-size:12px!important}
+@media(max-width:740px){.how-to-play{padding:14px;margin:13px 0 19px}.how-to-play ol{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.how-to-play li{padding:9px}.how-to-heading{align-items:flex-start;flex-direction:column;gap:6px}.how-to-play li span,.how-to-play>p{font-size:9px}}
+@media(max-width:740px){.event-card{padding:15px;margin-top:14px}.event-bounds{gap:5px}.bound{padding:8px}.bound span{font-size:8px}.bound strong{font-size:11px}.event-actions{align-items:flex-start;flex-direction:column}.event-actions .outline-button{align-self:flex-end}.compare-line{font-size:7px}.compare-line b{font-size:8px}}
 
 </style>
   <style>
@@ -234,8 +237,9 @@
 <div class="shell">
   <header class="topbar"><div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M3 17h7l4-10 5 19 4-9h6"></path></svg></span><span>BLOCK<span class="brand-light">PULSE</span><small>区块预言家 / 交易竞技场</small></span></div><nav class="topnav" aria-label="页面导航"><a class="current" href="#game">交易竞技场</a><a href="#history-section">成交与复盘</a><a id="rules-link" href="#rules">玩法说明 ↗</a></nav><div class="top-actions"><span class="local-tag"><i></i> 积分模拟</span><button id="wallet-shortcut" class="monad-button" type="button"><span class="monad-button-mark" aria-hidden="true">M</span><span id="wallet-shortcut-label">连接钱包</span></button><button id="reset" class="quiet-button" type="button" aria-label="重置模拟积分" title="重置模拟积分"><span class="reset-label">重置积分</span> <span aria-hidden="true">↻</span></button></div></header>
   <main>
-    <section class="intro"><div><p class="eyebrow">一分钟，交易你的判断</p><h1>读懂价格，<span>把握下一步。</span></h1><p class="intro-copy">买低卖高，或者持有到收盘。与策略 Bot 同场，用有限的行动改变局势。</p></div><div class="mode-picker"><span>选择对手规模 <small>切换会重置余额与历史</small></span><div class="segmented" role="group" aria-label="对手数量，切换会重置场次"><button type="button" data-bots="2" class="selected" aria-pressed="true">2 位 Bot</button><button type="button" data-bots="20" aria-pressed="false">20 位 · 繁忙模式</button></div></div></section>
+    <section class="intro"><div><p class="eyebrow">一分钟，本地事件预测练习</p><h1>判断红黑绿，<span>交易你的判断。</span></h1><p class="intro-copy">目标：盘中卖出锁定盈亏，或持有到本地模拟事件结算；按本轮净收益排名。积分不可兑换。</p></div><div class="mode-picker"><span>选择对手规模 <small>切换会重置余额与历史</small></span><div class="segmented" role="group" aria-label="对手数量，切换会重置场次"><button type="button" data-bots="2" class="selected" aria-pressed="true">2 位 Bot</button><button type="button" data-bots="20" aria-pressed="false">20 位 · 繁忙模式</button></div></div></section>
     <div class="round-guide" aria-label="每轮五十五秒交易、五秒封盘、三张行动券"><div><strong>55<span>秒</span></strong><small>自由买卖 · 报价随成交变化</small></div><div><strong>5<span>秒</span></strong><small>封盘等待 · 不再交易或控场</small></div><div><strong>3<span>张</span></strong><small>行动额度 · 可以保留不用</small></div></div>
+    <section class="how-to-play" aria-labelledby="quick-play-title"><div class="how-to-heading"><strong id="quick-play-title">第一次来？按这四步完成一轮</strong><a href="#rules" id="rules-link-inline">完整玩法与结算规则 ↓</a></div><ol><li><b>选结果</b><span>点红、黑或绿，先看条件和当前价格。</span></li><li><b>看报价</b><span>输入份数，确认支付额、手续费和命中兑付。</span></li><li><b>实际下单</b><span>开始交易后点“买入”；持仓可盘中卖出。</span></li><li><b>结算复盘</b><span>封盘后由本地随机噪声结算，比较本轮净盈亏。</span></li></ol><p>当前版本使用本地热度与随机噪声：红色为热度 &gt; 102，黑色为热度 &lt; 98，绿色为 98–102（含边界）。不是 Monad 链上事件。</p></section>
     <section id="monad-panel" class="panel monad-panel" aria-labelledby="monad-title" data-wallet-state="disconnected" data-chain-state="idle">
       <div class="monad-heading">
         <div class="monad-brand"><span class="monad-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M16 3 29 16 16 29 3 16Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><rect x="11" y="11" width="10" height="10" rx="3" fill="currentColor"/></svg></span><div><p class="small-label">MONAD / TESTNET</p><h2 id="monad-title">连接你的钱包</h2></div></div>
@@ -303,7 +307,7 @@
         <div class="quote-summary"><span id="quote-total-label">预计支付</span><strong><b id="quote-total">—</b><small>模拟积分</small></strong></div><dl class="quote-details"><div><dt>当前价格</dt><dd id="quote-spot">—</dd></div><div><dt>成交平均价</dt><dd id="quote-average">—</dd></div><div><dt>份额成交金额</dt><dd id="quote-gross">—</dd></div><div><dt>手续费 <small>0.3%</small></dt><dd id="quote-fee">—</dd></div><div><dt>本单对价格的影响</dt><dd id="quote-impact">—</dd></div></dl>
         <div id="win-preview" class="win-preview"><div><span id="win-label">若红盘命中，持有到结算</span><b id="quote-win-payout">—</b></div><div><span>扣除本单成本后净收益</span><strong id="quote-win-profit">—</strong></div><small id="quote-roi">—</small></div>
         <div id="error" class="error-message" role="alert" hidden></div><button id="submit-trade" class="primary-button" type="button" disabled><span id="submit-label">买入红色份额</span><b aria-hidden="true">→</b></button><p id="quote-note" class="quote-note">开始本轮后可交易。买卖份数决定成交价，没有固定赔付赔率。</p><div id="result" class="result-box" aria-live="polite" hidden></div>
-        <details id="rules" class="rules"><summary>一分钟，怎样玩？<span>＋</span></summary><ol><li>开始后有 55 秒交易时间。买卖红、黑、绿份额，价格随实际模拟成交变化。</li><li>可卖出已有份额，无做空或杠杆。每笔买卖收取 0.3% 手续费。</li><li>每人最多 3 张行动券，可加热 +1 或降温 −1；也可以不用。</li><li>最后 5 秒封盘。60 秒时热度叠加本地模拟随机噪声，按红 &gt;102、黑 &lt;98、绿 98–102 结算。</li><li>赢色每份兑付 1 积分，其他兑付 0；由做市账户支付，没有固定分池赔率。</li><li>Bot 有实际模拟买卖、费用与盈亏，不读取未来结果。此原型未经策略平衡或公平性验证。</li></ol></details>
+        <details id="rules" class="rules" open><summary>完整玩法与结算规则<span>−</span></summary><p class="rules-goal">目标：通过判断本轮结果、盘中交易或持有到期，让自己的本轮净盈亏高于其他参与者。</p><ol><li><b>选择结果：</b>点红、黑、绿卡片查看当前市场价和模型场景估计。场景估计只是本地模型参考，不是保证胜率。</li><li><b>确认报价：</b>输入 1–1,000 整数份。报价列出预计支付、成交均价、0.3% 手续费和命中时兑付。下单时会按最新价格重新计算。</li><li><b>提交买入：</b>开始一轮后有 55 秒交易时间。点“买入”会从模拟余额扣款并记入持仓账本；不会连接钱包或花费 MON。</li><li><b>盘中退出或等结算：</b>交易窗口内可卖出自己已有的份额；也可继续持有。每份命中兑付 1 积分，未命中兑付 0，手续费已计入本轮净盈亏。</li><li><b>理解本地结果：</b>最后 5 秒封盘。当前版本先按行动后的热度加上本地模拟随机噪声决定结果：热度 &gt; 102 为红，热度 &lt; 98 为黑，98–102（含边界）为绿。结果不来自真实区块或外部事件。</li><li><b>行动券与对手：</b>每轮最多 3 张行动券，可加热 +1 或降温 −1，也可保留。Bot 会按各自策略、余额和持仓真实买卖；它们不知道未来结果。场次按净盈亏排名。</li></ol><p>红黑绿份额价格由本地成交推动；场景估计、市场价格和最终结果是不同信息。便宜的颜色若命中仍按每份 1 积分兑付，但不会因为支持者少就自动获胜。本地积分没有现金价值，模拟成交不代表链上交易。</p></details>
       </aside>
     </div>
     <section class="panel bots-panel" aria-labelledby="bots-title"><div class="panel-header"><div><p class="small-label">规则策略，同场交易</p><h2 id="bots-title">Bot 交易观察</h2></div><span id="bot-summary" class="section-caption">2 位对手 · 无未来信息</span></div><div class="bot-explainer"><span><i>↗</i><b>动量策略</b> 观察价格趋势与当前信号</span><span><i>⇄</i><b>价值策略</b> 比较场景概率与市场价格</span><span>都受余额、持仓与行动券约束</span></div><div class="table-scroll bot-table-wrap"><table class="bot-table"><thead><tr><th>参与者 / 当前持仓</th><th>策略</th><th>成交笔数</th><th>预计清仓净值</th><th>清仓估算盈亏</th><th>最大回撤</th><th>行动券</th></tr></thead><tbody id="bots-body"></tbody></table></div></section>
@@ -346,6 +350,7 @@ const downUnits = value => Math.max(0, Math.floor(value * POINT_PRECISION));
 const MAX_RECORDS = 400;
 const MAX_HISTORY = 700;
 const DEFAULT_B = 150;
+const DEFAULT_PRIORS = Object.freeze({ red: 0.45, black: 0.45, green: 0.10 });
 const MIN_ROUND_RESERVE = 1;
 
 function findTrader(state, id) {
@@ -362,18 +367,19 @@ function random(state, field = '_rngState') {
   return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
 }
 
-function marketCost(q, b) {
+function marketCost(q, b, priors = DEFAULT_PRIORS) {
   const values = COLORS.map(color => q[color] / b);
   const maximum = Math.max(...values);
-  return b * (maximum + Math.log(values.reduce((sum, value) => sum + Math.exp(value - maximum), 0)));
+  return b * (maximum + Math.log(COLORS.reduce((sum, color, index) =>
+    sum + priors[color] * Math.exp(values[index] - maximum), 0)));
 }
 
 // Shared by execution quotes and portfolio valuation. Amounts are integer
 // micropoints, conservatively rounded in favor of the collateral reserve.
 function tradeAmounts(market, color, side, shares) {
   const qAfter = { ...market.q, [color]: market.q[color] + (side === 'buy' ? shares : -shares) };
-  const beforeCost = marketCost(market.q, market.b);
-  const afterCost = marketCost(qAfter, market.b);
+  const beforeCost = marketCost(market.q, market.b, market.priors);
+  const afterCost = marketCost(qAfter, market.b, market.priors);
   const rawGross = side === 'buy' ? afterCost - beforeCost : beforeCost - afterCost;
   // Positive LMSR purchases always have positive cost. At extreme q spreads,
   // subtracting two large C values can lose a tiny difference entirely.
@@ -407,7 +413,7 @@ function marketPrices(state) {
   }
   const values = COLORS.map(color => state.market.q[color] / state.market.b);
   const maximum = Math.max(...values);
-  const weights = values.map(value => Math.exp(value - maximum));
+  const weights = COLORS.map((color, index) => (state.market.priors?.[color] ?? 1 / 3) * Math.exp(values[index] - maximum));
   const total = weights.reduce((sum, weight) => sum + weight, 0);
   return Object.fromEntries(COLORS.map((color, index) => [color, weights[index] / total]));
 }
@@ -485,7 +491,7 @@ function createGame(seed = 20261017, options = {}) {
     elapsedMs: 0, remainingMs: ROUND_DURATION_MS, block: 0,
     heat: 100, baseline: 100, greenBand: [98, 102], actionLimit: 3,
     noiseRange: participants.length * 3 + 3,
-    market: { q: emptyPosition(), cash: 1000, initialReserve: 1000, b: DEFAULT_B, feeRate: 0.003 },
+    market: { q: emptyPosition(), cash: 1000, initialReserve: 1000, b: DEFAULT_B, feeRate: 0.003, priors: { ...DEFAULT_PRIORS } },
     participants, initialTotal: participants.length * 1000 + 1000,
     history: [], events: [], trades: [], results: [], result: null, tradeCount: 0,
     _rngState: normalizedSeed, _noiseRngState: (normalizedSeed ^ 0x9e3779b9) >>> 0,
@@ -722,7 +728,7 @@ function nextRound(state) {
   next.tradeCount = 0;
   next.result = null;
   next.market.q = emptyPosition();
-  next.market.b = Math.min(DEFAULT_B, 0.8 * next.market.cash / Math.log(3));
+  next.market.b = Math.min(DEFAULT_B, 0.8 * next.market.cash / Math.log(10));
   next.history = [];
   next.events = [];
   next.trades = [];

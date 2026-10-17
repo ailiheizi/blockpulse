@@ -28,6 +28,7 @@ const downUnits = value => Math.max(0, Math.floor(value * POINT_PRECISION));
 const MAX_RECORDS = 400;
 const MAX_HISTORY = 700;
 const DEFAULT_B = 150;
+const DEFAULT_PRIORS = Object.freeze({ red: 0.45, black: 0.45, green: 0.10 });
 const MIN_ROUND_RESERVE = 1;
 
 function findTrader(state, id) {
@@ -44,18 +45,19 @@ function random(state, field = '_rngState') {
   return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
 }
 
-function marketCost(q, b) {
+function marketCost(q, b, priors = DEFAULT_PRIORS) {
   const values = COLORS.map(color => q[color] / b);
   const maximum = Math.max(...values);
-  return b * (maximum + Math.log(values.reduce((sum, value) => sum + Math.exp(value - maximum), 0)));
+  return b * (maximum + Math.log(COLORS.reduce((sum, color, index) =>
+    sum + priors[color] * Math.exp(values[index] - maximum), 0)));
 }
 
 // Shared by execution quotes and portfolio valuation. Amounts are integer
 // micropoints, conservatively rounded in favor of the collateral reserve.
 function tradeAmounts(market, color, side, shares) {
   const qAfter = { ...market.q, [color]: market.q[color] + (side === 'buy' ? shares : -shares) };
-  const beforeCost = marketCost(market.q, market.b);
-  const afterCost = marketCost(qAfter, market.b);
+  const beforeCost = marketCost(market.q, market.b, market.priors);
+  const afterCost = marketCost(qAfter, market.b, market.priors);
   const rawGross = side === 'buy' ? afterCost - beforeCost : beforeCost - afterCost;
   // Positive LMSR purchases always have positive cost. At extreme q spreads,
   // subtracting two large C values can lose a tiny difference entirely.
@@ -89,7 +91,7 @@ export function marketPrices(state) {
   }
   const values = COLORS.map(color => state.market.q[color] / state.market.b);
   const maximum = Math.max(...values);
-  const weights = values.map(value => Math.exp(value - maximum));
+  const weights = COLORS.map((color, index) => (state.market.priors?.[color] ?? 1 / 3) * Math.exp(values[index] - maximum));
   const total = weights.reduce((sum, weight) => sum + weight, 0);
   return Object.fromEntries(COLORS.map((color, index) => [color, weights[index] / total]));
 }
@@ -167,7 +169,7 @@ export function createGame(seed = 20261017, options = {}) {
     elapsedMs: 0, remainingMs: ROUND_DURATION_MS, block: 0,
     heat: 100, baseline: 100, greenBand: [98, 102], actionLimit: 3,
     noiseRange: participants.length * 3 + 3,
-    market: { q: emptyPosition(), cash: 1000, initialReserve: 1000, b: DEFAULT_B, feeRate: 0.003 },
+    market: { q: emptyPosition(), cash: 1000, initialReserve: 1000, b: DEFAULT_B, feeRate: 0.003, priors: { ...DEFAULT_PRIORS } },
     participants, initialTotal: participants.length * 1000 + 1000,
     history: [], events: [], trades: [], results: [], result: null, tradeCount: 0,
     _rngState: normalizedSeed, _noiseRngState: (normalizedSeed ^ 0x9e3779b9) >>> 0,
@@ -404,7 +406,7 @@ export function nextRound(state) {
   next.tradeCount = 0;
   next.result = null;
   next.market.q = emptyPosition();
-  next.market.b = Math.min(DEFAULT_B, 0.8 * next.market.cash / Math.log(3));
+  next.market.b = Math.min(DEFAULT_B, 0.8 * next.market.cash / Math.log(10));
   next.history = [];
   next.events = [];
   next.trades = [];

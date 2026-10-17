@@ -40,7 +40,7 @@ test('new sessions expose schema, modes and an explicit independent maker reserv
   assert.equal(new Set(crowd.participants.map(item => item.id)).size, 21);
   assert.equal(crowd.initialTotal, 22000);
   assert.equal(crowd.noiseRange, 66);
-  assert.deepEqual(marketPrices(state), { red: 1 / 3, black: 1 / 3, green: 1 / 3 });
+  assert.deepEqual(marketPrices(state), { red: 0.45, black: 0.45, green: 0.1 });
   rejects(() => createGame(NaN), 'INVALID_SEED');
   rejects(() => createGame(1, { botCount: 3 }), 'INVALID_BOT_COUNT');
   invariants(state);
@@ -284,7 +284,7 @@ test('new rounds retain actual funds/stats and adapt depth when maker capital sh
   const shallow = nextRound(depleted);
   assert.equal(shallow.market.cash, 10);
   assert.ok(shallow.market.b < 150);
-  assert.ok(shallow.market.b * Math.log(3) < 10);
+  assert.ok(shallow.market.b * Math.log(10) <= 0.8 * 10);
   let started = startRound(shallow);
   started = executeTrade(started, 'player', 'red', 'buy', 5);
   started = executeTrade(started, 'player', 'red', 'sell', 5);

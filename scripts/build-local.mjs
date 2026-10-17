@@ -1,7 +1,10 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { Script } from 'node:vm';
 
 const root = new URL('../', import.meta.url);
+const pagesBuild = process.argv[2] === '--pages';
+if (process.argv.length > 3 || (process.argv[2] && !pagesBuild)) throw new Error('只支持 --pages 构建参数。');
+const outputFile = pagesBuild ? '_site/index.html' : '本地试玩.html';
 const modules = [
   ['game.js', 'GameEngine'],
   ['monad.js', 'MonadNetwork'],
@@ -40,7 +43,7 @@ const bundled = modules.map(([file, namespace], index) => {
   return `const ${namespace} = (() => {\n${code}\nreturn { ${names.join(', ')} };\n})();`;
 });
 const script = `(() => {\n'use strict';\n${bundled.join('\n')}\n${inlineImports(app)}\n})();`;
-new Script(script, { filename: '本地试玩.html' });
+new Script(script, { filename: outputFile });
 if (/<\/script/i.test(script) || sheets.some(css => /<\/style/i.test(css))) {
   throw new Error('源文件含有内联标签结束符，未生成单文件。');
 }
@@ -56,5 +59,9 @@ styles.forEach((file, index) => {
   if (!standalone.includes(tag)) throw new Error(`找不到样式入口：${file}。`);
   standalone = standalone.replace(tag, () => `<style>\n${sheets[index]}\n</style>`);
 });
-await writeFile(new URL('本地试玩.html', root), standalone, 'utf8');
-console.log('已生成 本地试玩.html，可直接双击打开。');
+if (/<script\b[^>]*\bsrc\s*=|<link\b[^>]*\brel\s*=\s*["']stylesheet["']/i.test(standalone)) {
+  throw new Error('仍有未打包的脚本或样式，未生成发布文件。');
+}
+if (pagesBuild) await mkdir(new URL('_site/', root), { recursive: true });
+await writeFile(new URL(outputFile, root), standalone, 'utf8');
+console.log(pagesBuild ? '已生成 _site/index.html，页面、样式与脚本使用同一份发布产物。' : '已生成 本地试玩.html，可直接双击打开。');

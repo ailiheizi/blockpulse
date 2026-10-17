@@ -80,13 +80,14 @@ cd "/Users/amigoer/DevProjects/blockpulse-demo"
 
 已按用户授权启用 [Pages 自动部署工作流](.github/workflows/pages.yml)：每次推送 `main` 自动执行 `npm test`，测试通过后打包静态资源并发布到 [GitHub Pages](https://ailiheizi.github.io/blockpulse-demo/)。测试失败时停止发布，线上保留上次成功版本；也可在 GitHub Actions 中手动运行该工作流。
 
-发布内容为 `dist/`，这是浏览器直接运行的静态模块，无需安装依赖或运行 `server.mjs`。可在 [Actions 运行记录](https://github.com/ailiheizi/blockpulse-demo/actions/workflows/pages.yml) 查看每次测试和发布状态。本地单文件生成与站点部署是独立步骤。
+工作流运行 `npm run build:pages`，把 `dist/` 的样式与脚本内联到 `_site/index.html` 后发布 `_site/`。浏览器只加载一个完整页面，避免新 HTML 混用旧缓存模块或样式导致界面失效；开发时仍保留 `dist/` 模块结构。构建不安装依赖，也无需运行 `server.mjs`。可在 [Actions 运行记录](https://github.com/ailiheizi/blockpulse-demo/actions/workflows/pages.yml) 查看每次测试、构建和发布状态。
 
 ## 验证与文件
 
 ```sh
 npm test
 npm run build:local
+npm run build:pages
 ```
 
 - `dist/game.js`：不可变状态更新、做市报价、资金账本、策略、时间与结算。
@@ -98,6 +99,7 @@ npm run build:local
 - `tests/game.test.mjs`：交易、库存、费用、资金守恒、兑付、封盘与多轮边界测试。
 - `tests/monad.test.mjs`：钱包授权、切网、事件清理、异步竞态及 RPC 数据校验、取消和超时测试；使用模拟 provider，无需扩展或真实资产。
 - `tests/monad-monitor.test.mjs`：并发读取去重、暂停和恢复、采样上限、错误恢复与销毁测试；使用可控的定时器，不访问网络。
-- `scripts/build-local.mjs`：生成不需要服务的单文件试玩。
+- `scripts/build-local.mjs`：生成不需要服务的单文件试玩，或生成 Pages 使用的 `_site/index.html`；内置脚本语法及资源内联检查。
+- `tests/build.test.mjs`：验证 Pages 发布产物只包含内联脚本和样式，避免更新时缓存混用。
 
 存储不可用时仍可试玩；浏览器会尽力保存进度，关闭标签页期间不保证模拟继续运行。当前原型用于检验交易和控场的可玩性，尚未做策略平衡、安全审计或链上能力验收。

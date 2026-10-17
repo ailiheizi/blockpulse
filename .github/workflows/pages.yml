@@ -38,13 +38,16 @@ jobs:
       - name: Test game and Monad integration
         run: npm test
 
+      - name: Build self-contained Pages site
+        run: npm run build:pages
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
       - name: Upload static site
         uses: actions/upload-pages-artifact@v4
         with:
-          path: dist
+          path: _site
 
       - name: Deploy GitHub Pages
         id: deployment

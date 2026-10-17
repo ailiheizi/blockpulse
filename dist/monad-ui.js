@@ -7,6 +7,8 @@ export function mountMonad() {
   const wallet = createWalletClient();
   const monitor = createHeadMonitor();
   let wallets = [];
+  let selectedProvider = null;
+  let renderedWallets = [];
   let userSelected = false;
   let displayedAccount = null;
   let copyVersion = 0;
@@ -45,13 +47,22 @@ export function mountMonad() {
     const chainText = state.status === 'refreshing' ? '正在核对网络' : onMonad ? 'Monad Testnet · 10143' : state.chainId ? `当前网络 ${BigInt(state.chainId).toString()} · 请切换测试网` : '等待连接钱包';
     setText('wallet-network', chainText);
     setText('wallet-state', state.reading ? '正在读取钱包' : state.pending ? '等待钱包确认' : ready ? '测试网已连接' : connected && state.status === 'wrong-network' ? '需要切换网络' : connected ? '状态待刷新' : '尚未连接');
-    const message = state.reading ? '正在核对账户、网络与余额…' : ready ? state.balanceWei === 0n ? '测试网余额为 0，可从下方领水；模拟交易不需要 MON。' : '余额来自当前测试网账户，可单独刷新；游戏积分保持独立。' : connected && onMonad ? '余额暂未读到，可点击“刷新余额”重试。' : connected ? '请切换到 Monad Testnet，或展开下方网络帮助手动设置。' : '选择钱包开始连接。也可以直接试玩，或单独读取测试网区块。';
+    const selected = wallets.find(item => item.provider === selectedProvider);
+    const message = state.reading ? '正在读取账户与余额…' : ready ? state.balanceWei === 0n ? '测试网余额为 0，可从下方领水；模拟交易不需要 MON。' : '账户已就绪，可以继续体验模拟交易。' : connected && onMonad ? '余额暂未读到，可点击“刷新余额”重试。' : connected ? '确认 Monad 测试网后，即可查看 MON 余额。' : selected ? '仅请求账户授权，模拟交易不消耗 MON。' : '选择一个钱包以继续，也可以直接体验模拟交易。';
     setText('wallet-message', state.message || message);
+    $('wallet-message').hidden = !wallets.length && !state.message;
     setText('wallet-shortcut-label', state.reading ? '读取中…' : state.pending ? '等待确认…' : connected ? shortenAddress(state.account) : '连接钱包');
-    $('wallet-connect').hidden = connected;
-    $('wallet-connect').disabled = state.pending;
-    setText('wallet-connect', state.pending ? '等待钱包确认…' : '连接所选钱包');
-    $('wallet-provider').disabled = connected || state.pending || !wallets.length;
+    $('wallet-connect').hidden = connected || !wallets.length;
+    $('wallet-actions').hidden = !wallets.length && !connected && !state.pending;
+    $('wallet-connect').disabled = state.pending || !selected;
+    setText('wallet-connect-label', state.pending ? '等待钱包确认…' : selected ? `连接 ${selected.name}` : '选择一个钱包以连接');
+    $('wallet-selection').disabled = connected || state.pending;
+    $('wallet-selection').hidden = connected || !wallets.length;
+    $('wallet-account').hidden = !connected;
+    setText('wallet-connected-name', selected?.name || '浏览器钱包');
+    $('wallet-providers').querySelectorAll('input').forEach(input => {
+      input.checked = wallets[Number(input.value)]?.provider === selectedProvider;
+    });
     $('wallet-switch').hidden = !connected || state.chainId === MONAD_TESTNET.chainIdHex;
     $('wallet-switch').disabled = state.pending || state.reading;
     $('wallet-refresh').hidden = !connected;
@@ -62,38 +73,74 @@ export function mountMonad() {
     $('wallet-shortcut').disabled = state.pending;
   }
 
+  function renderChoices() {
+    const changed = wallets.length !== renderedWallets.length || wallets.some((item, index) => {
+      const previous = renderedWallets[index];
+      return item.provider !== previous?.provider || item.name !== previous?.name || item.icon !== previous?.icon;
+    });
+    if (!changed) return;
+    renderedWallets = wallets.map(item => ({ provider: item.provider, name: item.name, icon: item.icon }));
+    $('wallet-providers').replaceChildren(...wallets.map((item, index) => {
+      const label = document.createElement('label');
+      label.className = 'wallet-option';
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'wallet-provider';
+      input.value = String(index);
+      const body = document.createElement('span');
+      body.className = 'wallet-option-body';
+      const icon = document.createElement('span');
+      icon.className = 'wallet-option-icon';
+      icon.setAttribute('aria-hidden', 'true');
+      const fallback = document.createElement('span');
+      fallback.textContent = Array.from(item.name.trim())[0]?.toUpperCase() || 'W';
+      icon.append(fallback);
+      if (item.icon) {
+        // 钱包提供的 SVG 仅作为图片加载，禁止作为页面标记插入。
+        const img = document.createElement('img');
+        img.alt = '';
+        img.src = item.icon;
+        img.draggable = false;
+        fallback.hidden = true;
+        img.addEventListener('error', () => { img.remove(); fallback.hidden = false; }, { once: true });
+        icon.append(img);
+      }
+      const copy = document.createElement('span');
+      copy.className = 'wallet-option-copy';
+      const name = document.createElement('strong');
+      name.textContent = item.name;
+      const description = document.createElement('small');
+      description.textContent = '已检测到';
+      copy.append(name, description);
+      const indicator = document.createElement('span');
+      indicator.className = 'wallet-choice-indicator';
+      indicator.setAttribute('aria-hidden', 'true');
+      body.append(icon, copy, indicator);
+      label.append(input, body);
+      return label;
+    }));
+  }
+
   const unsubscribeWallet = wallet.subscribe(renderWallet);
   const discovery = discoverWallets(window, next => {
-    const value = $('wallet-provider').value;
-    const selected = value === '' ? undefined : wallets[Number(value)]?.provider;
     wallets = next;
-    const choices = [];
-    const placeholder = document.createElement('option');
-    placeholder.value = '';
-    placeholder.textContent = wallets.length ? '请选择钱包' : '未检测到钱包扩展';
-    choices.push(placeholder);
-    wallets.forEach((item, index) => {
-      const option = document.createElement('option');
-      option.value = String(index);
-      option.textContent = item.name;
-      choices.push(option);
-    });
-    $('wallet-provider').replaceChildren(...choices);
-    const index = wallets.findIndex(item => item.provider === selected);
-    $('wallet-provider').value = wallets.length === 1 ? '0' : userSelected && index >= 0 ? String(index) : '';
+    if (!userSelected) selectedProvider = wallets.length === 1 ? wallets[0].provider : null;
+    else if (!wallets.some(item => item.provider === selectedProvider)) selectedProvider = null;
+    setText('wallet-count', String(wallets.length));
+    renderChoices();
     $('wallet-help').hidden = wallets.length > 0;
     renderWallet(wallet.getState());
   });
 
   function connectSelected() {
     discovery.request();
-    const value = $('wallet-provider').value;
-    if (wallets.length && value === '') {
-      setText('wallet-message', '检测到多个钱包，请先选择你想连接的那个。');
-      $('wallet-provider').focus();
+    if (!wallets.length) { $('wallet-detect').focus(); return; }
+    if (!selectedProvider) {
+      $('wallet-providers').querySelector('input')?.focus();
       return;
     }
-    void wallet.connect(value === '' ? undefined : wallets[Number(value)]?.provider);
+    userSelected = true;
+    void wallet.connect(selectedProvider);
   }
 
   function setPanelOpen(open) {
@@ -152,7 +199,20 @@ export function mountMonad() {
   syncEnvironment();
   const handlers = [];
   function listen(target, type, handler) { target.addEventListener(type, handler); handlers.push(() => target.removeEventListener(type, handler)); }
-  listen($('wallet-provider'), 'change', () => { userSelected = true; });
+  listen($('wallet-providers'), 'change', event => {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement) || input.name !== 'wallet-provider') return;
+    selectedProvider = wallets[Number(input.value)]?.provider || null;
+    userSelected = true;
+    renderWallet(wallet.getState());
+  });
+  listen($('wallet-detect'), 'click', () => {
+    discovery.request();
+    if (!wallets.length) {
+      $('wallet-message').hidden = false;
+      setText('wallet-message', '暂未发现钱包，请确认扩展已启用，或在已安装钱包的桌面浏览器中打开。');
+    }
+  });
   listen($('wallet-connect'), 'click', connectSelected);
   listen($('wallet-shortcut'), 'click', () => {
     setPanelOpen(true);

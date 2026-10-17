@@ -256,9 +256,9 @@ test('初次状态读取超时会清理 provider 事件，账户授权弹窗不�
   client.disconnect();
 });
 
-function announce(target, provider, name, uuid) {
+function announce(target, provider, name, uuid, icon = '<svg onload="bad()">') {
   const event = new Event('eip6963:announceProvider');
-  Object.defineProperty(event, 'detail', { value: { provider, info: { name, uuid, icon: '<svg onload="bad()">' } } });
+  Object.defineProperty(event, 'detail', { value: { provider, info: { name, uuid, icon } } });
   target.dispatchEvent(event);
 }
 
@@ -297,6 +297,29 @@ test('传统注入钱包可回退发现，公布后更新同一 provider 的名�
   assert.equal(wallets[0].name, 'Named wallet');
   for (let index = 0; index < 30; index += 1) announce(target, new FakeProvider(), 'Wallet', `wallet-${index}`);
   assert.equal(wallets.length, 16);
+  discovery.dispose();
+});
+
+test('钱包图标仅接受有长度限制的数据图像，重复声明不改变元数据', () => {
+  const target = new EventTarget();
+  let wallets;
+  let updates = 0;
+  const discovery = discoverWallets(target, next => { wallets = next; updates += 1; });
+  const provider = new FakeProvider();
+  const svg = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path d="M0 0h32v32H0z"/></svg>';
+  announce(target, provider, 'Wallet', 'wallet', svg);
+  assert.equal(wallets[0].icon, svg);
+  const before = updates;
+  announce(target, provider, 'Wallet', 'wallet', svg);
+  assert.equal(updates, before);
+  for (const icon of ['https://example.com/tracker.svg', 'javascript:bad()', 'data:text/html,<script>bad()</script>', `data:image/png;base64,${'a'.repeat(131072)}`]) {
+    announce(target, provider, 'Wallet', 'wallet', icon);
+    assert.equal('icon' in wallets[0], false);
+  }
+  const png = 'data:image/png;base64,iVBORw0KGgo=';
+  announce(target, provider, 'Wallet', 'wallet', png);
+  assert.equal(wallets[0].icon, png);
+  assert.equal(provider.calls.length, 0);
   discovery.dispose();
 });
 

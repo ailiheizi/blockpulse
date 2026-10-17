@@ -210,21 +210,29 @@ export function createWalletClient({ readTimeoutMs = 8000, now = Date.now } = {}
 
 export function discoverWallets(target, onChange) {
   const wallets = [];
-  function add(provider, name, uuid = '') {
-    if (typeof provider?.request !== 'function' || wallets.length >= 16) return;
+  function add(provider, name, uuid = '', icon = '') {
+    if (typeof provider?.request !== 'function') return;
     const existing = wallets.find(wallet => wallet.provider === provider);
     if (existing) {
-      if (uuid) { existing.name = name; existing.uuid = uuid; onChange([...wallets]); }
+      if (uuid && (existing.name !== name || existing.uuid !== uuid || (existing.icon || '') !== icon)) {
+        existing.name = name;
+        existing.uuid = uuid;
+        if (icon) existing.icon = icon;
+        else delete existing.icon;
+        onChange([...wallets]);
+      }
       return;
     }
-    if (uuid && wallets.some(wallet => wallet.uuid === uuid)) return;
-    wallets.push({ provider, name, uuid });
+    if (wallets.length >= 16 || (uuid && wallets.some(wallet => wallet.uuid === uuid))) return;
+    wallets.push({ provider, name, uuid, ...(icon ? { icon } : {}) });
     onChange([...wallets]);
   }
   const announced = event => {
     const info = event.detail?.info;
     if (!info || typeof info.name !== 'string' || typeof info.uuid !== 'string' || !info.uuid || info.uuid.length > 128) return;
-    add(event.detail.provider, info.name.slice(0, 80) || '浏览器钱包', info.uuid);
+    const icon = typeof info.icon === 'string' && info.icon.length <= 131072
+      && /^data:image\/(?:png|jpeg|webp|gif|svg\+xml)(?:;charset=[\w-]+)?(?:;base64)?,.+/is.test(info.icon) ? info.icon : '';
+    add(event.detail.provider, info.name.slice(0, 80) || '浏览器钱包', info.uuid, icon);
   };
   function request() {
     target.dispatchEvent(new Event('eip6963:requestProvider'));

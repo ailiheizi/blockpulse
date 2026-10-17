@@ -33,43 +33,82 @@
 .monad-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 8px 13px; border: 1px solid #b29afd55; border-radius: 9px; color: #d9cbff; background: #b29afd12; font-size: 11px; white-space: nowrap; }
 .monad-button:not(:disabled):hover { background: #b29afd22; border-color: #b29afd99; }
 .monad-button-mark { font-family: 'Avenir Next', system-ui, sans-serif; font-size: 13px; font-weight: 750; }
-.monad-panel { margin-top: 22px; border-color: #b29afd3d; background: linear-gradient(120deg, #252239a6, #171e2d); scroll-margin-top: 20px; }
-.monad-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 21px; }
+.monad-panel { margin-top: 22px; border-color: #b29afd35; background: linear-gradient(120deg, #211e32, #171d2b); scroll-margin-top: 20px; }
+.monad-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 24px; }
 .monad-heading-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
 .monad-text-button { min-height: 36px; padding: 5px 0; border: 0; color: var(--purple); background: transparent; font-size: 10px; white-space: nowrap; }
 .monad-text-button:hover { color: #e1d6ff; text-decoration: underline; }
 [data-collapsed="true"] .monad-heading { margin-bottom: 0; }
-.wallet-steps { display: flex; gap: 15px; padding: 0; margin: 0 0 18px; list-style: none; }
-.wallet-steps li { display: flex; align-items: center; gap: 6px; color: #7e8ba5; font-size: 10px; white-space: nowrap; }
-.wallet-steps li > span { display: grid; place-items: center; width: 21px; height: 21px; border: 1px solid #3b4156; border-radius: 50%; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 9px; }
+.wallet-steps { display: flex; gap: 0; padding: 0; margin: 0 0 21px; list-style: none; }
+.wallet-steps li { display: flex; align-items: center; gap: 6px; color: #8590a9; font-size: 10px; white-space: nowrap; }
+.wallet-steps li + li::before { content: ''; height: 1px; width: clamp(12px, 2vw, 32px); margin: 0 10px 0 4px; background: #b29afd28; }
+.wallet-steps li > span { display: grid; place-items: center; width: 19px; height: 19px; border: 1px solid #3b4156; border-radius: 50%; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 9px; }
 .wallet-steps [data-state="current"] { color: #d5c5ff; }
 .wallet-steps [data-state="current"] > span { border-color: #b29afd99; background: #b29afd18; }
 .wallet-steps [data-state="complete"] { color: #91cbb5; }
 .wallet-steps [data-state="complete"] > span { border-color: #78dfb862; background: #78dfb80b; }
 .monad-brand { display: flex; align-items: center; gap: 12px; }
-.monad-mark { display: grid; place-items: center; flex-shrink: 0; width: 39px; height: 39px; border: 1px solid #b29afd4d; border-radius: 11px; background: #b29afd13; color: #c9b6ff; font-family: 'Avenir Next', system-ui, sans-serif; font-size: 21px; font-weight: 650; }
+.monad-mark { display: grid; place-items: center; flex-shrink: 0; width: 42px; height: 42px; border: 1px solid #b29afd40; border-radius: 12px; background: #b29afd0d; color: #c9b6ff; }
+.monad-mark svg { width: 25px; height: 25px; }
 .monad-brand .small-label { margin-bottom: 3px; font-size: 9px; }
-.monad-brand h2 { font-size: 17px; }
+.monad-brand h2 { font-size: 19px; letter-spacing: -.4px; }
 .monad-status { padding: 5px 9px; color: #ad9acb; background: #b29afd0a; border: 1px solid #b29afd24; border-radius: 20px; font-size: 10px; white-space: nowrap; }
 [data-wallet-state="connected"] .monad-status { color: #8ee0bf; background: #78dfb80a; border-color: #78dfb836; }
 [data-wallet-state="wrong-network"] .monad-status { color: #ffca9d; border-color: #ffb68e36; }
-.monad-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 25px; }
-.monad-wallet { min-width: 0; }
-.wallet-picker { display: flex; align-items: center; gap: 14px; }
-.wallet-picker label { flex-shrink: 0; color: #a5afc5; font-size: 11px; }
-.wallet-picker select { min-width: 0; flex: 1; width: 100%; max-width: 280px; min-height: 39px; padding: 8px 28px 8px 10px; border: 1px solid #403a56; border-radius: 8px; background: #151a27; color: #c6c9dc; font: inherit; font-size: 11px; text-overflow: ellipsis; }
-.wallet-picker select:disabled { color: #8b8fa7; opacity: 1; }
-.wallet-picker select:focus-visible, .monad-panel a:focus-visible { outline: 3px solid var(--purple); outline-offset: 3px; }
+.monad-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+.monad-wallet { min-width: 0; display: flex; flex-direction: column; }
+.wallet-steps { order: 0; }
+.wallet-selection, .wallet-help, .wallet-account { order: 1; }
+.wallet-connection-actions { order: 2; }
+#wallet-message { order: 3; }
+.wallet-address-details { order: 4; }
+#wallet-copy-message { order: 5; }
+.wallet-selection { min-width: 0; padding: 0; margin: 0; border: 0; }
+.wallet-selection legend { display: flex; align-items: center; gap: 7px; color: #acb4cb; font-size: 11px; padding: 0; margin-bottom: 11px; }
+#wallet-count { display: inline-grid; place-items: center; min-width: 19px; height: 17px; border-radius: 5px; color: #bfa8f0; background: #b29afd10; font-size: 9px; font-variant-numeric: tabular-nums; }
+.wallet-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; max-height: 284px; overflow-y: auto; padding: 3px; margin: -3px; scrollbar-width: thin; }
+.wallet-option { position: relative; display: block; min-width: 0; }
+.wallet-option > input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; margin: 0; cursor: pointer; z-index: 1; }
+.wallet-option-body { display: flex; align-items: center; gap: 11px; min-height: 85px; padding: 15px 13px; border: 1px solid #b29afd24; border-radius: 11px; background: #13172480; transition: border-color .15s, background .15s; }
+.wallet-option > input:not(:disabled):hover + .wallet-option-body { border-color: #b29afd70; background: #b29afd08; }
+.wallet-option > input:checked + .wallet-option-body { border-color: #bca4fb; background: #b29afd10; box-shadow: inset 0 0 0 1px #b29afd18; }
+.wallet-option > input:focus-visible + .wallet-option-body { outline: 2px solid #d0baff; outline-offset: 2px; }
+.wallet-option > input:disabled { cursor: wait; }
+.wallet-selection:disabled .wallet-option-body { opacity: .6; }
+.wallet-option-icon { display: grid; place-items: center; flex-shrink: 0; width: 37px; height: 37px; border-radius: 10px; background: #b29afd12; color: #ceb9ff; font-family: 'Avenir Next', system-ui, sans-serif; font-size: 18px; font-weight: 650; overflow: hidden; }
+.wallet-option-icon img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.wallet-option-copy { display: block; min-width: 0; flex: 1; }
+.wallet-option-copy strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #e1dfed; font-family: 'Avenir Next', system-ui, sans-serif; font-size: 13px; font-weight: 600; line-height: 1.5; }
+.wallet-option-copy small { display: block; color: #9198b0; font-size: 10px; margin-top: 3px; }
+.wallet-choice-indicator { display: grid; place-items: center; flex-shrink: 0; width: 17px; height: 17px; border: 1px solid #514963; border-radius: 50%; color: #20172e; font-size: 11px; }
+.wallet-option > input:checked + .wallet-option-body .wallet-choice-indicator { background: #c3acff; border-color: #c3acff; }
+.wallet-option > input:checked + .wallet-option-body .wallet-choice-indicator::after { content: '✓'; font-weight: 700; }
+.monad-panel a:focus-visible { outline: 2px solid var(--purple); outline-offset: 3px; }
 .wallet-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
 .monad-action { min-height: 39px; padding: 8px 12px; border: 1px solid #4a4262; border-radius: 7px; color: #c8bddf; background: #b29afd06; font-size: 11px; }
 .monad-action:not(:disabled):hover { background: #b29afd16; border-color: #b29afd75; }
 .monad-primary { border-color: #b29afd70; color: #e1d6ff; background: #b29afd19; }
+.wallet-connection-actions { margin-top: 15px; }
+.wallet-connect-button { display: flex; align-items: center; justify-content: space-between; gap: 14px; width: 100%; min-height: 44px; padding: 11px 15px; border-radius: 9px; background: #bca3fa; color: #21172e; border-color: #bca3fa; font-size: 12px; font-weight: 600; text-align: left; }
+.wallet-connect-button > span:first-child { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.wallet-connect-button > span:last-child { font-size: 18px; font-weight: 400; }
+.wallet-connect-button:not(:disabled):hover { background: #cbb5ff; border-color: #cbb5ff; }
+.wallet-connect-button:disabled { opacity: 1; color: #9996b1; background: #b29afd0b; border-color: #b29afd22; }
 .monad-message { margin: 10px 0 0; color: #98a5bd; font-size: 10px; line-height: 1.85; overflow-wrap: anywhere; }
-.wallet-help { margin: 7px 0 0; color: #92a0b9; font-size: 10px; line-height: 1.85; }
+.wallet-help { display: flex; align-items: flex-start; gap: 13px; margin: 0; padding: 17px; border: 1px dashed #b29afd30; border-radius: 11px; color: #92a0b9; background: #13172440; font-size: 10px; line-height: 1.85; }
+.wallet-help > div { min-width: 0; flex: 1; }
+.wallet-help strong { display: block; color: #c9c5da; font-size: 12px; font-weight: 550; }
+.wallet-help p { margin: 5px 0; color: #909ab1; font-size: 10px; }
+.wallet-help > button { margin-top: -6px; }
+.wallet-empty-icon { flex-shrink: 0; width: 30px; height: 30px; color: #a791d8; }
+.wallet-empty-icon svg { display: block; width: 100%; height: 100%; }
 .monad-panel a { color: #c4adfb; text-decoration: none; }
 .monad-panel a:hover { text-decoration: underline; }
 .wallet-help a { display: inline-block; }
-.wallet-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 19px; }
+.wallet-account { padding: 16px; border: 1px solid #b29afd2c; border-radius: 11px; background: #13172460; }
+.wallet-connected-name { display: flex; align-items: center; gap: 7px; margin: 0 0 16px; color: #afcbbc; font-size: 11px; }
+.wallet-connected-name::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: #78dfb8; }
+.wallet-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 0; }
 .wallet-metrics > div { min-width: 0; }
 .wallet-metrics span { display: block; color: #94a2bc; font-size: 10px; }
 .wallet-metrics strong { display: block; margin: 6px 0; color: #ddd4f5; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 20px; font-weight: 450; overflow-wrap: anywhere; }
@@ -80,7 +119,7 @@
 .wallet-address-details summary { cursor: pointer; padding: 6px 0; }
 .wallet-address-details input { width: 100%; min-height: 40px; padding: 9px; margin-top: 6px; color: #d5c5ff; border: 1px solid #49405e; border-radius: 7px; background: #141a27; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 11px; }
 #wallet-copy-message:empty { display: none; }
-.monad-chain { min-width: 0; padding: 0 0 0 25px; border-left: 1px solid #b29afd20; }
+.monad-chain { min-width: 0; padding: 18px; border: 1px solid #b29afd1c; border-radius: 11px; background: #13172450; }
 .monad-chain-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #d5c9ed; font-size: 12px; }
 .monad-chain-title > span:last-child { color: #8d9bb4; font-size: 10px; }
 .monad-block { display: block; margin: 13px 0 8px; color: #c6b0ff; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 30px; font-weight: 450; line-height: 1.25; letter-spacing: -.8px; overflow-wrap: anywhere; }
@@ -115,9 +154,10 @@
   .top-actions { gap: 14px; }
   .topbar .local-tag { display: none; }
   .monad-grid { gap: 20px; }
-  .monad-chain { padding-left: 20px; }
-  .wallet-picker { flex-wrap: wrap; gap: 8px; }
-  .wallet-picker select { max-width: none; flex-basis: 100%; }
+  .monad-chain { padding: 17px; }
+  .wallet-option-body { gap: 8px; padding: 13px 10px; }
+  .wallet-option-icon { width: 32px; height: 32px; }
+  .wallet-option-copy strong { font-size: 12px; }
   .wallet-metrics { gap: 12px; }
   .wallet-metrics strong { font-size: 17px; }
 }
@@ -129,19 +169,21 @@
   .monad-button { min-height: 40px; padding: 8px 10px; font-size: 10px; gap: 6px; }
   .monad-panel { margin-top: 18px; }
   .monad-heading { align-items: flex-start; gap: 10px; margin-bottom: 19px; }
-  .monad-heading-actions { flex-direction: column; gap: 2px; flex-shrink: 0; }
+  .monad-heading-actions { gap: 9px; flex-shrink: 0; }
   .monad-heading-actions .monad-text-button { min-height: 30px; }
   .monad-brand { gap: 9px; }
-  .monad-brand h2 { font-size: 16px; }
+  .monad-brand h2 { font-size: 17px; }
   .monad-brand .small-label { font-size: 8px; }
-  .monad-mark { width: 33px; height: 33px; border-radius: 9px; font-size: 18px; }
+  .monad-mark { width: 36px; height: 36px; border-radius: 10px; }
+  .monad-mark svg { width: 22px; height: 22px; }
   .monad-status { padding: 4px 7px; font-size: 9px; }
   .monad-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
-  .wallet-picker { flex-wrap: nowrap; gap: 12px; }
-  .wallet-picker select { flex-basis: auto; }
+  .wallet-option-body { gap: 12px; padding: 14px; }
+  .wallet-option-icon { width: 37px; height: 37px; }
+  .wallet-option-copy strong { font-size: 13px; }
   .wallet-actions { gap: 7px; }
   .monad-action { min-height: 42px; font-size: 11px; }
-  .wallet-steps { gap: 11px; }
+  .wallet-steps { gap: 0; }
   .wallet-steps li { gap: 5px; font-size: 10px; }
   .wallet-steps li > span { width: 20px; height: 20px; }
   .wallet-address-actions .monad-text-button { min-height: 40px; font-size: 11px; }
@@ -152,26 +194,38 @@
   .monad-config dd > small { display: block; margin-top: 4px; }
   .monad-config-rpc dd { gap: 3px; }
   .monad-config-rpc .monad-text-button { min-height: 42px; font-size: 11px; }
-  .monad-message, .wallet-help { font-size: 11px; }
+  .monad-message, .wallet-help p { font-size: 11px; }
   .wallet-metrics { gap: 15px; }
   .wallet-metrics strong { font-size: 19px; }
   .wallet-metrics span, .wallet-metrics small, .wallet-metrics a { font-size: 10px; }
-  .monad-chain { padding: 18px 0 0; border-left: 0; border-top: 1px solid #b29afd20; }
+  .monad-chain { padding: 16px; }
   .monad-block { font-size: 28px; }
   .monad-block-time, .monad-chain-links { font-size: 10px; }
   .monad-scope { flex-direction: column; gap: 8px; margin-top: 18px; font-size: 10px; }
 }
+@media (max-width: 420px) {
+  .monad-heading-actions { flex-direction: column; gap: 0; }
+  .monad-heading-actions .monad-text-button { min-height: 28px; }
+  .wallet-option-body { display: grid; grid-template-columns: minmax(0, 1fr) 17px; gap: 12px; min-height: 122px; padding: 14px; }
+  .wallet-option-copy { grid-column: 1 / -1; grid-row: 2; }
+  .wallet-choice-indicator { grid-row: 1; grid-column: 2; align-self: start; }
+  .wallet-help { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 8px 12px; padding: 14px; }
+  .wallet-help > button { grid-column: 2; justify-self: start; margin-top: 0; }
+  .wallet-steps li + li::before { width: 11px; margin: 0 6px 0 1px; }
+}
 @media (max-width: 360px) {
-  .monad-brand h2 { font-size: 14px; }
-  .monad-mark { display: none; }
-  .wallet-picker { flex-wrap: wrap; gap: 7px; }
-  .wallet-picker select { flex-basis: 100%; }
+  .monad-brand h2 { font-size: 15px; }
+  .monad-mark { width: 32px; height: 32px; }
+  .monad-mark svg { width: 20px; height: 20px; }
   .wallet-metrics { grid-template-columns: minmax(0, 1fr); }
-  .wallet-steps { gap: 8px; }
+  .wallet-steps { gap: 0; }
   .wallet-steps li { font-size: 9px; }
   .wallet-steps li > span { width: 18px; height: 18px; }
   .monad-samples { grid-template-columns: minmax(0, 1fr); }
   .monad-button { font-size: 9px; padding: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wallet-option-body { transition: none; }
 }
 
 </style>
@@ -184,18 +238,18 @@
     <div class="round-guide" aria-label="每轮五十五秒交易、五秒封盘、三张行动券"><div><strong>55<span>秒</span></strong><small>自由买卖 · 报价随成交变化</small></div><div><strong>5<span>秒</span></strong><small>封盘等待 · 不再交易或控场</small></div><div><strong>3<span>张</span></strong><small>行动额度 · 可以保留不用</small></div></div>
     <section id="monad-panel" class="panel monad-panel" aria-labelledby="monad-title" data-wallet-state="disconnected" data-chain-state="idle">
       <div class="monad-heading">
-        <div class="monad-brand"><span class="monad-mark" aria-hidden="true">M</span><div><p class="small-label">MONAD / TESTNET</p><h2 id="monad-title">把钱包，接入竞技场。</h2></div></div>
+        <div class="monad-brand"><span class="monad-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M16 3 29 16 16 29 3 16Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><rect x="11" y="11" width="10" height="10" rx="3" fill="currentColor"/></svg></span><div><p class="small-label">MONAD / TESTNET</p><h2 id="monad-title">连接你的钱包</h2></div></div>
         <div class="monad-heading-actions"><span id="wallet-state" class="monad-status">尚未连接</span><button id="monad-toggle" class="monad-text-button" type="button" aria-expanded="true" aria-controls="monad-body">收起面板</button></div>
       </div>
       <div id="monad-body">
       <div class="monad-grid">
         <div class="monad-wallet">
-          <ol class="wallet-steps" aria-label="钱包连接步骤"><li id="wallet-step-account" data-state="current"><span>1</span>选择钱包</li><li id="wallet-step-network"><span>2</span>切换测试网</li><li id="wallet-step-balance"><span>3</span>查看余额</li></ol>
-          <div class="wallet-picker"><label for="wallet-provider">选择浏览器钱包</label><select id="wallet-provider" disabled><option value="">未检测到钱包扩展</option></select></div>
-          <div class="wallet-actions"><button id="wallet-connect" class="monad-action monad-primary" type="button">连接所选钱包</button><button id="wallet-switch" class="monad-action monad-primary" type="button" hidden>切换到 Monad Testnet</button><button id="wallet-refresh" class="monad-action" type="button" hidden>刷新余额</button><button id="wallet-disconnect" class="monad-action" type="button" hidden>断开本站连接</button></div>
-          <p id="wallet-message" class="monad-message" role="status" aria-live="polite">没有钱包也能继续试玩，或单独读取测试网区块。</p>
-          <p id="wallet-help" class="wallet-help">请用支持 EVM 的浏览器钱包打开本地 HTTP 或在线页面。<a href="https://docs.monad.xyz/guides/add-monad-to-wallet/testnet" target="_blank" rel="noopener noreferrer">查看官方钱包接入说明 ↗</a></p>
-          <div class="wallet-metrics"><div><span>钱包地址</span><strong id="wallet-address">未连接</strong><div class="wallet-address-actions"><button id="wallet-copy" class="monad-text-button" type="button" hidden>复制地址</button><a id="wallet-account-link" target="_blank" rel="noopener noreferrer" hidden>查看测试网地址 ↗</a></div></div><div><span>测试网余额 · MON</span><strong id="wallet-balance">—</strong><small id="wallet-network">等待连接钱包</small><small id="wallet-balance-time"></small></div></div>
+          <ol class="wallet-steps" aria-label="钱包连接步骤"><li id="wallet-step-account" data-state="current"><span>1</span>选择钱包</li><li id="wallet-step-network"><span>2</span>确认网络</li><li id="wallet-step-balance"><span>3</span>查看余额</li></ol>
+          <fieldset id="wallet-selection" class="wallet-selection"><legend>可用钱包 <span id="wallet-count">0</span></legend><div id="wallet-providers" class="wallet-options"></div></fieldset>
+          <div id="wallet-help" class="wallet-help"><span class="wallet-empty-icon" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M7 8h18a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3h16v3M27 14h-7v7h7" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="22.5" cy="17.5" r="1" fill="currentColor"/></svg></span><div><strong>未检测到钱包扩展</strong><p>请在已安装钱包的浏览器中打开，或先体验模拟交易。</p><a href="https://docs.monad.xyz/guides/add-monad-to-wallet/testnet" target="_blank" rel="noopener noreferrer">钱包接入说明 ↗</a></div><button id="wallet-detect" class="monad-text-button" type="button">重新检测</button></div>
+          <div id="wallet-actions" class="wallet-actions wallet-connection-actions"><button id="wallet-connect" class="monad-action monad-primary wallet-connect-button" type="button" disabled><span id="wallet-connect-label">选择一个钱包以连接</span><span aria-hidden="true">↗</span></button><button id="wallet-switch" class="monad-action monad-primary" type="button" hidden>切换到 Monad Testnet</button><button id="wallet-refresh" class="monad-action" type="button" hidden>刷新余额</button><button id="wallet-disconnect" class="monad-action" type="button" hidden>断开本站连接</button></div>
+          <p id="wallet-message" class="monad-message" role="status" aria-live="polite">连接钱包后，地址与测试网余额会显示在这里。</p>
+          <div id="wallet-account" class="wallet-account" hidden><p id="wallet-connected-name" class="wallet-connected-name"></p><div class="wallet-metrics"><div><span>钱包地址</span><strong id="wallet-address">未连接</strong><div class="wallet-address-actions"><button id="wallet-copy" class="monad-text-button" type="button" hidden>复制地址</button><a id="wallet-account-link" target="_blank" rel="noopener noreferrer" hidden>查看测试网地址 ↗</a></div></div><div><span>测试网余额 · MON</span><strong id="wallet-balance">—</strong><small id="wallet-network">等待连接钱包</small><small id="wallet-balance-time"></small></div></div></div>
           <details id="wallet-address-details" class="wallet-address-details" hidden><summary>完整钱包地址</summary><input id="wallet-full-address" readonly aria-label="完整钱包地址，可手动复制" spellcheck="false"></details>
           <p id="wallet-copy-message" class="monad-message" role="status" aria-live="polite"></p>
         </div>
@@ -899,21 +953,29 @@ function createWalletClient({ readTimeoutMs = 8000, now = Date.now } = {}) {
 
 function discoverWallets(target, onChange) {
   const wallets = [];
-  function add(provider, name, uuid = '') {
-    if (typeof provider?.request !== 'function' || wallets.length >= 16) return;
+  function add(provider, name, uuid = '', icon = '') {
+    if (typeof provider?.request !== 'function') return;
     const existing = wallets.find(wallet => wallet.provider === provider);
     if (existing) {
-      if (uuid) { existing.name = name; existing.uuid = uuid; onChange([...wallets]); }
+      if (uuid && (existing.name !== name || existing.uuid !== uuid || (existing.icon || '') !== icon)) {
+        existing.name = name;
+        existing.uuid = uuid;
+        if (icon) existing.icon = icon;
+        else delete existing.icon;
+        onChange([...wallets]);
+      }
       return;
     }
-    if (uuid && wallets.some(wallet => wallet.uuid === uuid)) return;
-    wallets.push({ provider, name, uuid });
+    if (wallets.length >= 16 || (uuid && wallets.some(wallet => wallet.uuid === uuid))) return;
+    wallets.push({ provider, name, uuid, ...(icon ? { icon } : {}) });
     onChange([...wallets]);
   }
   const announced = event => {
     const info = event.detail?.info;
     if (!info || typeof info.name !== 'string' || typeof info.uuid !== 'string' || !info.uuid || info.uuid.length > 128) return;
-    add(event.detail.provider, info.name.slice(0, 80) || '浏览器钱包', info.uuid);
+    const icon = typeof info.icon === 'string' && info.icon.length <= 131072
+      && /^data:image\/(?:png|jpeg|webp|gif|svg\+xml)(?:;charset=[\w-]+)?(?:;base64)?,.+/is.test(info.icon) ? info.icon : '';
+    add(event.detail.provider, info.name.slice(0, 80) || '浏览器钱包', info.uuid, icon);
   };
   function request() {
     target.dispatchEvent(new Event('eip6963:requestProvider'));
@@ -1070,6 +1132,8 @@ function mountMonad() {
   const wallet = createWalletClient();
   const monitor = createHeadMonitor();
   let wallets = [];
+  let selectedProvider = null;
+  let renderedWallets = [];
   let userSelected = false;
   let displayedAccount = null;
   let copyVersion = 0;
@@ -1108,13 +1172,22 @@ function mountMonad() {
     const chainText = state.status === 'refreshing' ? '正在核对网络' : onMonad ? 'Monad Testnet · 10143' : state.chainId ? `当前网络 ${BigInt(state.chainId).toString()} · 请切换测试网` : '等待连接钱包';
     setText('wallet-network', chainText);
     setText('wallet-state', state.reading ? '正在读取钱包' : state.pending ? '等待钱包确认' : ready ? '测试网已连接' : connected && state.status === 'wrong-network' ? '需要切换网络' : connected ? '状态待刷新' : '尚未连接');
-    const message = state.reading ? '正在核对账户、网络与余额…' : ready ? state.balanceWei === 0n ? '测试网余额为 0，可从下方领水；模拟交易不需要 MON。' : '余额来自当前测试网账户，可单独刷新；游戏积分保持独立。' : connected && onMonad ? '余额暂未读到，可点击“刷新余额”重试。' : connected ? '请切换到 Monad Testnet，或展开下方网络帮助手动设置。' : '选择钱包开始连接。也可以直接试玩，或单独读取测试网区块。';
+    const selected = wallets.find(item => item.provider === selectedProvider);
+    const message = state.reading ? '正在读取账户与余额…' : ready ? state.balanceWei === 0n ? '测试网余额为 0，可从下方领水；模拟交易不需要 MON。' : '账户已就绪，可以继续体验模拟交易。' : connected && onMonad ? '余额暂未读到，可点击“刷新余额”重试。' : connected ? '确认 Monad 测试网后，即可查看 MON 余额。' : selected ? '仅请求账户授权，模拟交易不消耗 MON。' : '选择一个钱包以继续，也可以直接体验模拟交易。';
     setText('wallet-message', state.message || message);
+    $('wallet-message').hidden = !wallets.length && !state.message;
     setText('wallet-shortcut-label', state.reading ? '读取中…' : state.pending ? '等待确认…' : connected ? shortenAddress(state.account) : '连接钱包');
-    $('wallet-connect').hidden = connected;
-    $('wallet-connect').disabled = state.pending;
-    setText('wallet-connect', state.pending ? '等待钱包确认…' : '连接所选钱包');
-    $('wallet-provider').disabled = connected || state.pending || !wallets.length;
+    $('wallet-connect').hidden = connected || !wallets.length;
+    $('wallet-actions').hidden = !wallets.length && !connected && !state.pending;
+    $('wallet-connect').disabled = state.pending || !selected;
+    setText('wallet-connect-label', state.pending ? '等待钱包确认…' : selected ? `连接 ${selected.name}` : '选择一个钱包以连接');
+    $('wallet-selection').disabled = connected || state.pending;
+    $('wallet-selection').hidden = connected || !wallets.length;
+    $('wallet-account').hidden = !connected;
+    setText('wallet-connected-name', selected?.name || '浏览器钱包');
+    $('wallet-providers').querySelectorAll('input').forEach(input => {
+      input.checked = wallets[Number(input.value)]?.provider === selectedProvider;
+    });
     $('wallet-switch').hidden = !connected || state.chainId === MONAD_TESTNET.chainIdHex;
     $('wallet-switch').disabled = state.pending || state.reading;
     $('wallet-refresh').hidden = !connected;
@@ -1125,38 +1198,74 @@ function mountMonad() {
     $('wallet-shortcut').disabled = state.pending;
   }
 
+  function renderChoices() {
+    const changed = wallets.length !== renderedWallets.length || wallets.some((item, index) => {
+      const previous = renderedWallets[index];
+      return item.provider !== previous?.provider || item.name !== previous?.name || item.icon !== previous?.icon;
+    });
+    if (!changed) return;
+    renderedWallets = wallets.map(item => ({ provider: item.provider, name: item.name, icon: item.icon }));
+    $('wallet-providers').replaceChildren(...wallets.map((item, index) => {
+      const label = document.createElement('label');
+      label.className = 'wallet-option';
+      const input = document.createElement('input');
+      input.type = 'radio';
+      input.name = 'wallet-provider';
+      input.value = String(index);
+      const body = document.createElement('span');
+      body.className = 'wallet-option-body';
+      const icon = document.createElement('span');
+      icon.className = 'wallet-option-icon';
+      icon.setAttribute('aria-hidden', 'true');
+      const fallback = document.createElement('span');
+      fallback.textContent = Array.from(item.name.trim())[0]?.toUpperCase() || 'W';
+      icon.append(fallback);
+      if (item.icon) {
+        // 钱包提供的 SVG 仅作为图片加载，禁止作为页面标记插入。
+        const img = document.createElement('img');
+        img.alt = '';
+        img.src = item.icon;
+        img.draggable = false;
+        fallback.hidden = true;
+        img.addEventListener('error', () => { img.remove(); fallback.hidden = false; }, { once: true });
+        icon.append(img);
+      }
+      const copy = document.createElement('span');
+      copy.className = 'wallet-option-copy';
+      const name = document.createElement('strong');
+      name.textContent = item.name;
+      const description = document.createElement('small');
+      description.textContent = '已检测到';
+      copy.append(name, description);
+      const indicator = document.createElement('span');
+      indicator.className = 'wallet-choice-indicator';
+      indicator.setAttribute('aria-hidden', 'true');
+      body.append(icon, copy, indicator);
+      label.append(input, body);
+      return label;
+    }));
+  }
+
   const unsubscribeWallet = wallet.subscribe(renderWallet);
   const discovery = discoverWallets(window, next => {
-    const value = $('wallet-provider').value;
-    const selected = value === '' ? undefined : wallets[Number(value)]?.provider;
     wallets = next;
-    const choices = [];
-    const placeholder = document.createElement('option');
-    placeholder.value = '';
-    placeholder.textContent = wallets.length ? '请选择钱包' : '未检测到钱包扩展';
-    choices.push(placeholder);
-    wallets.forEach((item, index) => {
-      const option = document.createElement('option');
-      option.value = String(index);
-      option.textContent = item.name;
-      choices.push(option);
-    });
-    $('wallet-provider').replaceChildren(...choices);
-    const index = wallets.findIndex(item => item.provider === selected);
-    $('wallet-provider').value = wallets.length === 1 ? '0' : userSelected && index >= 0 ? String(index) : '';
+    if (!userSelected) selectedProvider = wallets.length === 1 ? wallets[0].provider : null;
+    else if (!wallets.some(item => item.provider === selectedProvider)) selectedProvider = null;
+    setText('wallet-count', String(wallets.length));
+    renderChoices();
     $('wallet-help').hidden = wallets.length > 0;
     renderWallet(wallet.getState());
   });
 
   function connectSelected() {
     discovery.request();
-    const value = $('wallet-provider').value;
-    if (wallets.length && value === '') {
-      setText('wallet-message', '检测到多个钱包，请先选择你想连接的那个。');
-      $('wallet-provider').focus();
+    if (!wallets.length) { $('wallet-detect').focus(); return; }
+    if (!selectedProvider) {
+      $('wallet-providers').querySelector('input')?.focus();
       return;
     }
-    void wallet.connect(value === '' ? undefined : wallets[Number(value)]?.provider);
+    userSelected = true;
+    void wallet.connect(selectedProvider);
   }
 
   function setPanelOpen(open) {
@@ -1215,7 +1324,20 @@ function mountMonad() {
   syncEnvironment();
   const handlers = [];
   function listen(target, type, handler) { target.addEventListener(type, handler); handlers.push(() => target.removeEventListener(type, handler)); }
-  listen($('wallet-provider'), 'change', () => { userSelected = true; });
+  listen($('wallet-providers'), 'change', event => {
+    const input = event.target;
+    if (!(input instanceof HTMLInputElement) || input.name !== 'wallet-provider') return;
+    selectedProvider = wallets[Number(input.value)]?.provider || null;
+    userSelected = true;
+    renderWallet(wallet.getState());
+  });
+  listen($('wallet-detect'), 'click', () => {
+    discovery.request();
+    if (!wallets.length) {
+      $('wallet-message').hidden = false;
+      setText('wallet-message', '暂未发现钱包，请确认扩展已启用，或在已安装钱包的桌面浏览器中打开。');
+    }
+  });
   listen($('wallet-connect'), 'click', connectSelected);
   listen($('wallet-shortcut'), 'click', () => {
     setPanelOpen(true);

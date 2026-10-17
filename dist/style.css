@@ -63,3 +63,16 @@
 #game .result-ranking ol{list-style:none;padding:0;margin:6px 0 0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 12px}
 #game .result-ranking li{display:flex;justify-content:space-between;gap:8px;font-size:9px;color:#aebbd1}
 #game .result-ranking li b{font-weight:550}
+
+/* Independent SOL/USD event source panel. */
+.event-panel{margin:15px 0 20px;padding:18px 20px;background:linear-gradient(120deg,#1e2432,#181d29);border-color:#b29afd35}
+.event-rule,.event-caveat{font-size:11px;line-height:1.7;color:#bdc8db;margin:10px 0}
+.event-source-actions{display:flex;align-items:center;gap:13px;flex-wrap:wrap;margin:14px 0}
+.event-source-actions #event-status{font-size:10px;color:var(--muted);flex:1;min-width:220px}
+.price-event-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.price-event-stats>div{padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:#ffffff05;min-width:0}
+.price-event-stats span,.price-event-stats small{display:block;color:var(--muted);font-size:9px}
+.price-event-stats strong{display:block;margin:3px 0;font-size:13px;font-weight:550;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.event-error{margin:10px 0 0;padding:9px 11px;border:1px solid #ff818e55;border-radius:7px;background:#ff818e12;color:#ffabb3;font-size:10px;line-height:1.6}
+.independent-result-note{margin:12px 0 0;padding:10px 12px;border:1px solid #b29afd2a;border-radius:7px;background:#b29afd08;color:#b6c2d6;font-size:10px;line-height:1.65}
+@media(max-width:740px){.event-panel{padding:14px}.price-event-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.event-source-actions{align-items:flex-start;flex-direction:column}}

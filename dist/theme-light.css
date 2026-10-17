@@ -174,6 +174,11 @@
 :root[data-theme="light"] #game .result-ranking{border-top:1px solid #14141417}
 :root[data-theme="light"] #game .result-ranking>strong{color:#4d6997}
 :root[data-theme="light"] #game .result-ranking li{color:#59729c}
+:root[data-theme="light"] .event-panel{background:linear-gradient(120deg,#eceef4,#eff1f6);border-color:#4419ca35}
+:root[data-theme="light"] .event-rule,:root[data-theme="light"] .event-caveat{color:#506893}
+:root[data-theme="light"] .price-event-stats>div{background:#14141405}
+:root[data-theme="light"] .event-error{border:1px solid #d91b2e55;background:#d91b2e12;color:#be1727}
+:root[data-theme="light"] .independent-result-note{border:1px solid #4419ca2a;background:#4419ca08;color:#556d97}
 :root[data-theme="light"] .monad-button{border:1px solid #4419ca55;color:#3d15a9;background:#4419ca12}
 :root[data-theme="light"] .monad-button:not(:disabled):hover{background:#4419ca22;border-color:#4419ca99}
 :root[data-theme="light"] .monad-panel{border-color:#4419ca35;background:linear-gradient(120deg, #edecf4, #eff1f6)}

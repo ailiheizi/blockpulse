@@ -4,7 +4,7 @@ import { performance } from 'node:perf_hooks';
 import {
   createGame, resetGame, startRound, advance, executeTrade, quoteTrade,
   playerAction, nextRound, marketPrices, scenarioOdds, participantStats, quoteBudget, actionPreview,
-  configureEvent, observeEvent, configureAutomation, armChainEvent, ingestBlocks, GameError,
+  configurePriceEvent, observePriceEvent, configureAutomation, configureEvent, observeEvent, armChainEvent, ingestBlocks, GameError,
 } from '../dist/game.js';
 
 const trader = (state, id = 'player') => state.participants.find(item => item.id === id);
@@ -29,21 +29,23 @@ function invariants(state) {
 
 test('new sessions expose schema, modes and an explicit independent maker reserve', () => {
   const state = createGame(0);
-  assert.equal(state.schemaVersion, 3);
+  assert.equal(state.schemaVersion, 4);
   assert.equal(state.phase, 'ready');
   assert.equal(state.initialTotal, 4000);
   assert.equal(state.participants.length, 3);
-  assert.equal(state.noiseRange, 12);
+  assert.equal(state.event.mode, 'simulation');
+  assert.equal(state.participants[0].tickets, 0);
   assert.equal(state.remainingMs, 60000);
   assert.deepEqual(resetGame(0), state);
   const crowd = createGame(0, { botCount: 20 });
   assert.equal(crowd.participants.length, 21);
   assert.equal(new Set(crowd.participants.map(item => item.id)).size, 21);
   assert.equal(crowd.initialTotal, 22000);
-  assert.equal(crowd.noiseRange, 66);
+  assert.equal(crowd.participants[0].tickets, 0);
   assert.deepEqual(marketPrices(state), { red: 0.45, black: 0.45, green: 0.1 });
   rejects(() => createGame(NaN), 'INVALID_SEED');
   rejects(() => createGame(1, { botCount: 3 }), 'INVALID_BOT_COUNT');
+  rejects(() => createGame(1, { mode: 'chain' }), 'LEGACY_EVENT_DISABLED');
   invariants(state);
   invariants(crowd);
 });
@@ -171,21 +173,36 @@ test('budget quotes maximize whole shares without exceeding the requested spend'
   assert.ok(quoteTrade(createGame(28), 'player', 'green', 'short', preview.shares + 1).total > 50);
 });
 
-const monadSpec = () => ({ mode: 'monad', title: '未来目标区块交易笔数', chainId: 10143, source: 'Monad Testnet RPC',
-  startBlock: 100, closeBlock: 110, targetBlock: 120, baseline: 100, lower: 90, upper: 110, confirmations: 2 });
-const verifiedObservation = (txCount = 91) => ({ mode: 'monad', chainId: 10143, headBlock: 122, verified: true,
-  blockNumber: 120, txCount, blockHash: `0x${'a'.repeat(64)}` });
+const PRICE_START_MS = Date.now() + 5000;
+const priceSpec = (overrides = {}) => {
+  const referenceMicros = 100000000;
+  const startTimeMs = PRICE_START_MS;
+  return { mode: 'price', title: 'SOL/USD 到期价格', source: 'Coinbase Exchange SOL-USD', product: 'SOL-USD',
+    startTimeMs, cutoffTimeMs: startTimeMs + 105000, targetTimeMs: startTimeMs + 120000, referenceTimeMs: startTimeMs - 60000,
+    referenceMicros, lowerMicros: 99980000, upperMicros: 100020000, bandBps: 2, settlementDelayMs: 10000, ...overrides };
+};
+const priceObservation = (overrides = {}) => ({ mode: 'price', source: 'Coinbase Exchange SOL-USD', product: 'SOL-USD',
+  serverTimeMs: PRICE_START_MS + 1000, priceMicros: 100000000, priceTimeMs: PRICE_START_MS, verified: false, ...overrides });
+const terminalPriceObservation = (closeMicros, overrides = {}) => priceObservation({ serverTimeMs: PRICE_START_MS + 130000,
+  priceMicros: closeMicros, priceTimeMs: PRICE_START_MS + 120000, verified: true, targetTimeMs: PRICE_START_MS + 120000,
+  candleTimeMs: PRICE_START_MS + 60000, closeMicros, ...overrides });
+function withNow(now, callback) {
+  const original = Date.now;
+  Date.now = () => now;
+  try { return callback(value => { now = value; }); }
+  finally { Date.now = original; }
+}
 
-test('local event settles from target-block traffic and reports ranking/support counts', () => {
+test('practice settles from its independent SOL/USD path and reports ranking/support counts', () => {
   let state = startRound(createGame(38));
   state = executeTrade(state, 'player', 'green', 'buy', 10);
   state = advance(state, 60000);
   assert.equal(state.phase, 'settled');
-  assert.equal(state.event.status, 'simulated');
-  assert.equal(state.event.headBlock, state.event.targetBlock);
+  assert.equal(state.event.status, 'settled');
   assert.equal(state.result.eventMode, 'simulation');
-  assert.equal(state.result.eventValue, state.event.txCount);
-  assert.equal(state.result.color, state.event.txCount > state.event.upper ? 'red' : state.event.txCount < state.event.lower ? 'black' : 'green');
+  assert.equal(state.result.eventValue, state.event.priceMicros);
+  assert.equal(state.result.color, state.event.priceMicros > state.event.upperMicros ? 'red' : state.event.priceMicros < state.event.lowerMicros ? 'black' : 'green');
+  assert.equal(state.result.eventPriceMicros, state.event.priceMicros);
   assert.ok(state.result.supportCounts.green >= 1);
   assert.equal(state.result.ranking.length, state.participants.length);
   assert.equal(state.result.ranking[0].rank, 1);
@@ -207,51 +224,160 @@ test('settlement ranking uses competition ranks for three-way and two-way ties',
   assert.equal(state.result.ranking[0].rank, 1);
 });
 
-test('real Monad observation locks at close and settles only verified exact target block data', () => {
-  let state = configureEvent(createGame(39), monadSpec());
-  assert.equal(scenarioOdds(state).red, 1 / 3);
-  state = startRound(state);
-  state = observeEvent(state, { mode: 'monad', headBlock: 110, observedAt: Date.now(), verified: false });
-  assert.equal(state.phase, 'locked');
-  assert.equal(state.result, null);
-  state = advance(state, 60000);
-  assert.equal(state.phase, 'locked');
-  assert.equal(state.result, null);
-  const settled = observeEvent(state, verifiedObservation(91));
-  assert.equal(settled.phase, 'settled');
-  assert.equal(settled.result.color, 'green');
-  assert.equal(settled.result.eventValue, 91);
-  assert.equal(settled.result.eventHash, `0x${'a'.repeat(64)}`);
-  assert.equal(settled.result.eventMode, 'monad');
-  assert.equal(actionPreview(state, 1).canExecute, false);
-  assert.match(actionPreview(state, 1).reason, /真实链事件/);
-  rejects(() => playerAction(state, 1), 'REAL_EVENT_CONTROL_DISABLED');
-  assert.equal(observeEvent(settled, verifiedObservation(91)), settled);
+test('external price event stays pending after lock and settles only its exact verified candle', () => {
+  withNow(PRICE_START_MS, setNow => {
+    let state = observePriceEvent(configurePriceEvent(createGame(39), priceSpec()), priceObservation());
+    assert.equal(state.mode, 'price');
+    assert.equal(state.event.status, 'live');
+    state = startRound(state);
+    setNow(PRICE_START_MS + 105000);
+    state = observePriceEvent(state, priceObservation({ serverTimeMs: PRICE_START_MS + 105000, priceTimeMs: PRICE_START_MS + 104000 }));
+    assert.equal(state.phase, 'locked');
+    assert.equal(state.result, null);
+    state = advance(state, state.durationMs);
+    assert.equal(state.phase, 'locked');
+    assert.equal(state.result, null);
+    setNow(PRICE_START_MS + 130000);
+    const settled = observePriceEvent(state, terminalPriceObservation(99970000));
+    assert.equal(settled.phase, 'settled');
+    assert.equal(settled.result.color, 'black');
+    assert.equal(settled.result.eventValue, 99970000);
+    assert.equal(settled.result.eventPriceMicros, 99970000);
+    assert.equal(settled.result.eventSource, 'Coinbase Exchange SOL-USD');
+    assert.equal(settled.result.eventTargetTimeMs, priceSpec().targetTimeMs);
+    assert.equal(settled.result.eventCandleTimeMs, priceSpec().targetTimeMs - 60000);
+    assert.equal(actionPreview(state, 1).canExecute, false);
+    assert.match(actionPreview(state, 1).reason, /不受行动券影响/);
+    rejects(() => playerAction(state, 1), 'EVENT_CONTROL_DISABLED');
+    assert.equal(observePriceEvent(settled, terminalPriceObservation(99970000)), settled);
+    const next = nextRound(settled);
+    assert.equal(next.mode, 'price');
+    assert.equal(next.event, null);
+    assert.equal(next.phase, 'ready');
+    assert.equal(next.durationMs, 60000);
+    assert.equal(next.tradingDurationMs, 55000);
+    assert.equal(next.elapsedMs, 0);
+    assert.equal(next.remainingMs, 60000);
+  });
 });
 
-test('real event that reaches close while ready cannot be opened with a stale target', () => {
-  let state = configureEvent(createGame(40), monadSpec());
-  state = observeEvent(state, { mode: 'monad', chainId: 10143, headBlock: 110, verified: false });
-  assert.equal(state.event.status, 'expired');
-  rejects(() => startRound(state), 'EVENT_EXPIRED');
+test('external price event that reaches cutoff while ready cannot be opened', () => {
+  withNow(PRICE_START_MS, setNow => {
+    let state = configurePriceEvent(createGame(40), priceSpec());
+    setNow(priceSpec().cutoffTimeMs);
+    state = observePriceEvent(state, priceObservation({ serverTimeMs: priceSpec().cutoffTimeMs, priceTimeMs: priceSpec().cutoffTimeMs - 1000 }));
+    assert.equal(state.event.status, 'expired');
+    rejects(() => startRound(state), 'EVENT_EXPIRED');
+  });
 });
 
-test('bots cannot apply local heat actions during a real-chain event', () => {
-  const state = advance(startRound(configureEvent(createGame(48), monadSpec())), 20000);
-  assert.equal(state.event.mode, 'monad');
-  assert.equal(state.events.some(item => item.type === 'action'), false);
+test('price event validates source, monotone server time, exact terminal candle and threshold edges', () => {
+  withNow(PRICE_START_MS, setNow => {
+    const configured = configurePriceEvent(createGame(43), priceSpec());
+    rejects(() => configurePriceEvent(createGame(43), priceSpec({ upperMicros: 100020001 })), 'INVALID_EVENT_SPEC');
+    rejects(() => observePriceEvent(configured, priceObservation({ source: 'other' })), 'INVALID_EVENT_OBSERVATION');
+    let live = observePriceEvent(configured, priceObservation());
+    rejects(() => observePriceEvent(live, priceObservation({ serverTimeMs: PRICE_START_MS + 999 })), 'INVALID_EVENT_OBSERVATION');
+    live = startRound(live);
+    setNow(PRICE_START_MS + 130000);
+    rejects(() => observePriceEvent(live, terminalPriceObservation(100000000, { candleTimeMs: PRICE_START_MS + 60001 })), 'INVALID_EVENT_OBSERVATION');
+    for (const [priceMicros, color] of [[99979999, 'black'], [99980000, 'green'], [100020000, 'green'], [100020001, 'red']]) {
+      setNow(PRICE_START_MS);
+      const active = startRound(observePriceEvent(configurePriceEvent(createGame(44), priceSpec()), priceObservation()));
+      setNow(PRICE_START_MS + 130000);
+      const settled = observePriceEvent(active, terminalPriceObservation(priceMicros));
+      assert.equal(settled.result.eventValue, priceMicros);
+      assert.equal(settled.result.color, color);
+    }
+  });
 });
 
-test('real event interval includes both bounds and rejects events outside them', () => {
-  const spec = monadSpec();
-  for (const [txCount, color] of [[spec.lower - 1, 'black'], [spec.lower, 'green'], [spec.upper, 'green'], [spec.upper + 1, 'red']]) {
-    let state = startRound(configureEvent(createGame(43), spec));
-    state = observeEvent(state, verifiedObservation(txCount));
-    assert.equal(state.result.eventValue, txCount);
-    assert.equal(state.result.color, color);
-  }
-  const real = configureEvent(createGame(44), monadSpec());
-  assert.equal(configureEvent(real, { mode: 'simulation' }).event.mode, 'simulation');
+test('price event source clock jumps skip stale scheduler work and keep history monotone', () => {
+  withNow(PRICE_START_MS, setNow => {
+    let state = configurePriceEvent(createGame(48), priceSpec());
+    state = observePriceEvent(state, priceObservation({ serverTimeMs: PRICE_START_MS + 1000 }));
+    assert.equal(state.elapsedMs, 1000);
+
+    // A delayed preflight followed by ready->start must not replay ticks which
+    // occurred before players were allowed to trade.
+    setNow(PRICE_START_MS + 11000);
+    state = observePriceEvent(state, priceObservation({ serverTimeMs: PRICE_START_MS + 11000,
+      priceTimeMs: PRICE_START_MS + 10000 }));
+    assert.equal(state.elapsedMs, 11000);
+    state = startRound(state);
+    assert.ok(state._nextTickMs > state.elapsedMs);
+    assert.ok(state._nextAutomationMs > state.elapsedMs);
+    const firstTradeCount = state.tradeCount;
+    state = advance(state, 1000);
+    assert.ok(state.trades.every(trade => trade.timeMs >= 11000));
+    assert.ok(state.tradeCount >= firstTradeCount);
+    assert.deepEqual(state.history.map(point => point.timeMs), [...state.history.map(point => point.timeMs)].sort((a, b) => a - b));
+
+    // A later server clock jump skips missed bot/automation intervals too.
+    setNow(PRICE_START_MS + 21000);
+    state = observePriceEvent(state, priceObservation({ serverTimeMs: PRICE_START_MS + 21000,
+      priceTimeMs: PRICE_START_MS + 20000 }));
+    assert.ok(state._nextTickMs > state.elapsedMs);
+    assert.ok(state._nextAutomationMs > state.elapsedMs);
+    const beforeAdvance = state.trades.length;
+    state = advance(state, 500);
+    assert.ok(state.trades.slice(beforeAdvance).every(trade => trade.timeMs >= 21000));
+    assert.deepEqual(state.history.map(point => point.timeMs), [...state.history.map(point => point.timeMs)].sort((a, b) => a - b));
+  });
+});
+
+test('stale source closes quote, execute and advance paths without UI mediation', () => {
+  withNow(PRICE_START_MS, setNow => {
+    let state = observePriceEvent(configurePriceEvent(createGame(49), priceSpec()), priceObservation());
+    state = startRound(state);
+    const beforeStale = quoteTrade(state, 'player', 'red', 'buy', 1);
+    assert.equal(beforeStale.canExecute, true);
+    setNow(PRICE_START_MS + 20000);
+    const staleQuote = quoteTrade(state, 'player', 'red', 'buy', 1);
+    assert.equal(staleQuote.canExecute, false);
+    assert.equal(staleQuote.code, 'MARKET_CLOSED');
+    rejects(() => executeTrade(state, 'player', 'red', 'buy', 1), 'MARKET_CLOSED');
+    state = advance(state, 500);
+    assert.equal(state.phase, 'locked');
+    assert.equal(state.tradeCount, 0);
+  });
+});
+
+test('ready round cannot start on a stale preflight observation', () => {
+  withNow(PRICE_START_MS, setNow => {
+    let state = observePriceEvent(configurePriceEvent(createGame(50), priceSpec()), priceObservation());
+    setNow(PRICE_START_MS + 20000);
+    rejects(() => startRound(state), 'EVENT_EXPIRED');
+  });
+});
+
+test('price ticker timestamp may lead server time by up to five seconds', () => {
+  withNow(PRICE_START_MS, () => {
+    const configured = configurePriceEvent(createGame(52), priceSpec());
+    const observation = priceObservation({ serverTimeMs: PRICE_START_MS + 1000,
+      priceTimeMs: PRICE_START_MS + 1149 });
+    let state = observePriceEvent(configured, observation);
+    assert.equal(state.event.priceTimeMs, PRICE_START_MS + 1149);
+    state = startRound(state);
+    state = executeTrade(state, 'player', 'red', 'buy', 1);
+    assert.equal(state.tradeCount, 1);
+    rejects(() => observePriceEvent(configured, priceObservation({ serverTimeMs: PRICE_START_MS + 1000,
+      priceTimeMs: PRICE_START_MS + 6001 })), 'INVALID_EVENT_OBSERVATION');
+  });
+});
+
+test('real price mode leaves uncalibrated bots idle while manual trading stays open', () => {
+  withNow(PRICE_START_MS, () => {
+    let state = observePriceEvent(configurePriceEvent(createGame(51, { botCount: 20 }), priceSpec()), priceObservation());
+    state = startRound(state);
+    state = executeTrade(state, 'player', 'red', 'buy', 10);
+    assert.equal(state.tradeCount, 1);
+    assert.equal(trader(state).holdings.red, 10);
+    state = advance(state, 5000);
+    assert.equal(state.tradeCount, 1);
+    assert.deepEqual(state.trades.map(item => item.traderId), ['player']);
+    assert.ok(state.participants.slice(1).every(bot => bot.tradeCount === 0));
+  });
 });
 
 test('player automation places real fills, records decisions, and stops on manual exit or lock', () => {
@@ -281,20 +407,6 @@ test('player automation places real fills, records decisions, and stops on manua
   assert.equal(locked.phase, 'locked');
   assert.equal(locked.automation.enabled, false);
   assert.equal(locked.automation.lastDecision.action, 'stop');
-});
-
-test('player automation uses chain odds and stops at the busy-block lock', () => {
-  const baseline = Array.from({ length: 600 }, (_, index) => ({ number: 1000 + index, tx: index < 240 ? 3 : 1 }));
-  let state = armChainEvent(createGame(7, { mode: 'chain' }), baseline);
-  state = configureAutomation(startRound(state), { enabled: true, strategy: 'value', orderShares: 10, maxPosition: 50, edge: 0.01 });
-  state = ingestBlocks(state, Array.from({ length: 8 }, (_, index) => ({ number: state.event.startBlock + index + 1, tx: 1 })));
-  assert.ok(state.automation.decisions.length > 0);
-  assert.ok(state.trades.some(item => item.source === 'strategy'));
-  const lockBlocks = Array.from({ length: 157 }, (_, index) => ({ number: state.event.startBlock + state.event.observed + index + 1, tx: 1 }));
-  state = ingestBlocks(state, lockBlocks);
-  assert.equal(state.phase, 'locked');
-  assert.equal(state.automation.enabled, false);
-  assert.equal(state.automation.lastDecision.action, 'stop');
 });
 
 test('extreme legal inventory cannot create zero-cost positive buy shares', () => {
@@ -379,69 +491,51 @@ test('insufficient cash and collateral reject transactions before state changes'
   assert.deepEqual(state, snapshot);
 });
 
-test('tickets are limited, quotes do not draw randomness, and all actions close at 55 seconds', () => {
+test('influence actions are disabled and orders close at the independent event cutoff', () => {
   const initial = startRound(createGame(5));
-  let state = initial;
-  for (let index = 0; index < 3; index += 1) state = playerAction(state, 1);
-  assert.equal(state.heat, 103);
-  assert.equal(trader(initial).tickets, 3);
-  rejects(() => playerAction(state, -1), 'NO_TICKETS');
+  assert.equal(trader(initial).tickets, 0);
+  rejects(() => playerAction(initial, 1), 'EVENT_CONTROL_DISABLED');
   rejects(() => playerAction(initial, 0), 'INVALID_ACTION');
   const locked = advance(initial, 55000);
   assert.equal(locked.phase, 'locked');
   assert.equal(locked.remainingMs, 5000);
   rejects(() => executeTrade(locked, 'player', 'red', 'buy', 1), 'MARKET_CLOSED');
-  rejects(() => playerAction(locked, 1), 'ACTION_CLOSED');
+  rejects(() => playerAction(locked, 1), 'EVENT_CONTROL_DISABLED');
   const before = structuredClone(locked);
   quoteTrade(locked, 'player', 'red', 'buy', 10);
   assert.deepEqual(locked, before);
   const almostDone = advance(locked, 4999);
   assert.equal(almostDone.tradeCount, locked.tradeCount);
-  assert.equal(almostDone.heat, locked.heat);
+  assert.equal(almostDone.result, null);
   assert.equal(almostDone.phase, 'locked');
   invariants(almostDone);
 });
 
-test('scenario odds model the fixed event interval and local controls preview pressure', () => {
+test('scenario odds are an approximate price model and never depend on legacy controls', () => {
   const state = createGame();
-  assert.deepEqual(scenarioOdds(state), { red: 10 / 25, black: 10 / 25, green: 5 / 25 });
+  const odds = scenarioOdds(state);
+  close(odds.red + odds.black + odds.green, 1);
   const preview = actionPreview(state, 1);
   assert.equal(preview.canExecute, false);
-  assert.notDeepEqual(preview.before, preview.after);
-  state.participants.find(item => item.id === 'player').tickets = 0;
-  const exhaustedPreview = actionPreview(state, 1);
-  assert.equal(exhaustedPreview.canExecute, false);
-  assert.equal(exhaustedPreview.reason, '本轮行动券已用完');
-  for (const botCount of [2, 20]) {
-    let game = startRound(createGame(3, { botCount }));
-    for (const delta of [-1, 1]) {
-      let pressured = game;
-      for (let count = 0; count < 3; count += 1) pressured = playerAction(pressured, delta);
-      const odds = scenarioOdds(pressured);
-      close(odds.red + odds.black + odds.green, 1);
-      assert.ok(odds.red > 0 && odds.black > 0 && odds.green > 0);
-      assert.ok(odds.red < 1 && odds.black < 1 && odds.green < 1);
-    }
-  }
-  let capped = startRound(createGame(49));
-  for (let i = 0; i < 3; i += 1) capped = playerAction(capped, 1);
-  const tickets = trader(capped).tickets;
-  const cappedPreview = actionPreview(capped, 1);
-  assert.equal(cappedPreview.canExecute, false);
-  assert.match(cappedPreview.reason, /上限/);
-  rejects(() => playerAction(capped, 1), 'ACTION_LIMIT');
-  assert.equal(trader(capped).tickets, tickets);
+  assert.deepEqual(preview.before, preview.after);
+  const legacy = structuredClone(state);
+  legacy.heat = -1000;
+  legacy.baseline = 777;
+  legacy.greenBand = [999, 1000];
+  legacy.participants[0].tickets = 3;
+  assert.deepEqual(scenarioOdds(legacy), odds);
+  assert.match(preview.reason, /不受行动券影响/);
 });
 
-test('settlement noise is independent of quote, trade and bot RNG consumption', () => {
+test('practice price path is independent of quote, trade and bot RNG consumption', () => {
   const base = startRound(createGame(1234));
   let traded = executeTrade(base, 'player', 'red', 'buy', 10);
   for (let index = 0; index < 20; index += 1) quoteTrade(traded, 'player', 'red', 'sell', 1);
   traded._rngState = 933;
   const left = advance(base, 60000);
   const right = advance(traded, 60000);
-  assert.equal(left.result.noise, right.result.noise);
-  assert.equal(left.result.eventValue, right.result.eventValue);
+  assert.equal(left.result.eventPriceMicros, right.result.eventPriceMicros);
+  assert.equal(left.result.color, right.result.color);
   assert.ok(!('noise' in base));
 });
 
@@ -463,7 +557,7 @@ test('settlement pays winning shares exactly one, clears inventory and books ful
   assert.deepEqual(trader(settled).holdings, { red: 0, black: 0, green: 0 });
   assert.deepEqual(trader(settled).costBasis, { red: 0, black: 0, green: 0 });
   close(trader(settled).realizedPnl, trader(settled).balance - 1000);
-  assert.equal(settled.result.finalHeat, settled.result.actionHeat + settled.result.noise);
+  assert.equal(settled.result.eventPriceMicros, settled.event.priceMicros);
   assert.deepEqual(settled.result.closingPrices, closingPrices);
   assert.equal(marketPrices(settled)[settled.result.color], 1);
   assert.deepEqual(scenarioOdds(settled), marketPrices(settled));

@@ -6,10 +6,9 @@ const pagesBuild = process.argv[2] === '--pages';
 if (process.argv.length > 3 || (process.argv[2] && !pagesBuild)) throw new Error('只支持 --pages 构建参数。');
 const outputFile = pagesBuild ? '_site/index.html' : '本地试玩.html';
 const modules = [
-  ['chain-event.js', 'ChainEvent'],
   ['game.js', 'GameEngine'],
   ['monad.js', 'MonadNetwork'],
-  ['event-source.js', 'BlockEventSource'],
+  ['price-source.js', 'PriceSource'],
   ['monad-monitor.js', 'MonadMonitor'],
   ['monad-ui.js', 'MonadUI'],
   ['monad-market-artifact.js', 'MarketArtifact'],
@@ -17,7 +16,6 @@ const modules = [
   ['chart.js', 'PriceChart'],
   ['monad-market-ui.js', 'MonadMarketUI'],
   ['theme.js', 'ThemeSwitch'],
-  ['block-feed.js', 'BlockFeed'],
   ['event-ui.js', 'EventUI'],
 ];
 const styles = ['style.css', 'monad.css', 'theme-light.css', 'event.css'];

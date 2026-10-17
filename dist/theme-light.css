@@ -137,6 +137,11 @@
 :root[data-theme="light"] .order-panel .outcome-red .result-symbol{background:#c4466612;color:#c44666}
 :root[data-theme="light"] .order-panel .outcome-black .result-symbol{background:#5474b612;color:#5474b6}
 @media(max-width:740px){:root[data-theme="light"] .overview>div:nth-child(n+3){border-top:1px solid #1414140b}}
+:root[data-theme="light"] .price-card .budget-compare{border-top:1px solid #14141412;color:#697da0}
+:root[data-theme="light"] .price-card .budget-compare b{color:#3a15a9}
+:root[data-theme="light"] .side-explainer{color:#94889e}
+:root[data-theme="light"] .amount-modes button{border:1px solid #66418b;background:#1d1527;color:#d0c8d6}
+:root[data-theme="light"] .amount-modes button.selected{background:#5a3491;color:#7e5dad;border-color:#7d45ba}
 :root[data-theme="light"] .how-to-play{border:1px solid #4419ca26;background:linear-gradient(110deg,#4419ca0d,#f0f2f60a)}
 :root[data-theme="light"] .how-to-heading a{color:#4217bb}
 :root[data-theme="light"] .how-to-play li{border:1px solid #1414140b;background:#f0f2f670}

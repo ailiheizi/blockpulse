@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { performance } from 'node:perf_hooks';
 import {
   createGame, resetGame, startRound, advance, executeTrade, quoteTrade,
-  playerAction, nextRound, marketPrices, scenarioOdds, participantStats, GameError,
+  playerAction, nextRound, marketPrices, scenarioOdds, participantStats, quoteBudget, GameError,
 } from '../dist/game.js';
 
 const trader = (state, id = 'player') => state.participants.find(item => item.id === id);
@@ -65,7 +65,9 @@ test('ready previews are pure and cost reflects depth, price impact and fees', (
   assert.ok(Number.isFinite(quoteTrade(huge, 'player', 'red', 'buy', 1).gross));
   rejects(() => quoteTrade(state, 'unknown', 'red', 'buy', 1), 'INVALID_TRADER');
   rejects(() => quoteTrade(state, 'player', 'blue', 'buy', 1), 'INVALID_COLOR');
-  rejects(() => quoteTrade(state, 'player', 'red', 'short', 1), 'INVALID_SIDE');
+  const noQuote = quoteTrade(state, 'player', 'red', 'short', 1);
+  assert.equal(noQuote.side, 'short');
+  assert.deepEqual(noQuote.legs.map(leg => leg.color), ['black', 'green']);
   for (const value of [0, -1, 1.5, 1001, Infinity, NaN, '5']) rejects(() => quoteTrade(state, 'player', 'red', 'buy', value), 'INVALID_SHARES');
 });
 
@@ -91,6 +93,81 @@ test('buy/sell round trip loses its fees and cannot mint points; no short sellin
   assert.deepEqual(marketPrices(sold), marketPrices(initial));
   invariants(bought);
   invariants(sold);
+});
+
+test('fully paid NO opens two real legs, covers both legs, and preserves all funds', () => {
+  const initial = startRound(createGame(24));
+  const before = structuredClone(initial);
+  const quote = quoteTrade(initial, 'player', 'red', 'short', 40);
+  assert.equal(quote.canExecute, true);
+  assert.deepEqual(quote.legs.map(leg => [leg.color, leg.side, leg.shares]), [
+    ['black', 'buy', 40], ['green', 'buy', 40],
+  ]);
+  close(quote.total, quote.legs.reduce((sum, leg) => sum + leg.total, 0));
+  assert.equal(quote.winPayout, 40);
+  const opened = executeTrade(initial, 'player', 'red', 'short', 40);
+  assert.deepEqual(initial, before);
+  assert.deepEqual(trader(opened).holdings, { red: 0, black: 40, green: 40 });
+  assert.equal(opened.trades.length, 2);
+  assert.ok(opened.trades.every(leg => leg.comboColor === 'red' && leg.comboSide === 'short' && leg.groupId === opened.trades[0].groupId));
+  close(opened.participants.reduce((sum, item) => sum + item.balance, 0) + opened.market.cash, opened.initialTotal);
+
+  const coverQuote = quoteTrade(opened, 'player', 'red', 'cover', 40);
+  assert.equal(coverQuote.canExecute, true);
+  assert.deepEqual(coverQuote.legs.map(leg => [leg.color, leg.side, leg.shares]), [
+    ['black', 'sell', 40], ['green', 'sell', 40],
+  ]);
+  const covered = executeTrade(opened, 'player', 'red', 'cover', 40);
+  assert.deepEqual(trader(covered).holdings, { red: 0, black: 0, green: 0 });
+  assert.ok(trader(covered).balance < 1000);
+  assert.ok(covered.trades.slice(-2).every(leg => leg.comboSide === 'cover'));
+  close(covered.participants.reduce((sum, item) => sum + item.balance, 0) + covered.market.cash, covered.initialTotal);
+  invariants(opened);
+  invariants(covered);
+});
+
+test('NO combo rejects missing second-leg funds or cover inventory without partial fills', () => {
+  let state = startRound(createGame(25));
+  trader(state).balance = 0.5;
+  const beforeShort = structuredClone(state);
+  const quote = quoteTrade(state, 'player', 'red', 'short', 1);
+  assert.equal(quote.canExecute, false);
+  assert.equal(quote.code, 'INSUFFICIENT_BALANCE');
+  rejects(() => executeTrade(state, 'player', 'red', 'short', 1), 'INSUFFICIENT_BALANCE');
+  assert.deepEqual(state, beforeShort);
+
+  state = startRound(createGame(26));
+  state = executeTrade(state, 'player', 'black', 'buy', 5);
+  const beforeCover = structuredClone(state);
+  const cover = quoteTrade(state, 'player', 'red', 'cover', 1);
+  assert.equal(cover.canExecute, false);
+  assert.equal(cover.code, 'INSUFFICIENT_HOLDINGS');
+  rejects(() => executeTrade(state, 'player', 'red', 'cover', 1), 'INSUFFICIENT_HOLDINGS');
+  assert.deepEqual(state, beforeCover);
+});
+
+test('budget quotes maximize whole shares without exceeding the requested spend', () => {
+  const state = startRound(createGame(27));
+  for (const side of ['buy', 'short']) {
+    const quote = quoteBudget(state, 'player', 'green', 50, side);
+    assert.ok(quote.shares > 0);
+    assert.ok(quote.total <= 50);
+    assert.ok(quote.unusedBudget >= 0);
+    assert.ok(quoteTrade(state, 'player', 'green', side, quote.shares + 1).total > 50);
+    close(quote.unusedBudget, 50 - quote.total);
+  }
+  const expensive = structuredClone(state);
+  expensive.market.q.red = 1000;
+  const tooSmall = quoteBudget(expensive, 'player', 'red', 1, 'buy');
+  assert.equal(tooSmall.shares, 0);
+  assert.equal(tooSmall.code, 'BUDGET_TOO_SMALL');
+
+  const preview = quoteBudget(createGame(28), 'player', 'green', 50, 'short');
+  assert.ok(preview.shares > 0);
+  assert.ok(preview.total <= 50);
+  assert.equal(preview.canExecute, false);
+  assert.equal(preview.code, 'MARKET_CLOSED');
+  assert.ok(quoteTrade(createGame(28), 'player', 'green', 'short', preview.shares + 1).total > 50);
 });
 
 test('extreme legal inventory cannot create zero-cost positive buy shares', () => {

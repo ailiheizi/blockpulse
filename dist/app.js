@@ -1,4 +1,4 @@
-import { createGame, resetGame, startRound, advance, executeTrade, playerAction, nextRound, quoteTrade, marketPrices, scenarioOdds, participantStats, armChainEvent, ingestBlocks, voidRound } from './game.js';
+import { createGame, resetGame, startRound, advance, executeTrade, playerAction, nextRound, quoteTrade, quoteBudget, marketPrices, scenarioOdds, participantStats, armChainEvent, ingestBlocks, voidRound } from './game.js';
 import { mountMonad } from './monad-ui.js';
 import { mountMarket } from './monad-market-ui.js';
 import { mountTheme } from './theme.js';
@@ -25,6 +25,8 @@ const live = s => s.phase === 'trading' || s.phase === 'locked';
 let state = createGame(freshSeed(), { botCount: 2 });
 let selectedColor = 'red';
 let selectedSide = 'buy';
+let amountMode = 'budget';
+let compareKey = '';
 let lastNow = performance.now();
 let lastPhase = '';
 let lastPersistAt = 0;
@@ -62,6 +64,7 @@ function validSaved(saved) {
   }
   if (!ids.has('player') || playerOf(s).strategy !== 'player') return false;
   if (!nonnegative(s.market?.cash) || !finite(s.market?.b) || s.market.b <= 0 || s.market.feeRate !== 0.003 || !COLORS.every(c => Number.isInteger(s.market.q?.[c]) && s.market.q[c] >= 0 && s.market.q[c] <= s.market.cash + 0.000001)) return false;
+  if (!s.market.priors || Math.abs(s.market.priors.red - 0.45) > 1e-12 || Math.abs(s.market.priors.black - 0.45) > 1e-12 || Math.abs(s.market.priors.green - 0.10) > 1e-12) return false;
   if (s.initialTotal !== (s.botCount + 1) * 1000 + 1000 || Math.abs(s.participants.reduce((sum, p) => sum + p.balance, s.market.cash) - s.initialTotal) > 0.001) return false;
   if (!COLORS.every(c => Math.abs(s.participants.reduce((sum, p) => sum + p.holdings[c], 0) - s.market.q[c]) < 0.000001)) return false;
   if (!Array.isArray(s.history) || !s.history.length || s.history.length > 10000 || !s.history.every(p => nonnegative(p.timeMs) && p.timeMs <= s.elapsedMs && finite(p.heat) && COLORS.every(c => nonnegative(p.prices?.[c]) && p.prices[c] <= 1))) return false;
@@ -88,15 +91,17 @@ try {
   if (validSaved(saved)) {
     state = saved.state;
     selectedColor = COLORS.includes(saved.form?.color) ? saved.form.color : 'red';
-    selectedSide = saved.form?.side === 'sell' ? 'sell' : 'buy';
+    selectedSide = ['buy', 'sell', 'short', 'cover'].includes(saved.form?.side) ? saved.form.side : 'buy';
+    amountMode = ['sell', 'cover'].includes(selectedSide) ? 'shares' : saved.form?.mode === 'shares' ? 'shares' : 'budget';
     if (typeof saved.form?.shares === 'string' && saved.form.shares.length <= 8) $('shares').value = saved.form.shares;
+    if (typeof saved.form?.budget === 'string' && saved.form.budget.length <= 8) $('budget').value = saved.form.budget;
     $('notice').textContent = '已恢复本机 v2 进度；离开页面期间未继续模拟。';
   } else if (saved) $('notice').textContent = '旧进度或无效进度未恢复，已准备新的 v2 场次。';
 } catch { /* Storage is optional; an unavailable or invalid save never blocks play. */ }
 
 function persist() {
   if (chainMode()) return;
-  try { localStorage.setItem(KEY, JSON.stringify({ version: 2, state, form: { color: selectedColor, side: selectedSide, shares: $('shares').value } })); } catch { /* Private mode or full storage is fine. */ }
+  try { localStorage.setItem(KEY, JSON.stringify({ version: 2, state, form: { color: selectedColor, side: selectedSide, shares: $('shares').value, budget: $('budget').value, mode: amountMode } })); } catch { /* Private mode or full storage is fine. */ }
   lastPersistAt = performance.now();
 }
 function notify(message) { $('notice').textContent = message; }
@@ -145,7 +150,7 @@ function drawTrades() {
   const trades = state.trades.slice(-9).reverse();
   $('trades-body').innerHTML = trades.length ? trades.map(t => {
     const participant = state.participants.find(p => p.id === t.traderId);
-    return `<tr><td>${esc(participant?.name || t.traderId)}<small>${fmt(t.timeMs / 1000, 1)} 秒</small></td><td><span class="trade-side ${t.side}">${t.side === 'buy' ? '买' : '卖'}${LABELS[t.color]}</span></td><td>${fmt(t.shares, 0)}</td><td>${esc(moneyFmt(t.averagePrice, 4))}</td><td>${esc(moneyFmt(t.fee, 4))}</td><td>${t.side === 'buy' ? '−' : '+'}${esc(moneyFmt(t.total, 3))}</td></tr>`;
+    return `<tr><td>${esc(participant?.name || t.traderId)}<small>${fmt(t.timeMs / 1000, 1)} 秒</small></td><td><span class="trade-side ${t.side}">${t.comboSide === 'short' ? '开 NO' : t.comboSide === 'cover' ? '平 NO' : t.side === 'buy' ? '买' : '卖'}${t.comboSide ? ` · ${LABELS[t.color]}` : LABELS[t.color]}</span></td><td>${fmt(t.shares, 0)}</td><td>${esc(moneyFmt(t.averagePrice, 4))}</td><td>${esc(moneyFmt(t.fee, 4))}</td><td>${t.side === 'buy' ? '−' : '+'}${esc(moneyFmt(t.total, 3))}</td></tr>`;
   }).join('') : '<tr><td colspan="6" class="empty-cell">开场后，这里记录每一笔实际成交。</td></tr>';
 }
 
@@ -175,57 +180,106 @@ function drawFeed() {
 }
 
 function renderQuote(prices) {
-  const player = playerOf(state), quantity = Number($('shares').value);
-  const buy = selectedSide === 'buy';
+  const player = playerOf(state);
+  const opening = selectedSide === 'buy' || selectedSide === 'short';
+  const buying = selectedSide === 'buy';
+  const noSide = selectedSide === 'short' || selectedSide === 'cover';
+  const closeSide = selectedSide === 'sell' || selectedSide === 'cover';
   const closed = state.phase === 'locked' || state.phase === 'settled';
+  const useBudget = amountMode === 'budget' && opening;
+  const amount = Number(useBudget ? $('budget').value : $('shares').value);
+  const effectiveBudget = useBudget ? Math.min(amount, player.balance) : amount;
   $('selected-chip').className = `color-tag ${selectedColor}`;
-  $('selected-chip').innerHTML = `<i></i>${NAMES[selectedColor]}`;
-  $('available').textContent = buy ? `可用 ${fmt(player.balance)} 积分` : `持有 ${fmt(player.holdings[selectedColor], 0)} 份`;
-  $('quote-total-label').textContent = buy ? '预计支付（含费用）' : '预计到账（扣除费用）';
-  setText('submit-label', state.phase === 'settled' ? '本轮已到期' : state.phase === 'locked' ? '已封盘，等待结算' : `${buy ? '买入' : '卖出'}${LABELS[selectedColor]}色份额`);
-  setText('max-shares', buy ? '最多' : player.holdings[selectedColor] > 1000 ? '卖 1,000 份' : '卖出 100%');
-  $('max-shares').disabled = closed || (!buy && player.holdings[selectedColor] < 1);
+  $('selected-chip').innerHTML = `<i></i>${NAMES[selectedColor]}${noSide ? ' · NO' : ''}`;
+  $('budget-row').hidden = !useBudget;
+  $('shares-row').hidden = useBudget;
+  $('budget-mode').classList.toggle('selected', amountMode === 'budget');
+  $('shares-mode').classList.toggle('selected', amountMode === 'shares');
+  $('budget-mode').setAttribute('aria-pressed', String(amountMode === 'budget'));
+  $('shares-mode').setAttribute('aria-pressed', String(amountMode === 'shares'));
+  $('budget-mode').disabled = closeSide;
+  const noLegs = COLORS.filter(color => color !== selectedColor);
+  $('short-explainer').textContent = selectedSide === 'cover'
+    ? `平仓将卖出 ${noLegs.map(color => LABELS[color]).join(' + ')} 两条 NO 持仓；没有杠杆或自动借币。`
+    : '做空所选颜色会全额买入等份的另外两色作为 NO 组合；无借贷、杠杆或强平。平 NO 会卖出这两种实际持仓。';
+  $('available').textContent = opening ? `可用 ${fmt(player.balance)} 积分` : selectedSide === 'cover'
+    ? `NO 可平 ${fmt(Math.min(...COLORS.filter(c => c !== selectedColor).map(c => player.holdings[c])), 0)} 份`
+    : `持有 ${fmt(player.holdings[selectedColor], 0)} 份`;
+  $('quote-total-label').textContent = opening ? '预计支付（含费用）' : '预计到账（扣除费用）';
+  const actionName = { buy: '买入 YES', sell: '卖出', short: '买入 NO', cover: '平 NO' }[selectedSide];
+  setText('submit-label', state.phase === 'settled' ? '本轮已到期' : state.phase === 'locked' ? '已封盘，等待结算' : `${actionName} · ${LABELS[selectedColor]}`);
+  $('max-shares').textContent = selectedSide === 'cover' ? '全部平 NO' : opening ? '最多' : '卖出全部';
+  const held = selectedSide === 'cover' ? Math.min(...COLORS.filter(c => c !== selectedColor).map(c => player.holdings[c])) : player.holdings[selectedColor];
+  $('max-shares').disabled = closed || (closeSide && held < 1);
+  $('budget').disabled = closed || !opening;
   $('shares').disabled = closed;
-  document.querySelectorAll('#game [data-shares]').forEach(b => { const selected = Number(b.dataset.shares) === quantity; b.disabled = closed; b.classList.toggle('selected', selected); b.setAttribute('aria-pressed', String(selected)); });
-  document.querySelectorAll('#game [data-side]').forEach(b => { b.classList.toggle('selected', b.dataset.side === selectedSide); b.setAttribute('aria-pressed', String(b.dataset.side === selectedSide)); });
+  document.querySelectorAll('#game [data-budget]').forEach(button => { const selected = Number(button.dataset.budget) === amount; button.disabled = closed; button.classList.toggle('selected', selected); button.setAttribute('aria-pressed', String(selected)); });
+  document.querySelectorAll('#game [data-shares]').forEach(button => { const selected = Number(button.dataset.shares) === amount; button.disabled = closed; button.classList.toggle('selected', selected); button.setAttribute('aria-pressed', String(selected)); });
+  document.querySelectorAll('#game [data-side]').forEach(button => { button.classList.toggle('selected', button.dataset.side === selectedSide); button.setAttribute('aria-pressed', String(button.dataset.side === selectedSide)); });
   if (state.phase === 'settled') {
-    ['quote-total', 'quote-average', 'quote-gross', 'quote-fee', 'quote-impact'].forEach(id => { $(id).textContent = '—'; });
+    ['quote-total', 'quote-average', 'quote-gross', 'quote-fee', 'quote-impact', 'quote-shares', 'quote-unused'].forEach(id => { $(id).textContent = '—'; });
     $('quote-spot').textContent = `${fmt(prices[selectedColor], 3)} / 份（到期兑付）`;
     $('win-preview').hidden = true;
     $('submit-trade').disabled = true;
     $('quote-note').textContent = state.result.voided ? '本轮已作废，份额按成本退回。下一轮重新读取基准。'
       : chainMode() ? '本轮份额已按结果兑付，卡片显示到期兑付价。下一轮按新的基准区块重新定开盘价。'
-      : '本轮份额已按结果兑付，卡片显示到期兑付价。下一轮重新从三色等价开始。';
+      : '本轮份额已按结果兑付，卡片显示到期兑付价。下一轮重新开始。';
     return;
   }
   let quote;
-  try { quote = quoteTrade(state, 'player', selectedColor, selectedSide, quantity); }
-  catch (error) {
-    ['quote-total', 'quote-spot', 'quote-average', 'quote-gross', 'quote-fee', 'quote-impact'].forEach(id => { $(id).textContent = '—'; });
+  try {
+    quote = useBudget
+      ? quoteBudget(state, 'player', selectedColor, effectiveBudget, selectedSide)
+      : quoteTrade(state, 'player', selectedColor, selectedSide, amount);
+  } catch (error) {
+    ['quote-total', 'quote-spot', 'quote-average', 'quote-gross', 'quote-fee', 'quote-impact', 'quote-shares', 'quote-unused'].forEach(id => { $(id).textContent = '—'; });
     $('win-preview').hidden = true;
     $('submit-trade').disabled = true;
-    $('quote-note').textContent = error.reason || '请输入 1 至 1,000 的整数份数。';
+    $('quote-note').textContent = error.reason || error.message || '请检查预算或份数。';
     return;
   }
-  const hasQuote = !(selectedSide === 'sell' && player.holdings[selectedColor] < quantity);
-  $('quote-total').textContent = hasQuote ? moneyFmt(quote.total, 3) : '—';
+  const count = quote.shares;
+  const validQuote = Number.isInteger(count) && count > 0 && !(closeSide && quote.code === 'INSUFFICIENT_HOLDINGS');
+  $('quote-shares').textContent = validQuote ? `${fmt(count, 0)} 份` : '—';
+  $('quote-unused').textContent = useBudget && validQuote ? `${moneyFmt(Math.max(0, effectiveBudget - quote.total), 3)} 分${amount > player.balance ? `（余额上限 ${fmt(player.balance)}）` : ''}` : '—';
+  $('quote-total').textContent = validQuote ? moneyFmt(quote.total, 3) : '—';
   $('quote-spot').textContent = `${fmt(quote.spotPrice, 4)} / 份`;
-  $('quote-average').textContent = hasQuote ? `${moneyFmt(quote.averagePrice, 4)} / 份` : '—';
-  $('quote-gross').textContent = hasQuote ? moneyFmt(quote.gross, 4) : '—';
-  $('quote-fee').textContent = hasQuote ? moneyFmt(quote.fee, 4) : '—';
-  $('quote-impact').textContent = hasQuote ? `${signed((quote.pricesAfter[selectedColor] - quote.spotPrice) * 100, 2)} 个百分点` : '—';
-  $('win-preview').hidden = !buy || closed;
-  $('win-label').textContent = `若${LABELS[selectedColor]}盘命中，持有到结算`;
-  $('quote-win-payout').textContent = `兑付 ${fmt(quote.winPayout, 0)} 积分`;
+  $('quote-average').textContent = validQuote ? `${moneyFmt(quote.averagePrice, 4)} / 份` : '—';
+  $('quote-gross').textContent = validQuote ? moneyFmt(quote.gross, 4) : '—';
+  $('quote-fee').textContent = validQuote ? moneyFmt(quote.fee, 4) : '—';
+  const currentImpactSpot = selectedSide === 'short' || selectedSide === 'cover' ? 1 - prices[selectedColor] : prices[selectedColor];
+  const nextImpactSpot = selectedSide === 'short' || selectedSide === 'cover' ? 1 - quote.pricesAfter[selectedColor] : quote.pricesAfter[selectedColor];
+  $('quote-impact').textContent = validQuote ? `${signed((nextImpactSpot - currentImpactSpot) * 100, 2)} 个百分点` : '—';
+  $('win-preview').hidden = !opening || !validQuote;
+  $('win-label').textContent = selectedSide === 'short' ? `若${LABELS[selectedColor]}盘未命中，NO 组合兑付` : `若${LABELS[selectedColor]}盘命中，持有到结算`;
+  $('quote-win-payout').textContent = validQuote ? `兑付 ${fmt(quote.winPayout, 0)} 积分` : '—';
   profitText('quote-win-profit', quote.winProfit, 3);
-  $('quote-roi').textContent = `本单命中净回报 ${signed(quote.roi * 100, 1)}%；未命中最多损失 ${moneyFmt(quote.total, 3)} 积分。此为条件收益，不是胜率。`;
-  $('submit-trade').disabled = !quote.canExecute || simulationFailed;
-  $('quote-note').textContent = quote.canExecute ? '报价随成交变化，点击时重新核算；你也可以盘中卖出，锁定实际盈亏。' : quote.reason || '当前不能成交。';
+  $('quote-roi').textContent = validQuote ? `命中时返还 ${fmt((quote.winPayout / quote.total) || 0, 2)}× 本单成本；净收益 ${signed(quote.winProfit, 3)} 分。这是条件兑付，不是胜率。` : '预算不足以买入一份。';
+  $('submit-trade').disabled = !quote.canExecute || !validQuote || simulationFailed;
+  const legs = quote.legs?.map(leg => `${LABELS[leg.color]} ${fmt(leg.shares, 0)} 份 ${leg.side === 'buy' ? '买入' : '卖出'} ${moneyFmt(leg.total, 3)} 分`).join('；');
+  $('quote-note').textContent = legs
+    ? `NO 两腿报价：${legs}。${quote.canExecute ? '下单时按最新报价重算。' : quote.reason || '当前不能成交。'}`
+    : quote.canExecute ? '报价随成交变化，下单时按最新价格重算；你可以盘中卖出锁定实际盈亏。' : quote.reason || '当前不能成交。';
+}
+
+function drawBudgetComparisons() {
+  const key = `${state.round}:${state.block}:${state.tradeCount}:${state.market.cash}:${state.market.q.red}:${state.market.q.black}:${state.market.q.green}`;
+  if (compareKey === key) return;
+  compareKey = key;
+  for (const color of COLORS) {
+    try {
+      const quote = quoteBudget(state, 'player', color, 50, 'buy');
+      $(`compare-${color}`).textContent = quote.shares > 0
+        ? `${fmt(quote.shares, 0)}份 · 命中返${fmt(quote.winPayout, 0)}分 · ${fmt(quote.winPayout / quote.total, 2)}×`
+        : '50分不足1份';
+    } catch { $(`compare-${color}`).textContent = '暂不可报价'; }
+  }
 }
 
 function render() {
   const player = playerOf(state), stats = participantStats(state, 'player');
   const prices = marketPrices(state), odds = scenarioOdds(state);
+  drawBudgetComparisons();
   const trading = state.phase === 'trading', settled = state.phase === 'settled';
   const chain = chainMode(), e = state.event, voided = settled && state.result.voided;
   const feedLive = feedState.status === 'live';
@@ -307,41 +361,55 @@ function runOperation(operation) {
   catch (error) { showError(error.reason || error.message || '操作未成功，请查看当前阶段与账户余额。'); render(); }
 }
 
-document.querySelectorAll('#game [data-color]').forEach(b => b.addEventListener('click', () => runOperation(() => { selectedColor = b.dataset.color; })));
-document.querySelectorAll('#game [data-side]').forEach(b => b.addEventListener('click', () => runOperation(() => { selectedSide = b.dataset.side; })));
-document.querySelectorAll('#game [data-shares]').forEach(b => b.addEventListener('click', () => runOperation(() => { $('shares').value = b.dataset.shares; })));
+document.querySelectorAll('#game [data-color]').forEach(button => button.addEventListener('click', () => runOperation(() => { selectedColor = button.dataset.color; })));
+document.querySelectorAll('#game [data-side]').forEach(button => button.addEventListener('click', () => runOperation(() => {
+  selectedSide = button.dataset.side;
+  if (selectedSide === 'sell' || selectedSide === 'cover') amountMode = 'shares';
+})));
+document.querySelectorAll('#game [data-budget]').forEach(button => button.addEventListener('click', () => runOperation(() => { $('budget').value = button.dataset.budget; })));
+document.querySelectorAll('#game [data-shares]').forEach(button => button.addEventListener('click', () => runOperation(() => { $('shares').value = button.dataset.shares; })));
+$('budget-mode').addEventListener('click', () => runOperation(() => { if (selectedSide === 'buy' || selectedSide === 'short') amountMode = 'budget'; }));
+$('shares-mode').addEventListener('click', () => runOperation(() => { amountMode = 'shares'; }));
+$('budget').addEventListener('input', () => runOperation(() => {}));
+$('budget').addEventListener('keydown', event => { if (event.key === 'Enter' && !$('submit-trade').disabled) $('submit-trade').click(); });
 $('shares').addEventListener('input', () => runOperation(() => {}));
-$('shares').addEventListener('keydown', e => { if (e.key === 'Enter' && !$('submit-trade').disabled) $('submit-trade').click(); });
+$('shares').addEventListener('keydown', event => { if (event.key === 'Enter' && !$('submit-trade').disabled) $('submit-trade').click(); });
 
 $('max-shares').addEventListener('click', () => runOperation(() => {
+  amountMode = 'shares';
   if (selectedSide === 'sell') {
     const owned = playerOf(state).holdings[selectedColor];
     if (!owned) throw new Error('当前没有该色持仓可以卖出。');
     $('shares').value = String(Math.min(1000, owned));
     if (owned > 1000) notify('单笔最多 1,000 份；要一次清掉全部，请使用持仓行的“全部卖出”。');
+  } else if (selectedSide === 'cover') {
+    const closable = Math.min(...COLORS.filter(color => color !== selectedColor).map(color => playerOf(state).holdings[color]));
+    if (!closable) throw new Error('另外两色没有等量持仓，当前不能平 NO。');
+    $('shares').value = String(Math.min(1000, closable));
   } else {
-    // Ready quotes are previews; temporarily adjust only the phase for checking
-    // affordability. No state changes or random draws occur while quoting.
     const preview = state.phase === 'ready' ? { ...state, phase: 'trading' } : state;
+    const limit = selectedSide === 'buy' ? playerOf(state).balance : playerOf(state).balance;
     let low = 0, high = 1000;
     while (low < high) {
       const mid = Math.ceil((low + high) / 2);
-      if (quoteTrade(preview, 'player', selectedColor, 'buy', mid).canExecute) low = mid;
+      const quote = quoteTrade(preview, 'player', selectedColor, selectedSide, mid);
+      if (quote.canExecute && quote.total <= limit) low = mid;
       else high = mid - 1;
     }
-    if (!low) throw new Error('积分或做市储备不足，当前不能买入一份。');
+    if (!low) throw new Error('积分或做市储备不足，当前不能开仓。');
     $('shares').value = String(low);
   }
 }));
 
 $('submit-trade').addEventListener('click', () => runOperation(() => {
-  const quantity = Number($('shares').value);
-  const before = state.tradeCount;
-  state = executeTrade(state, 'player', selectedColor, selectedSide, quantity);
-  if (state.tradeCount > before) {
-    const trade = state.trades.at(-1);
-    notify(`已${selectedSide === 'buy' ? '买入' : '卖出'}${LABELS[selectedColor]}色 ${fmt(quantity, 0)} 份，${selectedSide === 'buy' ? '支付' : '到账'} ${fmt(trade.total, 4)} 积分（费用 ${fmt(trade.fee, 4)}）。`);
-  }
+  const quote = amountMode === 'budget' && (selectedSide === 'buy' || selectedSide === 'short')
+    ? quoteBudget(state, 'player', selectedColor, Math.min(Number($('budget').value), playerOf(state).balance), selectedSide)
+    : quoteTrade(state, 'player', selectedColor, selectedSide, Number($('shares').value));
+  if (!quote.canExecute || !quote.shares) throw new Error(quote.reason || '当前报价无法成交。');
+  state = executeTrade(state, 'player', selectedColor, selectedSide, quote.shares);
+  const verb = { buy: '买入 YES', sell: '卖出持仓', short: '买入 NO', cover: '平 NO' }[selectedSide];
+  const legSummary = quote.legs?.map(leg => `${LABELS[leg.color]} ${leg.shares} 份`).join(' + ');
+  notify(`已${verb} ${legSummary || `${LABELS[selectedColor]} ${fmt(quote.shares, 0)} 份`}，${selectedSide === 'buy' || selectedSide === 'short' ? '支付' : '到账'} ${fmt(quote.total, 4)} 积分，费用 ${fmt(quote.fee, 4)}。`);
 }));
 
 function sellColors(colors) {
@@ -387,7 +455,7 @@ function freshGame(botCount = state.botCount) {
   state = resetGame(freshSeed(), { botCount, mode: state.mode });
   simulationFailed = false;
   if (chainMode()) maybeArm();
-  selectedColor = 'red'; selectedSide = 'buy'; $('shares').value = '50';
+  selectedColor = 'red'; selectedSide = 'buy'; amountMode = 'budget'; $('budget').value = '50'; $('shares').value = '50'; compareKey = '';
   lastNow = performance.now(); lastPhase = ''; clearKeys(); showError();
   persist(); render(); notify(`新场次已准备：你与 ${botCount} 位 Bot 各有 1,000 积分，做市账户有 1,000 积分。`);
 }

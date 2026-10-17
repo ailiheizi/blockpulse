@@ -76,9 +76,9 @@ cd "/Users/amigoer/DevProjects/blockpulse-demo"
 
 ## GitHub Pages 配置
 
-保留远端新增的 [Pages 工作流](.github/workflows/pages.yml)，只支持手动触发；推送 `main` 只同步源代码，不自动发布站点。站点部署需要另外明确授权。本次本地迭代不会更新此前的 [Pages 地址](https://ailiheizi.github.io/blockpulse-demo/)，该地址可能仍是旧版。
+已按用户授权启用 [Pages 自动部署工作流](.github/workflows/pages.yml)：每次推送 `main` 自动执行 `npm test`，测试通过后打包静态资源并发布到 [GitHub Pages](https://ailiheizi.github.io/blockpulse-demo/)。测试失败时停止发布，线上保留上次成功版本；也可在 GitHub Actions 中手动运行该工作流。
 
-工作流沿用远端的测试、静态资源打包与发布步骤；发布内容为 `dist/`，无需运行 `server.mjs`。本地单文件生成与站点部署是独立步骤。
+发布内容为 `dist/`，这是浏览器直接运行的静态模块，无需安装依赖或运行 `server.mjs`。可在 [Actions 运行记录](https://github.com/ailiheizi/blockpulse-demo/actions/workflows/pages.yml) 查看每次测试和发布状态。本地单文件生成与站点部署是独立步骤。
 
 ## 验证与文件
 

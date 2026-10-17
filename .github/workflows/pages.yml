@@ -1,7 +1,8 @@
-name: Deploy GitHub Pages (manual)
+name: Deploy GitHub Pages
 
 on:
-  # Pushing source must not publish a site. Deployment requires a manual run.
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -34,7 +35,7 @@ jobs:
           node-version: '22'
           package-manager-cache: false
 
-      - name: Test game rules
+      - name: Test game and Monad integration
         run: npm test
 
       - name: Configure GitHub Pages

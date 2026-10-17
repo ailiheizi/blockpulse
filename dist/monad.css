@@ -195,3 +195,95 @@
 @media (prefers-reduced-motion: reduce) {
   .wallet-option-body { transition: none; }
 }
+/* Trade mode switch, theme toggle, faucets and the on-chain market. */
+:root[data-trade-mode="chain"] .local-only, :root:not([data-trade-mode="chain"]) .chain-only { display: none !important; }
+.chart-lock { fill: #ffb68e09; }
+.theme-toggle { display: inline-flex; align-items: center; gap: 7px; min-height: 42px; padding: 8px 11px; border: 1px solid var(--border); border-radius: 9px; color: var(--muted); background: transparent; font-size: 11px; white-space: nowrap; }
+.theme-toggle:hover { color: var(--text); border-color: #b29afd66; }
+.theme-icon { display: grid; place-items: center; width: 18px; height: 18px; }
+.theme-icon svg { width: 18px; height: 18px; }
+:root[data-theme="dark"] .theme-sun, :root[data-theme="dark"] .theme-rays, :root[data-theme="light"] .theme-moon { display: none; }
+.theme-toggle[data-choice="system"] .theme-icon { color: var(--purple); }
+.trade-mode { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 24px; scroll-margin-top: 20px; }
+.trade-mode > button { display: flex; align-items: center; gap: 14px; min-height: 68px; padding: 13px 17px; text-align: left; color: var(--text); background: #161c29; border: 1px solid #ffffff0b; border-radius: 12px; }
+.trade-mode > button:hover { border-color: #b29afd55; }
+.trade-mode > button.selected { border-color: #b29afd99; background: linear-gradient(110deg, #30254099, #211d3355); box-shadow: inset 0 0 0 1px #b29afd1c; }
+.trade-mode-mark { display: grid; place-items: center; flex-shrink: 0; width: 38px; height: 38px; border-radius: 10px; border: 1px solid #b29afd40; background: #b29afd0d; color: #c9b6ff; font-family: 'Avenir Next', system-ui, sans-serif; font-size: 16px; font-weight: 750; }
+.trade-mode > button.selected .trade-mode-mark { background: var(--purple); border-color: var(--purple); color: #191323; }
+.trade-mode b { display: block; font-size: 14px; font-weight: 600; }
+.trade-mode small { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
+.faucet-section { margin-top: 20px; padding-top: 16px; border-top: 1px solid #b29afd1a; }
+.faucet-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.faucet-heading h3 { margin: 0; color: #d5c9ed; font-size: 13px; font-weight: 600; }
+.faucet-heading p { margin: 4px 0 0; color: #98a5bd; font-size: 10px; line-height: 1.7; }
+.faucet-heading .monad-action { flex-shrink: 0; }
+[data-low="true"] .faucet-heading p { color: #ffca9d; }
+.faucet-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; padding: 0; margin: 13px 0 0; list-style: none; }
+.faucet-list li { min-width: 0; }
+.monad-panel a.faucet-card { display: flex; flex-direction: column; gap: 3px; height: 100%; padding: 12px 13px; border: 1px solid #b29afd24; border-radius: 10px; background: #13172460; color: #98a5bd; text-decoration: none; transition: border-color .15s, background .15s; }
+.monad-panel a.faucet-card:hover { border-color: #b29afd70; background: #b29afd08; text-decoration: none; }
+.faucet-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 3px; }
+.faucet-title strong { color: #e1dfed; font-size: 12px; font-weight: 600; }
+.faucet-tag { padding: 2px 6px; border-radius: 4px; background: #78dfb80c; color: #91cbb5; font-size: 9px; white-space: nowrap; }
+.faucet-card small { font-size: 10px; line-height: 1.6; }
+.faucet-open { margin-top: auto; padding-top: 6px; color: #c4adfb; font-size: 10px; }
+.faucet-note { margin: 11px 0 0; color: #8f9cb2; font-size: 9px; line-height: 1.7; }
+.chain-market { margin-top: 22px; }
+.chain-market > .arena-grid { margin-top: 22px; }
+.chain-setup { border-color: #b29afd35; background: linear-gradient(120deg, #211e32, #171d2b); }
+.chain-setup-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 22px; margin-top: 20px; }
+.chain-contract { min-width: 0; padding: 15px 16px; border: 1px solid #b29afd24; border-radius: 11px; background: #13172460; }
+.chain-contract > span, .chain-stats span { display: block; color: #94a2bc; font-size: 10px; }
+.chain-contract > strong { display: block; margin: 7px 0 4px; color: #ddd4f5; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 13px; font-weight: 450; overflow-wrap: anywhere; }
+.chain-links { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 14px; font-size: 10px; }
+.chain-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.chain-stats > div { min-width: 0; padding: 15px 14px; border: 1px solid #ffffff0b; border-radius: 11px; background: #161c29; }
+.chain-stats strong { display: block; margin: 6px 0 2px; font-size: 21px; font-weight: 600; letter-spacing: -.5px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.chain-stats small { display: block; color: #8f9cb2; font-size: 9px; }
+.chain-forms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
+.chain-form { min-width: 0; margin: 0; }
+.chain-form label { display: block; margin-bottom: 7px; color: #c9c5da; font-size: 11px; }
+.chain-form small { display: block; margin-top: 6px; color: #8f9cb2; font-size: 9px; line-height: 1.6; }
+.chain-input-row { display: flex; align-items: center; gap: 8px; }
+.chain-input-row input { flex: 1; min-width: 0; min-height: 39px; padding: 8px 11px; color: var(--text); border: 1px solid #49405e; border-radius: 7px; background: #141a27; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 12px; }
+.chain-input-row input:focus-visible { outline: 2px solid var(--purple); outline-offset: 1px; }
+.chain-input-row > span { color: #8f9cb2; font-size: 10px; white-space: nowrap; }
+.chain-input-row .monad-action { flex-shrink: 0; }
+.chain-manage { margin-top: 16px; }
+.chain-manage .chain-forms { margin-top: 4px; }
+.chain-read-error:empty, #chain-message:empty { display: none; }
+.chain-read-error { color: #ffca9d; }
+[data-contract="verified"] #chain-contract-state { border-color: #78dfb84a; background: #78dfb80a; color: var(--green); }
+.chain-tx-list { display: flex; flex-direction: column; gap: 7px; padding: 0; margin: 16px 0 0; list-style: none; }
+.chain-tx-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 9px 11px; border: 1px solid #b29afd19; border-radius: 7px; font-size: 11px; }
+.chain-tx-list li > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chain-tx-list small { color: #8f9cb2; font-size: 10px; }
+.chain-tx-list a { color: #c4adfb; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 10px; text-decoration: none; }
+.chain-tx-list [data-status="ok"] small { color: var(--green); }
+.chain-tx-list [data-status="failed"] small { color: var(--red); }
+.chain-tx-list .chain-tx-empty { display: block; color: #8193ae; text-align: center; border-style: dashed; padding: 22px 12px; }
+.chain-market .trade-table a { color: #c4adfb; text-decoration: none; }
+.chain-market .trade-table td small { display: block; color: #7789a6; font-size: 9px; margin-top: 3px; }
+@media (max-width: 1100px) {
+  .chain-setup-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .faucet-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 740px) {
+  .trade-mode { gap: 8px; margin-top: 18px; }
+  .trade-mode > button { gap: 10px; padding: 11px 12px; }
+  .trade-mode-mark { width: 32px; height: 32px; font-size: 14px; }
+  .trade-mode b { font-size: 13px; }
+  .trade-mode small { font-size: 9px; }
+  .theme-toggle .theme-label { display: none; }
+  .theme-toggle { width: 40px; padding: 0; justify-content: center; }
+  .chain-stats { grid-template-columns: minmax(0, 1fr); }
+  .chain-forms { grid-template-columns: minmax(0, 1fr); }
+  .faucet-heading { flex-direction: column; gap: 10px; }
+  .faucet-list { grid-template-columns: minmax(0, 1fr); }
+  .chain-market { margin-top: 18px; }
+}
+@media (max-width: 420px) {
+  .trade-mode { grid-template-columns: minmax(0, 1fr); }
+  .chain-input-row { flex-wrap: wrap; }
+  .chain-input-row input { flex-basis: 100%; }
+}

@@ -1,9 +1,9 @@
-import { MONAD_TESTNET, createWalletClient, discoverWallets, formatMon, shortenAddress } from './monad.js';
+import { MONAD_FAUCETS, MONAD_TESTNET, createWalletClient, discoverWallets, formatMon, shortenAddress } from './monad.js';
 import { createHeadMonitor } from './monad-monitor.js';
 
 export function mountMonad() {
   const $ = id => document.getElementById(id);
-  if (!$('monad-panel')) return;
+  if (!$('monad-panel')) return null;
   const wallet = createWalletClient();
   const monitor = createHeadMonitor();
   let wallets = [];
@@ -48,7 +48,7 @@ export function mountMonad() {
     setText('wallet-network', chainText);
     setText('wallet-state', state.reading ? '正在读取钱包' : state.pending ? '等待钱包确认' : ready ? '测试网已连接' : connected && state.status === 'wrong-network' ? '需要切换网络' : connected ? '状态待刷新' : '尚未连接');
     const selected = wallets.find(item => item.provider === selectedProvider);
-    const message = state.reading ? '正在读取账户与余额…' : ready ? state.balanceWei === 0n ? '测试网余额为 0，可从下方领水；模拟交易不需要 MON。' : '账户已就绪，可以继续体验模拟交易。' : connected && onMonad ? '余额暂未读到，可点击“刷新余额”重试。' : connected ? '确认 Monad 测试网后，即可查看 MON 余额。' : selected ? '仅请求账户授权，模拟交易不消耗 MON。' : '选择一个钱包以继续，也可以直接体验模拟交易。';
+    const message = state.reading ? '正在读取账户与余额…' : ready ? state.balanceWei === 0n ? '测试网余额为 0，可从下方水龙头领取；模拟积分模式不需要 MON。' : '账户已就绪，可切换到“测试网 MON”用真实测试币交易。' : connected && onMonad ? '余额暂未读到，可点击“刷新余额”重试。' : connected ? '确认 Monad 测试网后，即可查看 MON 余额。' : selected ? '连接只请求账户授权；每笔链上交易都会在钱包中单独确认。' : '选择一个钱包以继续，也可以直接体验模拟交易。';
     setText('wallet-message', state.message || message);
     $('wallet-message').hidden = !wallets.length && !state.message;
     setText('wallet-shortcut-label', state.reading ? '读取中…' : state.pending ? '等待确认…' : connected ? shortenAddress(state.account) : '连接钱包');
@@ -71,6 +71,38 @@ export function mountMonad() {
     $('wallet-disconnect').hidden = !connected && !state.pending;
     setText('wallet-disconnect', state.pending && !connected ? '取消本站连接' : '断开本站连接');
     $('wallet-shortcut').disabled = state.pending;
+    $('faucet-copy').disabled = !connected;
+    $('faucet-section').dataset.low = String(ready && state.balanceWei < 50000000000000000n);
+    setText('faucet-hint', !connected ? '连接钱包后可一键复制地址，再粘贴到水龙头页面。' : ready && state.balanceWei < 50000000000000000n ? '余额不足 0.05 MON，先领一些测试币再上链交易。' : '复制地址后粘贴到任一水龙头页面即可领取。');
+  }
+
+  function renderFaucets() {
+    $('faucet-list').replaceChildren(...MONAD_FAUCETS.map(faucet => {
+      const item = document.createElement('li');
+      const link = document.createElement('a');
+      link.className = 'faucet-card';
+      link.href = faucet.url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      const title = document.createElement('span');
+      title.className = 'faucet-title';
+      const name = document.createElement('strong');
+      name.textContent = faucet.name;
+      const tag = document.createElement('span');
+      tag.className = 'faucet-tag';
+      tag.textContent = faucet.tag;
+      title.append(name, tag);
+      const limit = document.createElement('small');
+      limit.textContent = faucet.limit;
+      const requirement = document.createElement('small');
+      requirement.textContent = faucet.requirement;
+      const open = document.createElement('span');
+      open.className = 'faucet-open';
+      open.textContent = '前往领取 ↗';
+      link.append(title, limit, requirement, open);
+      item.append(link);
+      return item;
+    }));
   }
 
   function renderChoices() {
@@ -121,6 +153,7 @@ export function mountMonad() {
     }));
   }
 
+  renderFaucets();
   const unsubscribeWallet = wallet.subscribe(renderWallet);
   const discovery = discoverWallets(window, next => {
     wallets = next;
@@ -240,6 +273,19 @@ export function mountMonad() {
       setText('wallet-copy-message', '浏览器未允许自动复制，已展开完整地址，可手动复制。');
     }
   });
+  listen($('faucet-copy'), 'click', async () => {
+    const account = wallet.getState().account;
+    if (!account) return;
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(account);
+      setText('faucet-hint', `已复制 ${shortenAddress(account)}，粘贴到水龙头页面即可。`);
+    } catch {
+      $('wallet-address-details').open = true;
+      $('wallet-full-address').select();
+      setText('faucet-hint', '浏览器未允许自动复制，已展开完整地址，可手动复制。');
+    }
+  });
   listen($('monad-copy-rpc'), 'click', async () => {
     try {
       if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
@@ -257,12 +303,15 @@ export function mountMonad() {
   listen(window, 'pagehide', () => monitor.setEnvironment({ visible: false }));
   listen(window, 'pageshow', syncEnvironment);
 
-  return () => {
-    handlers.forEach(remove => remove());
-    unsubscribeWallet();
-    unsubscribeMonitor();
-    discovery.dispose();
-    monitor.dispose();
-    wallet.disconnect();
+  return {
+    wallet,
+    dispose() {
+      handlers.forEach(remove => remove());
+      unsubscribeWallet();
+      unsubscribeMonitor();
+      discovery.dispose();
+      monitor.dispose();
+      wallet.disconnect();
+    },
   };
 }

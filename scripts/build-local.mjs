@@ -10,8 +10,13 @@ const modules = [
   ['monad.js', 'MonadNetwork'],
   ['monad-monitor.js', 'MonadMonitor'],
   ['monad-ui.js', 'MonadUI'],
+  ['monad-market-artifact.js', 'MarketArtifact'],
+  ['monad-market.js', 'MonadMarket'],
+  ['chart.js', 'PriceChart'],
+  ['monad-market-ui.js', 'MonadMarketUI'],
+  ['theme.js', 'ThemeSwitch'],
 ];
-const styles = ['style.css', 'monad.css'];
+const styles = ['style.css', 'monad.css', 'theme-light.css'];
 const read = file => readFile(new URL(`dist/${file}`, root), 'utf8');
 const [html, app, sources, sheets] = await Promise.all([
   read('index.html'), read('app.js'),

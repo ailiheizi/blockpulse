@@ -1,5 +1,8 @@
 import { createGame, resetGame, startRound, advance, executeTrade, playerAction, nextRound, quoteTrade, marketPrices, scenarioOdds, participantStats } from './game.js';
 import { mountMonad } from './monad-ui.js';
+import { mountMarket } from './monad-market-ui.js';
+import { mountTheme } from './theme.js';
+import { drawPriceChart } from './chart.js';
 
 const $ = id => document.getElementById(id);
 const setText = (id, value) => { if ($(id).textContent !== value) $(id).textContent = value; };
@@ -7,7 +10,6 @@ const KEY = 'blockpulse-playground-v2';
 const COLORS = ['red', 'black', 'green'];
 const LABELS = { red: '红', black: '黑', green: '绿' };
 const NAMES = { red: '红 · 上行', black: '黑 · 下行', green: '绿 · 区间' };
-const PAINT = { red: 'var(--red)', black: 'var(--blue)', green: 'var(--green)' };
 const fmt = (n, digits = 2) => Number.isFinite(n) ? n.toLocaleString('zh-CN', { minimumFractionDigits: digits, maximumFractionDigits: digits }) : '—';
 const moneyFmt = (n, digits = 3) => n > 0 && n < 10 ** -digits ? `<${(10 ** -digits).toFixed(digits)}` : fmt(n, digits);
 const signed = (n, digits = 2) => `${n > 0 ? '+' : ''}${fmt(Math.abs(n) < 0.0000005 ? 0 : n, digits)}`;
@@ -103,20 +105,11 @@ function drawChart(prices) {
   const key = `${state.round}:${state.elapsedMs}:${state.history.length}:${width}`;
   if (key === chartKey) return;
   chartKey = key;
-  const height = 210, left = 32, right = width - 10, top = 13, bottom = 178;
-  const x = ms => left + ms / state.durationMs * (right - left);
-  const y = p => top + (1 - p) * (bottom - top);
-  const points = state.history.filter(p => p.prices && p.timeMs <= state.elapsedMs);
-  if (!points.length) points.push({ timeMs: 0, prices });
-  if (points.at(-1).timeMs !== state.elapsedMs) points.push({ timeMs: state.elapsedMs, prices });
-  const sampleEvery = Math.max(1, Math.ceil(points.length / 600));
-  const sampled = points.filter((_, i) => i % sampleEvery === 0 || i === points.length - 1);
-  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-  svg.setAttribute('aria-label', `第 ${state.round} 轮份额价格，红 ${fmt(prices.red, 3)}、黑 ${fmt(prices.black, 3)}、绿 ${fmt(prices.green, 3)} 积分每份`);
-  svg.innerHTML = `<title>本地模拟成交形成的价格，不是结果概率</title><rect x="${x(55000)}" y="${top}" width="${right - x(55000)}" height="${bottom - top}" fill="#ffb68e09"/>
-    ${[0, 0.25, 0.5, 0.75, 1].map(p => `<line x1="${left}" x2="${right}" y1="${y(p)}" y2="${y(p)}" class="chart-grid"/><text x="0" y="${y(p) + 3}" class="chart-text">${p.toFixed(2)}</text>`).join('')}
-    ${[0, 15000, 30000, 45000, 60000].map(ms => `<text x="${x(ms)}" y="203" text-anchor="${ms === 0 ? 'start' : ms === 60000 ? 'end' : 'middle'}" class="chart-text">${ms / 1000}s</text>`).join('')}
-    ${COLORS.map(c => `<path d="${sampled.map((p, i) => `${i ? 'L' : 'M'}${x(p.timeMs).toFixed(2)},${y(p.prices[c]).toFixed(2)}`).join(' ')}" class="chart-line" style="stroke:${PAINT[c]}"/><circle cx="${x(state.elapsedMs)}" cy="${y(prices[c])}" r="3" style="fill:${PAINT[c]}"/>`).join('')}`;
+  drawPriceChart(svg, {
+    durationMs: state.durationMs, lockMs: state.tradingDurationMs, points: state.history, elapsedMs: state.elapsedMs, prices,
+    label: `第 ${state.round} 轮份额价格，红 ${fmt(prices.red, 3)}、黑 ${fmt(prices.black, 3)}、绿 ${fmt(prices.green, 3)} 积分每份`,
+    title: '本地模拟成交形成的价格，不是结果概率',
+  });
 }
 
 function drawBots() {
@@ -175,8 +168,8 @@ function renderQuote(prices) {
   setText('max-shares', buy ? '最多' : player.holdings[selectedColor] > 1000 ? '卖 1,000 份' : '卖出 100%');
   $('max-shares').disabled = closed || (!buy && player.holdings[selectedColor] < 1);
   $('shares').disabled = closed;
-  document.querySelectorAll('[data-shares]').forEach(b => { const selected = Number(b.dataset.shares) === quantity; b.disabled = closed; b.classList.toggle('selected', selected); b.setAttribute('aria-pressed', String(selected)); });
-  document.querySelectorAll('[data-side]').forEach(b => { b.classList.toggle('selected', b.dataset.side === selectedSide); b.setAttribute('aria-pressed', String(b.dataset.side === selectedSide)); });
+  document.querySelectorAll('#game [data-shares]').forEach(b => { const selected = Number(b.dataset.shares) === quantity; b.disabled = closed; b.classList.toggle('selected', selected); b.setAttribute('aria-pressed', String(selected)); });
+  document.querySelectorAll('#game [data-side]').forEach(b => { b.classList.toggle('selected', b.dataset.side === selectedSide); b.setAttribute('aria-pressed', String(b.dataset.side === selectedSide)); });
   if (state.phase === 'settled') {
     ['quote-total', 'quote-average', 'quote-gross', 'quote-fee', 'quote-impact'].forEach(id => { $(id).textContent = '—'; });
     $('quote-spot').textContent = `${fmt(prices[selectedColor], 3)} / 份（到期兑付）`;
@@ -236,10 +229,10 @@ function render() {
   $('countdown-dial').classList.toggle('urgent', state.phase === 'locked');
   $('chart-prompt').hidden = state.phase !== 'ready';
   $('scenario-note').textContent = settled ? '结果已确认：三色卡片现在显示到期兑付价与命中结果；封盘前价格保留在曲线上。' : '场景概率假设后续无人再用行动券，只计算结算噪声；它不同于交易价格，也不代表最终胜率。噪声仅为本地模拟随机。';
-  document.querySelectorAll('.scenario-label').forEach(node => { node.textContent = settled ? '本轮到期结果' : '当前热度场景概率'; });
+  document.querySelectorAll('#game .scenario-label').forEach(node => { node.textContent = settled ? '本轮到期结果' : '当前热度场景概率'; });
   document.querySelectorAll('[data-bots]').forEach(b => { b.disabled = live(state); b.classList.toggle('selected', Number(b.dataset.bots) === state.botCount); b.setAttribute('aria-pressed', String(Number(b.dataset.bots) === state.botCount)); });
-  document.querySelectorAll('[data-color]').forEach(b => { b.classList.toggle('selected', b.dataset.color === selectedColor); b.setAttribute('aria-pressed', String(b.dataset.color === selectedColor)); });
-  document.querySelectorAll('.price-unit').forEach(node => { node.textContent = settled ? '到期兑付价 · 积分 / 份' : '市场价格 · 积分 / 份'; });
+  document.querySelectorAll('#game [data-color]').forEach(b => { b.classList.toggle('selected', b.dataset.color === selectedColor); b.setAttribute('aria-pressed', String(b.dataset.color === selectedColor)); });
+  document.querySelectorAll('#game .price-unit').forEach(node => { node.textContent = settled ? '到期兑付价 · 积分 / 份' : '市场价格 · 积分 / 份'; });
   for (const color of COLORS) {
     $(`price-${color}`).textContent = fmt(prices[color], 3);
     $(`odds-${color}`).textContent = settled ? (state.result.color === color ? '已命中' : '未命中') : percent(odds[color]);
@@ -274,9 +267,9 @@ function runOperation(operation) {
   catch (error) { showError(error.reason || error.message || '操作未成功，请查看当前阶段与账户余额。'); render(); }
 }
 
-document.querySelectorAll('[data-color]').forEach(b => b.addEventListener('click', () => runOperation(() => { selectedColor = b.dataset.color; })));
-document.querySelectorAll('[data-side]').forEach(b => b.addEventListener('click', () => runOperation(() => { selectedSide = b.dataset.side; })));
-document.querySelectorAll('[data-shares]').forEach(b => b.addEventListener('click', () => runOperation(() => { $('shares').value = b.dataset.shares; })));
+document.querySelectorAll('#game [data-color]').forEach(b => b.addEventListener('click', () => runOperation(() => { selectedColor = b.dataset.color; })));
+document.querySelectorAll('#game [data-side]').forEach(b => b.addEventListener('click', () => runOperation(() => { selectedSide = b.dataset.side; })));
+document.querySelectorAll('#game [data-shares]').forEach(b => b.addEventListener('click', () => runOperation(() => { $('shares').value = b.dataset.shares; })));
 $('shares').addEventListener('input', () => runOperation(() => {}));
 $('shares').addEventListener('keydown', e => { if (e.key === 'Enter' && !$('submit-trade').disabled) $('submit-trade').click(); });
 
@@ -330,7 +323,7 @@ function sellColors(colors) {
     notify(`已卖出 ${fmt(sold, 0)} 份持仓，分 ${count} 笔成交，扣费后到账 ${fmt(proceeds, 4)} 积分。`);
   });
 }
-document.querySelectorAll('[data-sell]').forEach(b => b.addEventListener('click', () => sellColors([b.dataset.sell])));
+document.querySelectorAll('#game [data-sell]').forEach(b => b.addEventListener('click', () => sellColors([b.dataset.sell])));
 $('sell-all').addEventListener('click', () => sellColors(COLORS));
 $('heat-up').addEventListener('click', () => runOperation(() => { state = playerAction(state, 1); notify(`已加热 +1，热度 ${state.heat}；剩余 ${playerOf(state).tickets} 张行动券。`); }));
 $('heat-down').addEventListener('click', () => runOperation(() => { state = playerAction(state, -1); notify(`已降温 −1，热度 ${state.heat}；剩余 ${playerOf(state).tickets} 张行动券。`); }));
@@ -364,5 +357,6 @@ setInterval(() => {
   }
   catch (error) { simulationFailed = true; showError(`本地进度无法继续：${error.reason || error.message}。请用右上角“重置积分”重新开始。`); }
 }, 100);
+mountTheme();
 render();
-mountMonad();
+mountMarket(mountMonad());

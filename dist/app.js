@@ -7,6 +7,7 @@ const LABELS = { red: '红', black: '黑', green: '绿' };
 const NAMES = { red: '红 · 上行', black: '黑 · 下行', green: '绿 · 区间' };
 const PAINT = { red: 'var(--red)', black: 'var(--blue)', green: 'var(--green)' };
 const fmt = (n, digits = 2) => Number.isFinite(n) ? n.toLocaleString('zh-CN', { minimumFractionDigits: digits, maximumFractionDigits: digits }) : '—';
+const moneyFmt = (n, digits = 3) => n > 0 && n < 10 ** -digits ? `<${(10 ** -digits).toFixed(digits)}` : fmt(n, digits);
 const signed = (n, digits = 2) => `${n > 0 ? '+' : ''}${fmt(Math.abs(n) < 0.0000005 ? 0 : n, digits)}`;
 const percent = n => `${fmt(n * 100, 1)}%`;
 const pnlClass = n => n > 0.0000005 ? 'gain' : n < -0.0000005 ? 'loss' : '';
@@ -135,7 +136,7 @@ function drawTrades() {
   const trades = state.trades.slice(-9).reverse();
   $('trades-body').innerHTML = trades.length ? trades.map(t => {
     const participant = state.participants.find(p => p.id === t.traderId);
-    return `<tr><td>${esc(participant?.name || t.traderId)}<small>${fmt(t.timeMs / 1000, 1)} 秒</small></td><td><span class="trade-side ${t.side}">${t.side === 'buy' ? '买' : '卖'}${LABELS[t.color]}</span></td><td>${fmt(t.shares, 0)}</td><td>${fmt(t.averagePrice, 4)}</td><td>${fmt(t.fee, 4)}</td><td>${t.side === 'buy' ? '−' : '+'}${fmt(t.total, 3)}</td></tr>`;
+    return `<tr><td>${esc(participant?.name || t.traderId)}<small>${fmt(t.timeMs / 1000, 1)} 秒</small></td><td><span class="trade-side ${t.side}">${t.side === 'buy' ? '买' : '卖'}${LABELS[t.color]}</span></td><td>${fmt(t.shares, 0)}</td><td>${esc(moneyFmt(t.averagePrice, 4))}</td><td>${esc(moneyFmt(t.fee, 4))}</td><td>${t.side === 'buy' ? '−' : '+'}${esc(moneyFmt(t.total, 3))}</td></tr>`;
   }).join('') : '<tr><td colspan="6" class="empty-cell">开场后，这里记录每一笔实际成交。</td></tr>';
 }
 
@@ -172,7 +173,7 @@ function renderQuote(prices) {
   $('max-shares').textContent = buy ? '最多' : player.holdings[selectedColor] > 1000 ? '卖 1,000 份' : '卖出 100%';
   $('max-shares').disabled = closed || (!buy && player.holdings[selectedColor] < 1);
   $('shares').disabled = closed;
-  document.querySelectorAll('[data-shares]').forEach(b => { b.disabled = closed; b.classList.toggle('selected', Number(b.dataset.shares) === quantity); });
+  document.querySelectorAll('[data-shares]').forEach(b => { const selected = Number(b.dataset.shares) === quantity; b.disabled = closed; b.classList.toggle('selected', selected); b.setAttribute('aria-pressed', String(selected)); });
   document.querySelectorAll('[data-side]').forEach(b => { b.classList.toggle('selected', b.dataset.side === selectedSide); b.setAttribute('aria-pressed', String(b.dataset.side === selectedSide)); });
   if (state.phase === 'settled') {
     ['quote-total', 'quote-average', 'quote-gross', 'quote-fee', 'quote-impact'].forEach(id => { $(id).textContent = '—'; });
@@ -192,17 +193,17 @@ function renderQuote(prices) {
     return;
   }
   const hasQuote = !(selectedSide === 'sell' && player.holdings[selectedColor] < quantity);
-  $('quote-total').textContent = hasQuote ? fmt(quote.total, 3) : '—';
+  $('quote-total').textContent = hasQuote ? moneyFmt(quote.total, 3) : '—';
   $('quote-spot').textContent = `${fmt(quote.spotPrice, 4)} / 份`;
-  $('quote-average').textContent = hasQuote ? `${fmt(quote.averagePrice, 4)} / 份` : '—';
-  $('quote-gross').textContent = hasQuote ? fmt(quote.gross, 4) : '—';
-  $('quote-fee').textContent = hasQuote ? fmt(quote.fee, 4) : '—';
+  $('quote-average').textContent = hasQuote ? `${moneyFmt(quote.averagePrice, 4)} / 份` : '—';
+  $('quote-gross').textContent = hasQuote ? moneyFmt(quote.gross, 4) : '—';
+  $('quote-fee').textContent = hasQuote ? moneyFmt(quote.fee, 4) : '—';
   $('quote-impact').textContent = hasQuote ? `${signed((quote.pricesAfter[selectedColor] - quote.spotPrice) * 100, 2)} 个百分点` : '—';
   $('win-preview').hidden = !buy || closed;
   $('win-label').textContent = `若${LABELS[selectedColor]}盘命中，持有到结算`;
   $('quote-win-payout').textContent = `兑付 ${fmt(quote.winPayout, 0)} 积分`;
   profitText('quote-win-profit', quote.winProfit, 3);
-  $('quote-roi').textContent = `本单命中净回报 ${signed(quote.roi * 100, 1)}%；未命中最多损失 ${fmt(quote.total, 3)} 积分。此为条件收益，不是胜率。`;
+  $('quote-roi').textContent = `本单命中净回报 ${signed(quote.roi * 100, 1)}%；未命中最多损失 ${moneyFmt(quote.total, 3)} 积分。此为条件收益，不是胜率。`;
   $('submit-trade').disabled = !quote.canExecute || simulationFailed;
   $('quote-note').textContent = quote.canExecute ? '报价随成交变化，点击时重新核算；你也可以盘中卖出，锁定实际盈亏。' : quote.reason || '当前不能成交。';
 }

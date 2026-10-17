@@ -47,6 +47,12 @@ cd "/Users/macos/Documents/temp 2/blockpulse-demo"
 
 繁忙场运行 20 个本地策略账户，展示成交记录、持仓、盈亏和本地成交频率。浏览器按确定的模拟时序处理事件；它不是实际并行链上负载，也没有公开多人联机。利用 Monad 并行执行的多房间合约设计和真实网络基准测试属于后续工作。
 
+## GitHub Pages 配置
+
+保留远端新增的 [Pages 工作流](.github/workflows/pages.yml)，只支持手动触发；推送 `main` 只同步源代码，不自动发布站点。站点部署需要另外明确授权。本次本地迭代不会更新此前的 [Pages 地址](https://ailiheizi.github.io/blockpulse-demo/)，该地址可能仍是旧版。
+
+工作流沿用远端的测试、静态资源打包与发布步骤；发布内容为 `dist/`，无需运行 `server.mjs`。本地单文件生成与站点部署是独立步骤。
+
 ## 验证与文件
 
 ```sh

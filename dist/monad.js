@@ -8,6 +8,16 @@ export const MONAD_TESTNET = Object.freeze({
   nativeCurrency: Object.freeze({ name: 'Testnet MON Token', symbol: 'MON', decimals: 18 }),
 });
 
+// Third-party limits change often; the UI tells users to trust each faucet's own page.
+export const MONAD_FAUCETS = Object.freeze([
+  Object.freeze({ name: 'Monad 官方', url: 'https://faucet.monad.xyz', tag: '官方', limit: '额度随钱包活跃度变化', requirement: '完成人机验证即可领取' }),
+  Object.freeze({ name: 'QuickNode', url: 'https://faucet.quicknode.com/monad/testnet', tag: '免登录', limit: '每个地址 12 小时一次', requirement: '无需账号或主网余额，发帖可加倍' }),
+  Object.freeze({ name: 'Alchemy', url: 'https://www.alchemy.com/faucets/monad-testnet', tag: '每日', limit: '每 24 小时约 1 MON', requirement: '地址需持有少量以太坊主网 ETH' }),
+  Object.freeze({ name: 'aPriori', url: 'https://stake.apr.io/faucet', tag: '连接钱包', limit: '额度以页面显示为准', requirement: '连接钱包后点击领取' }),
+  Object.freeze({ name: 'thirdweb', url: 'https://thirdweb.com/monad-testnet', tag: '需登录', limit: '每日约 0.01 MON', requirement: '需登录 thirdweb 账号' }),
+  Object.freeze({ name: 'OKX Web3', url: 'https://web3.okx.com/faucet/monad/66', tag: '任务', limit: '完成页面任务后领取', requirement: '库存不足时可能暂停' }),
+]);
+
 const ADDRESS = /^0x[\da-f]{40}$/i;
 const HEX = /^0x[\da-f]+$/i;
 const isAddress = value => typeof value === 'string' && ADDRESS.test(value);
@@ -200,6 +210,7 @@ export function createWalletClient({ readTimeoutMs = 8000, now = Date.now } = {}
 
   return {
     getState: () => state,
+    getProvider: () => provider,
     subscribe(listener) { listeners.add(listener); listener(state); return () => listeners.delete(listener); },
     connect,
     switchNetwork,

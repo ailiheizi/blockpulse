@@ -2,9 +2,10 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#10131c">
-  <meta name="description" content="本地事件预测练习：选择红黑绿份额，查看报价并盘中卖出或持有到模拟结算。积分不可兑换。">
+  <meta name="description" content="一分钟交易竞技场：用本地积分或 Monad 测试网 MON 买卖红黑绿份额，观察动态报价、有限控场与链上结算。">
   <title>BlockPulse · 交易竞技场</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23b29afd'/%3E%3Cpath d='M7 22h8l4-11 5 20 4-9h5' fill='none' stroke='%2310131c' stroke-width='3'/%3E%3C/svg%3E">
+  <script>(()=>{const r=document.documentElement;let t='system',m='local';try{t=localStorage.getItem('blockpulse-theme')||t;m=localStorage.getItem('blockpulse-trade-mode')||m}catch{}if(/[?&]market=0x[0-9a-fA-F]{40}/.test(location.search))m='chain';r.dataset.theme=t==='light'||(t!=='dark'&&matchMedia('(prefers-color-scheme: light)').matches)?'light':'dark';r.dataset.tradeMode=m==='chain'?'chain':'local'})()</script>
   <style>
 :root{color-scheme:dark;--bg:#10131c;--surface:#181d29;--soft:#202635;--border:#2b3345;--muted:#9da9bf;--text:#eff2fa;--purple:#b29afd;--red:#ff818e;--blue:#91baf9;--green:#78dfb8;--warm:#ffb68e;font-family:system-ui,-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;font-size:14px;line-height:1.5;background:var(--bg);color:var(--text)}
 *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 60% -20%,#4d3a702e,transparent 60%),var(--bg)}button,input{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.4}button{transition:background .16s,border-color .16s,color .16s}button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--purple);outline-offset:3px}button:not(:disabled):active{transform:translateY(1px)}[hidden]{display:none!important}.shell{max-width:1400px;margin:auto;padding:0 36px}.topbar{height:90px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}.brand{display:flex;align-items:center;gap:12px;font-family:'Avenir Next',system-ui,sans-serif;font-size:19px;font-weight:750;letter-spacing:1px}.brand-mark{display:grid;place-items:center;width:43px;height:43px;border-radius:13px;background:var(--purple);color:#191323;font-size:41px;line-height:1}.brand-light{font-weight:400;color:var(--muted)}.brand small{display:block;font-size:10px;font-weight:400;letter-spacing:2px;color:var(--muted);margin-top:3px}.top-actions{display:flex;align-items:center;gap:25px}.local-tag{display:flex;align-items:center;gap:7px;color:var(--green);font-size:11px}.local-tag i,.feed-heading i{height:5px;width:5px;background:var(--green);border-radius:50%}.quiet-button{min-height:44px;background:none;border:0;color:var(--muted);font-size:12px;padding:8px 0}.quiet-button:hover{color:var(--text)}main{padding-top:34px}.intro{display:flex;align-items:flex-end;justify-content:space-between;gap:25px}.eyebrow,.small-label{font-size:10px;color:var(--purple);letter-spacing:1.5px;margin:0 0 6px}h1{font-size:33px;line-height:1.4;letter-spacing:-1px;font-weight:650;margin:0 0 11px}h1 span{color:var(--purple)}.intro-copy{color:var(--muted);font-size:13px;margin:0}h2{font-size:18px;font-weight:600;margin:0;letter-spacing:-.3px}.mode-picker{flex-shrink:0}.mode-picker>span{display:flex;align-items:center;justify-content:space-between;font-size:11px;margin-bottom:8px}.mode-picker small{font-size:10px;color:var(--muted);margin-left:18px}.segmented{display:flex;background:#151a25;border:1px solid var(--border);padding:4px;border-radius:9px;gap:3px}.segmented button{font-size:11px;color:var(--muted);border:1px solid transparent;border-radius:6px;background:none;padding:9px 13px;min-height:38px}.segmented .selected{color:#d5c8ff;background:#b29afd16;border-color:#b29afd44}.overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:27px 0 24px;background:#171c27c9;border:1px solid var(--border);border-radius:13px}.overview>div{padding:18px 22px;position:relative;min-width:0}.overview>div+div:before{content:'';position:absolute;left:0;top:22px;bottom:22px;width:1px;background:var(--border)}.overview span,.overview small{display:block;color:var(--muted);font-size:10px}.overview strong{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px;font-variant-numeric:tabular-nums;font-size:25px;font-weight:600;letter-spacing:-.5px;margin:6px 0}.overview strong>b{font-weight:600}.overview strong>em{font-style:normal;letter-spacing:0;color:var(--purple);font-size:10px;font-weight:400}.overview small{font-size:9px}.arena-grid{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:22px;align-items:start}.market-column{min-width:0;display:flex;flex-direction:column;gap:20px}.panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:23px;min-width:0}.panel-header{display:flex;align-items:center;justify-content:space-between;gap:12px}.phase-pill{display:inline-block;border-radius:30px;border:1px solid #b29afd40;color:var(--purple);background:#b29afd0b;font-size:10px;padding:5px 10px;white-space:nowrap}.phase-pill.trading{border-color:#78dfb84a;background:#78dfb80a;color:var(--green)}.phase-pill.locked{border-color:#ffb68e55;background:#ffb68e0c;color:var(--warm)}.phase-pill.settled{color:#c7d1e4;border-color:#48556e;background:#36405633}.round-controls{display:flex;justify-content:space-between;align-items:center;gap:20px;margin:22px 0 13px}.countdown{display:flex;align-items:center;gap:9px}.countdown>strong{font-size:39px;letter-spacing:-1.5px;line-height:1.1;font-weight:550;font-variant-numeric:tabular-nums}.countdown>span{color:var(--muted);font-size:11px}.countdown>span>span{display:block;font-size:9px;margin-top:2px}.start-button{display:flex;align-items:center;justify-content:center;gap:13px;border:1px solid #b29afd66;background:#b29afd16;color:#d8cbff;padding:11px 16px;border-radius:8px;min-height:44px;font-size:12px}.start-button:not(:disabled):hover{background:#b29afd2b}.start-button b{font-size:17px}.time-track{height:4px;border-radius:3px;background:#323b4e;position:relative;overflow:hidden;margin-bottom:22px}.time-track>span{display:block;height:100%;background:var(--purple);width:100%;transition:width .1s linear}.time-track>i{position:absolute;left:91.666%;top:0;height:100%;width:1px;background:#fff9}.time-track.urgent>span{background:var(--warm)}.price-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.price-card{text-align:left;border:1px solid var(--border);background:#1d2331;border-radius:10px;padding:13px 12px;color:var(--text);min-width:0}.price-card:hover{background:#252c3d}.price-card.selected{border-color:var(--purple);background:#b29afd0d;box-shadow:inset 0 0 0 1px #b29afd1c}.card-title{display:block}.card-title>b{font-size:12px;font-weight:600;white-space:nowrap}.red .card-title>b{color:var(--red)}.black .card-title>b{color:var(--blue)}.green .card-title>b{color:var(--green)}.card-title small{display:block;font-size:9px;color:var(--muted);margin-top:3px;white-space:nowrap}.price-card>strong{display:block;font-size:29px;line-height:1.2;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-1px;margin-top:13px}.price-unit{font-size:8px;color:var(--muted);display:block;margin-top:3px}.scenario-line{display:block;font-size:8px;border-top:1px solid #343d51;margin-top:12px;padding-top:9px;color:var(--muted);white-space:nowrap}.scenario-line>b{color:#cbd4e6;font-weight:500;display:block;font-size:12px;margin-top:2px}.scenario-note{color:#8695af;font-size:10px;margin:10px 0 21px;line-height:1.65}.chart-header{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#c2cbe0}.chart-legend{display:flex;gap:12px;font-size:10px;color:var(--muted)}.chart-legend>span{display:flex;align-items:center;gap:5px}.chart-legend i,.color-tag i{display:inline-block;width:5px;height:5px;border-radius:50%;background:currentColor}.red-dot{background:var(--red)!important}.black-dot{background:var(--blue)!important}.green-dot{background:var(--green)!important}.chart-wrap{margin-top:8px;overflow:hidden}.chart-wrap svg{display:block;width:100%;height:195px;overflow:visible}.chart-grid{stroke:#2b3448;stroke-width:1;stroke-dasharray:3 5}.chart-text{fill:#7f8eaa;font-family:inherit;font-size:9px}.chart-line{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}.chart-foot{display:flex;justify-content:space-between;gap:10px;font-size:9px;color:#8392ad}.influence-zone{border-top:1px solid var(--border);margin-top:20px;padding-top:18px;display:flex;justify-content:space-between;align-items:center;gap:18px}.heat-readout>span{display:block;color:var(--muted);font-size:10px}.heat-readout>strong{font-size:32px;font-weight:550;letter-spacing:-1px;display:inline-block;line-height:1.25}.heat-readout>small{font-size:9px;color:#95a3bb;display:block}.influence-controls>p{font-size:10px;color:var(--muted);margin:0 0 8px}.action-buttons{display:flex;gap:8px}.action-button{border:1px solid #6d544944;border-radius:7px;padding:9px 15px;min-height:40px;font-size:11px;background:#ffb68e0d;color:var(--warm)}.action-button.cool{color:var(--blue);background:#91baf90a;border-color:#91baf933}.action-button:hover:not(:disabled){border-color:currentColor}.phase-note{color:#8d9bb3;font-size:10px;margin:14px 0 0;line-height:1.7}.outline-button{background:none;color:#cbb9ff;border:1px solid #b29afd55;border-radius:7px;padding:8px 10px;font-size:10px;min-height:36px}.pnl-strip{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:22px 0 17px;padding-bottom:17px;border-bottom:1px solid var(--border)}.pnl-strip span{font-size:10px;color:var(--muted);display:block}.pnl-strip strong{display:block;font-size:19px;font-weight:550;font-variant-numeric:tabular-nums;margin-top:5px}.table-scroll{overflow-x:auto;overscroll-behavior-x:contain}table{border-collapse:collapse;width:100%;white-space:nowrap;font-variant-numeric:tabular-nums}th{font-size:9px;font-weight:400;color:#8b9ab2;text-align:right;padding:0 8px 10px}td{font-size:11px;text-align:right;border-top:1px solid #2a3344;padding:12px 8px}th:first-child,td:first-child{text-align:left;padding-left:0}th:last-child,td:last-child{padding-right:0}.color-tag{display:inline-flex;align-items:center;gap:6px;font-size:11px;white-space:nowrap}.color-tag.red{color:var(--red)}.color-tag.black{color:var(--blue)}.color-tag.green{color:var(--green)}.table-button{font-size:10px;min-height:32px;padding:6px 8px;border:1px solid #38445d;border-radius:5px;color:#c2b3ed;background:none}.subtle-note{font-size:9px;color:#8392ad;line-height:1.6;margin:11px 0 0}.gain{color:var(--green)!important}.loss{color:var(--red)!important}.order-panel{position:sticky;top:18px;padding:22px}.order-panel .panel-header h2{font-size:19px}.order-panel .small-label{font-size:9px}.trade-tabs{display:flex;border:1px solid var(--border);border-radius:8px;padding:4px;gap:5px;margin:22px 0 20px;background:#151a25}.trade-tabs>button{flex:1;min-height:39px;font-size:12px;color:var(--muted);border:0;border-radius:5px;background:none}.trade-tabs>button.selected{color:#ded2ff;background:#b29afd1d}.quantity-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 8px}.quantity-heading>label{font-size:11px}.quantity-heading>span{font-size:9px;color:var(--muted)}.quantity-control{display:flex;align-items:center;gap:9px;background:#121722;border:1px solid #39445c;border-radius:8px;padding:11px 14px;min-height:55px}.quantity-control input{background:none;outline:none;border:none;font-size:25px;letter-spacing:-.5px;color:var(--text);width:100%;min-width:0;font-variant-numeric:tabular-nums;-moz-appearance:textfield}.quantity-control input::-webkit-inner-spin-button,.quantity-control input::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}.quantity-control>span{font-size:11px;color:var(--muted)}.quantity-presets{display:flex;gap:7px;margin-top:10px}.quantity-presets button{flex:1;min-height:36px;background:#222a39;border:1px solid var(--border);border-radius:6px;font-size:10px;color:#b3bfd5;padding:6px}.quantity-presets .selected{background:#b29afd17;border-color:#b29afd66;color:#d5c5ff}.input-help{font-size:9px;color:#8c9bb4;line-height:1.65;margin:9px 0 0}.quote-summary{display:flex;justify-content:space-between;gap:12px;align-items:center;margin:25px 0 18px;padding-bottom:17px;border-bottom:1px solid var(--border)}.quote-summary>span{font-size:11px;color:var(--muted)}.quote-summary strong{text-align:right;font-weight:550;min-width:0}.quote-summary b{font-size:28px;font-weight:600;letter-spacing:-.8px;font-variant-numeric:tabular-nums}.quote-summary small{display:block;font-size:9px;font-weight:400;color:var(--muted)}.quote-details{margin:0;display:flex;flex-direction:column;gap:10px}.quote-details>div{display:flex;justify-content:space-between;gap:12px;font-size:10px}.quote-details dt{color:#94a3bc}.quote-details dt small{font-size:9px;color:#70819f;margin-left:3px}.quote-details dd{margin:0;color:#cad3e5;font-variant-numeric:tabular-nums}.win-preview{margin-top:20px;border:1px solid #b29afd32;background:#b29afd09;border-radius:9px;padding:14px}.win-preview>div{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:10px;color:#b0bdd5}.win-preview>div+div{margin-top:9px}.win-preview b{font-size:11px;font-weight:500;color:#d8c9ff}.win-preview strong{font-size:19px;font-weight:600;letter-spacing:-.5px;color:var(--green)}.win-preview>small{display:block;color:#97a6bf;font-size:9px;margin-top:7px;line-height:1.6}.primary-button{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:51px;border:1px solid var(--purple);background:var(--purple);color:#20162f;border-radius:8px;padding:13px 17px;font-size:13px;font-weight:650;margin-top:20px}.primary-button:not(:disabled):hover{background:#c3aaff}.primary-button>b{font-size:20px;font-weight:400}.primary-button:disabled{opacity:.38}.quote-note{font-size:10px;color:#91a0b9;line-height:1.75;margin:10px 0 0}.error-message{font-size:11px;color:#ffabb6;background:#ff818e0e;border:1px solid #ff818e36;padding:10px 12px;border-radius:7px;line-height:1.6;margin-top:14px;overflow-wrap:anywhere}.rules{border-top:1px solid var(--border);margin-top:21px;padding-top:15px;font-size:10px;color:#a2afc5}.rules summary{display:flex;justify-content:space-between;cursor:pointer;list-style:none;min-height:30px;align-items:center}.rules summary::-webkit-details-marker{display:none}.rules summary>span{font-size:15px;color:var(--purple)}.rules ol{padding-left:18px;margin:12px 0 0;line-height:1.85;color:#8d9eb9;font-size:10px}.rules li+li{margin-top:6px}.result-box{margin-top:18px;padding:15px;background:#79dfb80b;border:1px solid #79dfb83b;border-radius:8px}.result-box>strong{font-size:13px}.result-box>p{color:#a5b5cb;font-size:10px;line-height:1.7;margin:8px 0 0}.result-profit{font-size:25px;display:block;font-weight:600;margin-top:8px;letter-spacing:-.5px}.bots-panel{margin-top:23px}.section-caption{color:#8e9db6;font-size:10px}.bot-explainer{display:flex;align-items:center;gap:20px;flex-wrap:wrap;color:#94a3ba;font-size:10px;margin:19px 0 20px}.bot-explainer>span{display:flex;align-items:center;gap:6px}.bot-explainer i{display:inline-grid;place-items:center;width:23px;height:23px;border-radius:6px;font-style:normal;background:#b29afd17;color:var(--purple)}.bot-explainer b{color:#bac6dc;font-weight:500}.bot-table-wrap{max-height:365px;overflow-y:auto}.bot-table{min-width:650px}.bot-table thead{position:sticky;top:0;background:var(--surface);z-index:1}.bot-table th{padding-top:3px}.bot-name{font-size:11px;color:#e0e6f3;display:block}.bot-position{font-size:9px;color:#8292ae;display:block;margin-top:3px;max-width:240px;overflow:hidden;text-overflow:ellipsis}.strategy-tag{font-size:9px;padding:4px 7px;border-radius:4px;background:#b29afd10;color:#b7a6e2;white-space:nowrap}.strategy-tag.value{background:#91baf90d;color:#96b7e8}.bottom-grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:22px;margin-top:22px}.trade-table{margin-top:20px;min-width:500px}.trade-table td{padding-top:10px;padding-bottom:10px;font-size:10px}.trade-table td small{display:block;color:#7789a6;font-size:9px;margin-top:3px}.trade-side{font-size:9px;padding:4px 6px;border-radius:4px;background:#78dfb80c;color:var(--green)}.trade-side.sell{background:#ffb68e0d;color:var(--warm)}.empty-cell{padding:40px 0!important;text-align:center!important;color:#8394af;font-size:11px!important}.results-list{margin-top:15px}.result-row{display:flex;justify-content:space-between;align-items:center;gap:12px;border-bottom:1px solid #293245;padding:10px 0;font-size:10px}.result-row>span:first-child{color:#8294b1;min-width:36px}.result-row small{font-size:9px;color:#8c9eb9}.result-row b{font-size:11px;font-weight:550}.empty-message{color:#8193ae;font-size:11px;text-align:center;margin:27px 0 32px}.feed-heading{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:#a7b7d2;margin-top:20px}.feed{list-style:none;margin:8px 0 0;padding:0}.feed li{display:flex;gap:10px;align-items:baseline;border-top:1px solid #283145;padding:8px 0;font-size:10px;line-height:1.6;color:#a3b1c8}.feed time{color:#6f829e;font-size:9px;font-variant-numeric:tabular-nums;flex-shrink:0;width:31px}.feed li span{overflow-wrap:anywhere}.notice{font-size:11px;color:#ad9fd0;padding:15px 0 0;min-height:36px;line-height:1.65}footer{display:flex;justify-content:space-between;gap:15px;padding:24px 0;color:#7788a3;font-size:10px}footer i{color:var(--purple);font-style:normal;padding:0 8px}
@@ -230,16 +231,368 @@
 @media (prefers-reduced-motion: reduce) {
   .wallet-option-body { transition: none; }
 }
+/* Trade mode switch, theme toggle, faucets and the on-chain market. */
+:root[data-trade-mode="chain"] .local-only, :root:not([data-trade-mode="chain"]) .chain-only { display: none !important; }
+.chart-lock { fill: #ffb68e09; }
+.theme-toggle { display: inline-flex; align-items: center; gap: 7px; min-height: 42px; padding: 8px 11px; border: 1px solid var(--border); border-radius: 9px; color: var(--muted); background: transparent; font-size: 11px; white-space: nowrap; }
+.theme-toggle:hover { color: var(--text); border-color: #b29afd66; }
+.theme-icon { display: grid; place-items: center; width: 18px; height: 18px; }
+.theme-icon svg { width: 18px; height: 18px; }
+:root[data-theme="dark"] .theme-sun, :root[data-theme="dark"] .theme-rays, :root[data-theme="light"] .theme-moon { display: none; }
+.theme-toggle[data-choice="system"] .theme-icon { color: var(--purple); }
+.trade-mode { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 24px; scroll-margin-top: 20px; }
+.trade-mode > button { display: flex; align-items: center; gap: 14px; min-height: 68px; padding: 13px 17px; text-align: left; color: var(--text); background: #161c29; border: 1px solid #ffffff0b; border-radius: 12px; }
+.trade-mode > button:hover { border-color: #b29afd55; }
+.trade-mode > button.selected { border-color: #b29afd99; background: linear-gradient(110deg, #30254099, #211d3355); box-shadow: inset 0 0 0 1px #b29afd1c; }
+.trade-mode-mark { display: grid; place-items: center; flex-shrink: 0; width: 38px; height: 38px; border-radius: 10px; border: 1px solid #b29afd40; background: #b29afd0d; color: #c9b6ff; font-family: 'Avenir Next', system-ui, sans-serif; font-size: 16px; font-weight: 750; }
+.trade-mode > button.selected .trade-mode-mark { background: var(--purple); border-color: var(--purple); color: #191323; }
+.trade-mode b { display: block; font-size: 14px; font-weight: 600; }
+.trade-mode small { display: block; margin-top: 3px; color: var(--muted); font-size: 10px; }
+.faucet-section { margin-top: 20px; padding-top: 16px; border-top: 1px solid #b29afd1a; }
+.faucet-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.faucet-heading h3 { margin: 0; color: #d5c9ed; font-size: 13px; font-weight: 600; }
+.faucet-heading p { margin: 4px 0 0; color: #98a5bd; font-size: 10px; line-height: 1.7; }
+.faucet-heading .monad-action { flex-shrink: 0; }
+[data-low="true"] .faucet-heading p { color: #ffca9d; }
+.faucet-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; padding: 0; margin: 13px 0 0; list-style: none; }
+.faucet-list li { min-width: 0; }
+.monad-panel a.faucet-card { display: flex; flex-direction: column; gap: 3px; height: 100%; padding: 12px 13px; border: 1px solid #b29afd24; border-radius: 10px; background: #13172460; color: #98a5bd; text-decoration: none; transition: border-color .15s, background .15s; }
+.monad-panel a.faucet-card:hover { border-color: #b29afd70; background: #b29afd08; text-decoration: none; }
+.faucet-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 3px; }
+.faucet-title strong { color: #e1dfed; font-size: 12px; font-weight: 600; }
+.faucet-tag { padding: 2px 6px; border-radius: 4px; background: #78dfb80c; color: #91cbb5; font-size: 9px; white-space: nowrap; }
+.faucet-card small { font-size: 10px; line-height: 1.6; }
+.faucet-open { margin-top: auto; padding-top: 6px; color: #c4adfb; font-size: 10px; }
+.faucet-note { margin: 11px 0 0; color: #8f9cb2; font-size: 9px; line-height: 1.7; }
+.chain-market { margin-top: 22px; }
+.chain-market > .arena-grid { margin-top: 22px; }
+.chain-setup { border-color: #b29afd35; background: linear-gradient(120deg, #211e32, #171d2b); }
+.chain-setup-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 22px; margin-top: 20px; }
+.chain-contract { min-width: 0; padding: 15px 16px; border: 1px solid #b29afd24; border-radius: 11px; background: #13172460; }
+.chain-contract > span, .chain-stats span { display: block; color: #94a2bc; font-size: 10px; }
+.chain-contract > strong { display: block; margin: 7px 0 4px; color: #ddd4f5; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 13px; font-weight: 450; overflow-wrap: anywhere; }
+.chain-links { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 14px; font-size: 10px; }
+.chain-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.chain-stats > div { min-width: 0; padding: 15px 14px; border: 1px solid #ffffff0b; border-radius: 11px; background: #161c29; }
+.chain-stats strong { display: block; margin: 6px 0 2px; font-size: 21px; font-weight: 600; letter-spacing: -.5px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.chain-stats small { display: block; color: #8f9cb2; font-size: 9px; }
+.chain-forms { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-top: 16px; }
+.chain-form { min-width: 0; margin: 0; }
+.chain-form label { display: block; margin-bottom: 7px; color: #c9c5da; font-size: 11px; }
+.chain-form small { display: block; margin-top: 6px; color: #8f9cb2; font-size: 9px; line-height: 1.6; }
+.chain-input-row { display: flex; align-items: center; gap: 8px; }
+.chain-input-row input { flex: 1; min-width: 0; min-height: 39px; padding: 8px 11px; color: var(--text); border: 1px solid #49405e; border-radius: 7px; background: #141a27; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 12px; }
+.chain-input-row input:focus-visible { outline: 2px solid var(--purple); outline-offset: 1px; }
+.chain-input-row > span { color: #8f9cb2; font-size: 10px; white-space: nowrap; }
+.chain-input-row .monad-action { flex-shrink: 0; }
+.chain-manage { margin-top: 16px; }
+.chain-manage .chain-forms { margin-top: 4px; }
+.chain-read-error:empty, #chain-message:empty { display: none; }
+.chain-read-error { color: #ffca9d; }
+[data-contract="verified"] #chain-contract-state { border-color: #78dfb84a; background: #78dfb80a; color: var(--green); }
+.chain-tx-list { display: flex; flex-direction: column; gap: 7px; padding: 0; margin: 16px 0 0; list-style: none; }
+.chain-tx-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 10px; padding: 9px 11px; border: 1px solid #b29afd19; border-radius: 7px; font-size: 11px; }
+.chain-tx-list li > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chain-tx-list small { color: #8f9cb2; font-size: 10px; }
+.chain-tx-list a { color: #c4adfb; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 10px; text-decoration: none; }
+.chain-tx-list [data-status="ok"] small { color: var(--green); }
+.chain-tx-list [data-status="failed"] small { color: var(--red); }
+.chain-tx-list .chain-tx-empty { display: block; color: #8193ae; text-align: center; border-style: dashed; padding: 22px 12px; }
+.chain-market .trade-table a { color: #c4adfb; text-decoration: none; }
+.chain-market .trade-table td small { display: block; color: #7789a6; font-size: 9px; margin-top: 3px; }
+@media (max-width: 1100px) {
+  .chain-setup-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .faucet-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 740px) {
+  .trade-mode { gap: 8px; margin-top: 18px; }
+  .trade-mode > button { gap: 10px; padding: 11px 12px; }
+  .trade-mode-mark { width: 32px; height: 32px; font-size: 14px; }
+  .trade-mode b { font-size: 13px; }
+  .trade-mode small { font-size: 9px; }
+  .theme-toggle .theme-label { display: none; }
+  .theme-toggle { width: 40px; padding: 0; justify-content: center; }
+  .chain-stats { grid-template-columns: minmax(0, 1fr); }
+  .chain-forms { grid-template-columns: minmax(0, 1fr); }
+  .faucet-heading { flex-direction: column; gap: 10px; }
+  .faucet-list { grid-template-columns: minmax(0, 1fr); }
+  .chain-market { margin-top: 18px; }
+}
+@media (max-width: 420px) {
+  .trade-mode { grid-template-columns: minmax(0, 1fr); }
+  .chain-input-row { flex-wrap: wrap; }
+  .chain-input-row input { flex-basis: 100%; }
+}
+
+</style>
+  <style>
+/* Generated by scripts/build-theme.mjs from style.css and monad.css. Do not edit. */
+:root[data-theme="light"]{color-scheme:light;--bg:#f4f2f9;--surface:#ffffff;--soft:#efebf7;--border:#ddd6ea;--muted:#5f6880;--text:#1c2030;--purple:#6a4bd6;--red:#cc3d57;--blue:#3466c4;--green:#12825b;--warm:#b95a21}
+:root[data-theme="light"] body{background:radial-gradient(ellipse at 60% -20%,#dcd4e92e,transparent 60%),var(--bg)}
+:root[data-theme="light"] .brand-mark{color:#f4f2f8}
+:root[data-theme="light"] .segmented{background:#f1f3f7}
+:root[data-theme="light"] .segmented .selected{color:#3915ab;background:#4419ca16;border-color:#4419ca44}
+:root[data-theme="light"] .overview{background:#f0f2f6c9}
+:root[data-theme="light"] .phase-pill{border:1px solid #4419ca40;background:#4419ca0b}
+:root[data-theme="light"] .phase-pill.trading{border-color:#29ad7b4a;background:#29ad7b0a}
+:root[data-theme="light"] .phase-pill.locked{border-color:#d15a1a55;background:#d15a1a0c}
+:root[data-theme="light"] .phase-pill.settled{color:#455f90;border-color:#d2d7e0;background:#dee2ea33}
+:root[data-theme="light"] .start-button{border:1px solid #4419ca66;background:#4419ca16;color:#3a15a9}
+:root[data-theme="light"] .start-button:not(:disabled):hover{background:#4419ca2b}
+:root[data-theme="light"] .time-track{background:#dfe2e9}
+:root[data-theme="light"] .time-track>i{background:#14141499}
+:root[data-theme="light"] .price-card{background:#eceff4}
+:root[data-theme="light"] .price-card:hover{background:#e8eaf1}
+:root[data-theme="light"] .price-card.selected{background:#4419ca0d;box-shadow:inset 0 0 0 1px #4419ca1c}
+:root[data-theme="light"] .scenario-line{border-top:1px solid #dee1e8}
+:root[data-theme="light"] .scenario-line>b{color:#445c8d}
+:root[data-theme="light"] .scenario-note{color:#62728d}
+:root[data-theme="light"] .chart-header{color:#4a5f91}
+:root[data-theme="light"] .chart-grid{stroke:#e4e7ef}
+:root[data-theme="light"] .chart-text{fill:#677795}
+:root[data-theme="light"] .chart-foot{color:#647490}
+:root[data-theme="light"] .heat-readout>small{color:#57657d}
+:root[data-theme="light"] .action-button{border:1px solid #e0d6d244;background:#d15a1a0d}
+:root[data-theme="light"] .action-button.cool{background:#1a63d30a;border-color:#1a63d333}
+:root[data-theme="light"] .phase-note{color:#5e6d87}
+:root[data-theme="light"] .outline-button{color:#3f16b5;border:1px solid #4419ca55}
+:root[data-theme="light"] th{color:#5f6f88}
+:root[data-theme="light"] td{border-top:1px solid #e5e9ef}
+:root[data-theme="light"] .table-button{border:1px solid #dce0ea;color:#4d2ab2}
+:root[data-theme="light"] .subtle-note{color:#647490}
+:root[data-theme="light"] .trade-tabs{background:#f1f3f7}
+:root[data-theme="light"] .trade-tabs>button.selected{color:#211b32;background:#4419ca1d}
+:root[data-theme="light"] .quantity-control{background:#f2f4f8;border:1px solid #dce0e9}
+:root[data-theme="light"] .quantity-presets button{background:#e9ecf2;color:#556d99}
+:root[data-theme="light"] .quantity-presets .selected{background:#4419ca17;border-color:#4419ca66;color:#3f15ad}
+:root[data-theme="light"] .input-help{color:#5e6d87}
+:root[data-theme="light"] .quote-details dt{color:#687ea1}
+:root[data-theme="light"] .quote-details dt small{color:#7786a0}
+:root[data-theme="light"] .quote-details dd{color:#455d8d}
+:root[data-theme="light"] .win-preview{border:1px solid #4419ca32;background:#4419ca09}
+:root[data-theme="light"] .win-preview>div{color:#536d9d}
+:root[data-theme="light"] .win-preview b{color:#3f15ab}
+:root[data-theme="light"] .win-preview>small{color:#677da2}
+:root[data-theme="light"] .primary-button{color:#f1edf7}
+:root[data-theme="light"] .primary-button:not(:disabled):hover{background:#4918bf}
+:root[data-theme="light"] .quote-note{color:#697ea0}
+:root[data-theme="light"] .error-message{color:#be172d;background:#d91b2e0e;border:1px solid #d91b2e36}
+:root[data-theme="light"] .rules{color:#667ba0}
+:root[data-theme="light"] .rules ol{color:#677ea2}
+:root[data-theme="light"] .result-box{background:#29ad7b0b;border:1px solid #29ad7b3b}
+:root[data-theme="light"] .result-box>p{color:#5e7aa2}
+:root[data-theme="light"] .section-caption{color:#5c6b84}
+:root[data-theme="light"] .bot-explainer{color:#58677e}
+:root[data-theme="light"] .bot-explainer i{background:#4419ca17}
+:root[data-theme="light"] .bot-explainer b{color:#4d6797}
+:root[data-theme="light"] .bot-name{color:#1a2131}
+:root[data-theme="light"] .bot-position{color:#647490}
+:root[data-theme="light"] .strategy-tag{background:#4419ca10;color:#5d3ab3}
+:root[data-theme="light"] .strategy-tag.value{background:#1a63d30d;color:#2c6bc9}
+:root[data-theme="light"] .trade-table td small{color:#6e7f9a}
+:root[data-theme="light"] .trade-side{background:#29ad7b0c}
+:root[data-theme="light"] .trade-side.sell{background:#d15a1a0d}
+:root[data-theme="light"] .empty-cell{color:#64748f}
+:root[data-theme="light"] .result-row{border-bottom:1px solid #e5e8ef}
+:root[data-theme="light"] .result-row>span:first-child{color:#687ea1}
+:root[data-theme="light"] .result-row small{color:#677fa2}
+:root[data-theme="light"] .empty-message{color:#657791}
+:root[data-theme="light"] .feed-heading{color:#5472a5}
+:root[data-theme="light"] .feed li{border-top:1px solid #e5e8f0;color:#627aa1}
+:root[data-theme="light"] .feed time{color:#7889a1}
+:root[data-theme="light"] .notice{color:#6d54ac}
+:root[data-theme="light"] footer{color:#70819c}
+:root[data-theme="light"] .brand-mark path{stroke:#f2eff7}
+:root[data-theme="light"] .topnav a{color:#697da1}
+:root[data-theme="light"] .topnav a:hover,:root[data-theme="light"] .topnav a.current{color:#1d182c}
+:root[data-theme="light"] .round-guide{border:1px solid #4419ca20;background:linear-gradient(110deg,#4419ca0c,transparent)}
+:root[data-theme="light"] .round-guide>div+div{border-left:1px solid #4419ca20}
+:root[data-theme="light"] .round-guide strong{color:#431ea0}
+:root[data-theme="light"] .round-guide small{color:#687da1}
+:root[data-theme="light"] .overview>div:first-child{background:linear-gradient(110deg,#e1d7e32e,#4419ca07)}
+:root[data-theme="light"] .arena{background:linear-gradient(145deg,#eceef4,#eff2f7)}
+:root[data-theme="light"] .order-panel{background:linear-gradient(145deg,#eae9f0,#eeeff5);border-color:#4419ca2e;box-shadow:0 12px 35px #00000012}
+:root[data-theme="light"] .countdown-dial{background:conic-gradient(from 0deg,var(--purple) var(--remaining,100%),#1414140c 0)}
+:root[data-theme="light"] .countdown-dial:before{background:#edeff5}
+:root[data-theme="light"] .countdown-dial.urgent{background:conic-gradient(from 0deg,var(--warm) var(--remaining,100%),#1414140c 0)}
+:root[data-theme="light"] .chart-prompt{background:radial-gradient(ellipse,#edeff6e8 10%,#edeff600 72%);color:#55678e}
+:root[data-theme="light"] .chart-prompt>small{color:#667693}
+:root[data-theme="light"] .ticket-heading>b{color:#4a6491}
+:root[data-theme="light"] .ticket-dots i{border:1px solid #4419ca80;background:#4419ca35}
+:root[data-theme="light"] .ticket-dots .used{border-color:#d3d8e1}
+:root[data-theme="light"] .result-symbol{background:#29ad7b15}
+:root[data-theme="light"] .outcome-red .result-symbol{background:#d91b2e15}
+:root[data-theme="light"] .outcome-black .result-symbol{background:#1a63d315}
+:root[data-theme="light"] .result-box{box-shadow:0 8px 20px #0000000d}
+:root[data-theme="light"] .overview>div{border:1px solid #1414140b;background:#eff2f7}
+:root[data-theme="light"] .overview>div:first-child{border-color:#4419ca35;background:linear-gradient(110deg,#ebe7f199,#edecf455)}
+:root[data-theme="light"] .order-panel{--text:#ebe7f1;--muted:#c9c4d0;--border:#644886;background:linear-gradient(145deg,#181323,#1f182c);border-color:#5f4181;color:#ebe7f1;box-shadow:0 12px 35px #f9f9fc22}
+:root[data-theme="light"] .order-panel .small-label{color:#8168a1}
+:root[data-theme="light"] .order-panel .color-tag.red{color:#c44666}
+:root[data-theme="light"] .order-panel .color-tag.black{color:#5474b6}
+:root[data-theme="light"] .order-panel .color-tag.green{color:#3b9b7f}
+:root[data-theme="light"] .order-panel .trade-tabs{background:#5d437b;border-color:#684c88}
+:root[data-theme="light"] .order-panel .trade-tabs>button{color:#cbc4d2}
+:root[data-theme="light"] .order-panel .trade-tabs>button.selected{background:#171221;color:#7953b6;box-shadow:0 1px 5px #e4dcec12}
+:root[data-theme="light"] .order-panel .quantity-heading>span,:root[data-theme="light"] .order-panel .input-help{color:#91869e}
+:root[data-theme="light"] .order-panel .quantity-control{background:#14141469;border-color:#66438e}
+:root[data-theme="light"] .order-panel .quantity-control input{color:#ece6f0}
+:root[data-theme="light"] .order-panel .quantity-presets button{background:#1d1527;color:#d0c8d6;border-color:#66418b}
+:root[data-theme="light"] .order-panel .quantity-presets button.selected{background:#5a3491;color:#7c59b0;border-color:#7d45ba}
+:root[data-theme="light"] .order-panel .quote-summary>span,:root[data-theme="light"] .order-panel .quote-summary small{color:#ccc5d2}
+:root[data-theme="light"] .order-panel .quote-summary b{color:#e9e3ef}
+:root[data-theme="light"] .order-panel .quote-details dt{color:#ccc5d2}
+:root[data-theme="light"] .order-panel .quote-details dt small{color:#7d6b8a}
+:root[data-theme="light"] .order-panel .quote-details dd{color:#dfd7e3}
+:root[data-theme="light"] .order-panel .win-preview{border-color:#673c95;background:#241a302e}
+:root[data-theme="light"] .order-panel .win-preview>div{color:#cdc4d3}
+:root[data-theme="light"] .order-panel .win-preview b{color:#7f61a8}
+:root[data-theme="light"] .order-panel .win-preview strong{color:#36a07e}
+:root[data-theme="light"] .order-panel .win-preview>small{color:#97849e}
+:root[data-theme="light"] .order-panel .primary-button{background:#7649c0;border-color:#7649c0;color:#141414;box-shadow:0 6px 12px #7649c01c}
+:root[data-theme="light"] .order-panel .primary-button:not(:disabled):hover{background:#794dbc}
+:root[data-theme="light"] .order-panel .quote-note{color:#cbc5d0}
+:root[data-theme="light"] .order-panel .error-message{color:#be4b6b;background:#cd3c6708;border-color:#cd3c672b}
+:root[data-theme="light"] .order-panel .rules,:root[data-theme="light"] .order-panel .rules ol{color:#9788a0}
+:root[data-theme="light"] .order-panel .rules summary{color:#d4cada}
+:root[data-theme="light"] .order-panel .rules summary>span{color:#835faa}
+:root[data-theme="light"] .order-panel .gain{color:#36a07e!important}
+:root[data-theme="light"] .order-panel .loss{color:#bc4d6d!important}
+:root[data-theme="light"] .order-panel .result-box{border-color:#705294;background:#1414145c}
+:root[data-theme="light"] .order-panel .result-box p{color:#cdc5d3}
+:root[data-theme="light"] .order-panel .result-profit small{color:#887592}
+:root[data-theme="light"] .order-panel .result-symbol{background:#3b9b7f15;color:#3b9b7f}
+:root[data-theme="light"] .order-panel .outcome-red .result-symbol{background:#c4466612;color:#c44666}
+:root[data-theme="light"] .order-panel .outcome-black .result-symbol{background:#5474b612;color:#5474b6}
+@media(max-width:740px){:root[data-theme="light"] .overview>div:nth-child(n+3){border-top:1px solid #1414140b}}
+:root[data-theme="light"] .how-to-play{border:1px solid #4419ca26;background:linear-gradient(110deg,#4419ca0d,#f0f2f60a)}
+:root[data-theme="light"] .how-to-heading a{color:#4217bb}
+:root[data-theme="light"] .how-to-play li{border:1px solid #1414140b;background:#f0f2f670}
+:root[data-theme="light"] .how-to-play li b{color:#4015ac}
+:root[data-theme="light"] .how-to-play li b:before{color:#5e27d4}
+:root[data-theme="light"] .how-to-play li span,:root[data-theme="light"] .how-to-play>p{color:#697ea0}
+:root[data-theme="light"] .rules-goal{color:#4015ac!important}
+:root[data-theme="light"] .monad-button{border:1px solid #4419ca55;color:#3d15a9;background:#4419ca12}
+:root[data-theme="light"] .monad-button:not(:disabled):hover{background:#4419ca22;border-color:#4419ca99}
+:root[data-theme="light"] .monad-panel{border-color:#4419ca35;background:linear-gradient(120deg, #edecf4, #eff1f6)}
+:root[data-theme="light"] .monad-text-button:hover{color:#201a30}
+:root[data-theme="light"] .wallet-steps li{color:#667391}
+:root[data-theme="light"] .wallet-steps li + li::before{background:#4419ca28}
+:root[data-theme="light"] .wallet-steps li > span{border:1px solid #dbdee6}
+:root[data-theme="light"] .wallet-steps [data-state="current"]{color:#3f15ad}
+:root[data-theme="light"] .wallet-steps [data-state="current"] > span{border-color:#4419ca99;background:#4419ca18}
+:root[data-theme="light"] .wallet-steps [data-state="complete"]{color:#459174}
+:root[data-theme="light"] .wallet-steps [data-state="complete"] > span{border-color:#29ad7b62;background:#29ad7b0b}
+:root[data-theme="light"] .monad-mark{border:1px solid #4419ca40;background:#4419ca0d;color:#4017b7}
+:root[data-theme="light"] .monad-status{color:#7b5cab;background:#4419ca0a;border:1px solid #4419ca24}
+:root[data-theme="light"] [data-wallet-state="connected"] .monad-status{color:#2ca172;background:#29ad7b0a;border-color:#29ad7b36}
+:root[data-theme="light"] [data-wallet-state="wrong-network"] .monad-status{color:#c76919;border-color:#d15a1a36}
+:root[data-theme="light"] .wallet-selection legend{color:#606f9a}
+:root[data-theme="light"] #wallet-count{color:#5421c1;background:#4419ca10}
+:root[data-theme="light"] .wallet-option-body{border:1px solid #4419ca24;background:#f1f3f880}
+:root[data-theme="light"] .wallet-option > input:not(:disabled):hover + .wallet-option-body{border-color:#4419ca70;background:#4419ca08}
+:root[data-theme="light"] .wallet-option > input:checked + .wallet-option-body{border-color:#4818c5;background:#4419ca10;box-shadow:inset 0 0 0 1px #4419ca18}
+:root[data-theme="light"] .wallet-option > input:focus-visible + .wallet-option-body{outline:2px solid #4916b4}
+:root[data-theme="light"] .wallet-option-icon{background:#4419ca12;color:#4616b5}
+:root[data-theme="light"] .wallet-option-copy strong{color:#201d34}
+:root[data-theme="light"] .wallet-option-copy small{color:#5f6784}
+:root[data-theme="light"] .wallet-choice-indicator{border:1px solid #d9d5e0;color:#f1eef6}
+:root[data-theme="light"] .wallet-option > input:checked + .wallet-option-body .wallet-choice-indicator{background:#4517bd;border-color:#4517bd}
+:root[data-theme="light"] .monad-action{border:1px solid #d9d6e3;color:#624997;background:#4419ca06}
+:root[data-theme="light"] .monad-action:not(:disabled):hover{background:#4419ca16;border-color:#4419ca75}
+:root[data-theme="light"] .monad-primary{border-color:#4419ca70;color:#201a30;background:#4419ca19}
+:root[data-theme="light"] .wallet-connect-button{background:#4a19c6;color:#f1eef6;border-color:#4a19c6}
+:root[data-theme="light"] .wallet-connect-button:not(:disabled):hover{background:#4717b8;border-color:#4717b8}
+:root[data-theme="light"] .wallet-connect-button:disabled{color:#625e7f;background:#4419ca0b;border-color:#4419ca22}
+:root[data-theme="light"] .monad-message{color:#55627a}
+:root[data-theme="light"] .wallet-help{border:1px dashed #4419ca30;color:#596780;background:#f1f3f840}
+:root[data-theme="light"] .wallet-help strong{color:#605687}
+:root[data-theme="light"] .wallet-help p{color:#5e6a85}
+:root[data-theme="light"] .wallet-empty-icon{color:#6c47be}
+:root[data-theme="light"] .monad-panel a{color:#4918bf}
+:root[data-theme="light"] .wallet-account{border:1px solid #4419ca2c;background:#f1f3f860}
+:root[data-theme="light"] .wallet-connected-name{color:#456353}
+:root[data-theme="light"] .wallet-connected-name::before{background:#29ad7b}
+:root[data-theme="light"] .wallet-metrics span{color:#687ca1}
+:root[data-theme="light"] .wallet-metrics strong{color:#45249b}
+:root[data-theme="light"] .wallet-metrics small,:root[data-theme="light"] .wallet-metrics a{color:#5b6a84}
+:root[data-theme="light"] .wallet-metrics a{color:#4918bf}
+:root[data-theme="light"] .wallet-address-details{color:#697ea0}
+:root[data-theme="light"] .wallet-address-details input{color:#3f15ad;border:1px solid #dbd8e4;background:#f0f2f7}
+:root[data-theme="light"] .monad-chain{border:1px solid #4419ca1c;background:#f1f3f850}
+:root[data-theme="light"] .monad-chain-title{color:#55339a}
+:root[data-theme="light"] .monad-chain-title > span:last-child{color:#5d6c86}
+:root[data-theme="light"] .monad-block{color:#4517bb}
+:root[data-theme="light"] .monad-block-time{color:#525f77}
+:root[data-theme="light"] .monad-chain-links{color:#5d6c86}
+:root[data-theme="light"] [data-chain-state="stale"] .monad-block{color:#605277}
+:root[data-theme="light"] [data-chain-state="stale"] #monad-chain-state{color:#bd7e48}
+:root[data-theme="light"] [data-chain-state="fresh"] #monad-chain-state{color:#429472}
+:root[data-theme="light"] .monad-sample-section > p{color:#755f9e}
+:root[data-theme="light"] .monad-sample-section > p > small{color:#5d6c86}
+:root[data-theme="light"] .monad-samples li{border:1px solid #4419ca19}
+:root[data-theme="light"] .monad-samples li:first-child{border-color:#4419ca50;background:#4419ca0b}
+:root[data-theme="light"] .monad-samples small{color:#5d6c86}
+:root[data-theme="light"] .monad-config{border-top:1px solid #4419ca1a;color:#5e5277}
+:root[data-theme="light"] .monad-config dl{border:1px solid #4419ca24;background:#f1f3f850}
+:root[data-theme="light"] .monad-config dt{color:#5d6c86}
+:root[data-theme="light"] .monad-config dd{color:#56329c}
+:root[data-theme="light"] .monad-config small{color:#5d6c86}
+:root[data-theme="light"] .monad-scope{border-top:1px solid #4419ca1a;color:#57627d}
+:root[data-theme="light"] .chart-lock{fill:#d15a1a09}
+:root[data-theme="light"] .theme-toggle:hover{border-color:#4419ca66}
+:root[data-theme="light"] .trade-mode > button{background:#eff2f7;border:1px solid #1414140b}
+:root[data-theme="light"] .trade-mode > button:hover{border-color:#4419ca55}
+:root[data-theme="light"] .trade-mode > button.selected{border-color:#4419ca99;background:linear-gradient(110deg, #ebe7f199, #edecf455);box-shadow:inset 0 0 0 1px #4419ca1c}
+:root[data-theme="light"] .trade-mode-mark{border:1px solid #4419ca40;background:#4419ca0d;color:#4017b7}
+:root[data-theme="light"] .trade-mode > button.selected .trade-mode-mark{color:#f4f2f8}
+:root[data-theme="light"] .faucet-section{border-top:1px solid #4419ca1a}
+:root[data-theme="light"] .faucet-heading h3{color:#55339a}
+:root[data-theme="light"] .faucet-heading p{color:#55627a}
+:root[data-theme="light"] [data-low="true"] .faucet-heading p{color:#c76919}
+:root[data-theme="light"] .monad-panel a.faucet-card{border:1px solid #4419ca24;background:#f1f3f860;color:#55627a}
+:root[data-theme="light"] .monad-panel a.faucet-card:hover{border-color:#4419ca70;background:#4419ca08}
+:root[data-theme="light"] .faucet-title strong{color:#201d34}
+:root[data-theme="light"] .faucet-tag{background:#29ad7b0c;color:#459174}
+:root[data-theme="light"] .faucet-open{color:#4918bf}
+:root[data-theme="light"] .faucet-note{color:#5d6c86}
+:root[data-theme="light"] .chain-setup{border-color:#4419ca35;background:linear-gradient(120deg, #edecf4, #eff1f6)}
+:root[data-theme="light"] .chain-contract{border:1px solid #4419ca24;background:#f1f3f860}
+:root[data-theme="light"] .chain-contract > span,:root[data-theme="light"] .chain-stats span{color:#687ca1}
+:root[data-theme="light"] .chain-contract > strong{color:#45249b}
+:root[data-theme="light"] .chain-stats > div{border:1px solid #1414140b;background:#eff2f7}
+:root[data-theme="light"] .chain-stats small{color:#5d6c86}
+:root[data-theme="light"] .chain-form label{color:#605687}
+:root[data-theme="light"] .chain-form small{color:#5d6c86}
+:root[data-theme="light"] .chain-input-row input{border:1px solid #dbd8e4;background:#f0f2f7}
+:root[data-theme="light"] .chain-input-row > span{color:#5d6c86}
+:root[data-theme="light"] .chain-read-error{color:#c76919}
+:root[data-theme="light"] [data-contract="verified"] #chain-contract-state{border-color:#29ad7b4a;background:#29ad7b0a}
+:root[data-theme="light"] .chain-tx-list li{border:1px solid #4419ca19}
+:root[data-theme="light"] .chain-tx-list small{color:#5d6c86}
+:root[data-theme="light"] .chain-tx-list a{color:#4918bf}
+:root[data-theme="light"] .chain-tx-list .chain-tx-empty{color:#657791}
+:root[data-theme="light"] .chain-market .trade-table a{color:#4918bf}
+:root[data-theme="light"] .chain-market .trade-table td small{color:#6e7f9a}
+:root[data-theme="light"] .order-panel{--text:#eef0f8;--muted:#a9b0c6;--border:#3a3550;background:linear-gradient(145deg,#232036,#1b1a2a);border-color:#3a3550;color:#eef0f8;box-shadow:0 14px 34px #2a204a2e}
+:root[data-theme="light"] .order-panel .primary-button{background:#b9a2ff;border-color:#b9a2ff;color:#1b1430}
+:root[data-theme="light"] .order-panel .primary-button:not(:disabled):hover{background:#cbb8ff}
+:root[data-theme="light"] .brand-mark path{stroke:#ffffff}
+:root[data-theme="light"] .trade-mode>button.selected .trade-mode-mark{color:#ffffff}
+:root[data-theme="light"] .countdown-dial:before{background:#ffffff}
+:root[data-theme="light"] .chart-prompt{background:radial-gradient(ellipse,#ffffffeb 10%,#ffffff00 72%)}
+:root[data-theme="light"] .overview>div,:root[data-theme="light"] .chain-stats>div,:root[data-theme="light"] .trade-mode>button{box-shadow:0 1px 2px #1c20300d}
 
 </style>
 </head>
 <body>
 <div class="shell">
-  <header class="topbar"><div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M3 17h7l4-10 5 19 4-9h6"></path></svg></span><span>BLOCK<span class="brand-light">PULSE</span><small>区块预言家 / 交易竞技场</small></span></div><nav class="topnav" aria-label="页面导航"><a class="current" href="#game">交易竞技场</a><a href="#history-section">成交与复盘</a><a id="rules-link" href="#rules">玩法说明 ↗</a></nav><div class="top-actions"><span class="local-tag"><i></i> 积分模拟</span><button id="wallet-shortcut" class="monad-button" type="button"><span class="monad-button-mark" aria-hidden="true">M</span><span id="wallet-shortcut-label">连接钱包</span></button><button id="reset" class="quiet-button" type="button" aria-label="重置模拟积分" title="重置模拟积分"><span class="reset-label">重置积分</span> <span aria-hidden="true">↻</span></button></div></header>
+  <header class="topbar"><div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M3 17h7l4-10 5 19 4-9h6"></path></svg></span><span>BLOCK<span class="brand-light">PULSE</span><small>区块预言家 / 交易竞技场</small></span></div><nav class="topnav" aria-label="页面导航"><a class="current" href="#trade-modes">交易竞技场</a><a href="#monad-panel">钱包与水龙头</a><a id="rules-link" href="#rules">玩法说明 ↗</a></nav><div class="top-actions"><span class="local-tag"><i></i> <span id="mode-tag-label">积分模拟</span></span><button id="theme-toggle" class="theme-toggle" type="button" aria-label="切换主题"><span class="theme-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><circle class="theme-sun" cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/><path class="theme-rays" d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.3 5.3l1.6 1.6M17.1 17.1l1.6 1.6M5.3 18.7l1.6-1.6M17.1 6.9l1.6-1.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path class="theme-moon" d="M19.5 14.6A7.6 7.6 0 0 1 9.4 4.5a7.6 7.6 0 1 0 10.1 10.1Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg></span><span class="theme-label">跟随系统</span></button><button id="wallet-shortcut" class="monad-button" type="button"><span class="monad-button-mark" aria-hidden="true">M</span><span id="wallet-shortcut-label">连接钱包</span></button><button id="reset" class="quiet-button local-only" type="button" aria-label="重置模拟积分" title="重置模拟积分"><span class="reset-label">重置积分</span> <span aria-hidden="true">↻</span></button></div></header>
   <main>
-    <section class="intro"><div><p class="eyebrow">一分钟，本地事件预测练习</p><h1>判断红黑绿，<span>交易你的判断。</span></h1><p class="intro-copy">目标：盘中卖出锁定盈亏，或持有到本地模拟事件结算；按本轮净收益排名。积分不可兑换。</p></div><div class="mode-picker"><span>选择对手规模 <small>切换会重置余额与历史</small></span><div class="segmented" role="group" aria-label="对手数量，切换会重置场次"><button type="button" data-bots="2" class="selected" aria-pressed="true">2 位 Bot</button><button type="button" data-bots="20" aria-pressed="false">20 位 · 繁忙模式</button></div></div></section>
+    <section class="intro"><div><p class="eyebrow">一分钟，本地事件预测练习</p><h1>判断红黑绿，<span>交易你的判断。</span></h1><p class="intro-copy">盘中卖出锁定盈亏，或持有到收盘结算。选择积分练习，或使用 Monad 测试网 MON 体验链上交易。</p></div><div class="mode-picker local-only"><span>选择对手规模 <small>切换会重置余额与历史</small></span><div class="segmented" role="group" aria-label="对手数量，切换会重置场次"><button type="button" data-bots="2" class="selected" aria-pressed="true">2 位 Bot</button><button type="button" data-bots="20" aria-pressed="false">20 位 · 繁忙模式</button></div></div></section>
+    <div id="trade-modes" class="trade-mode" role="group" aria-label="交易资产"><button type="button" data-trade-mode="local" aria-pressed="true"><span class="trade-mode-mark" aria-hidden="true">P</span><span><b>模拟积分</b><small>本地 Bot 对局 · 无需钱包 · 积分不可兑换</small></span></button><button type="button" data-trade-mode="chain" aria-pressed="false"><span class="trade-mode-mark" aria-hidden="true">M</span><span><b>测试网 MON</b><small>链上合约成交 · 钱包确认 · 真实测试币</small></span></button></div>
     <div class="round-guide" aria-label="每轮五十五秒交易、五秒封盘、三张行动券"><div><strong>55<span>秒</span></strong><small>自由买卖 · 报价随成交变化</small></div><div><strong>5<span>秒</span></strong><small>封盘等待 · 不再交易或控场</small></div><div><strong>3<span>张</span></strong><small>行动额度 · 可以保留不用</small></div></div>
-    <section class="how-to-play" aria-labelledby="quick-play-title"><div class="how-to-heading"><strong id="quick-play-title">第一次来？按这四步完成一轮</strong><a href="#rules" id="rules-link-inline">完整玩法与结算规则 ↓</a></div><ol><li><b>选结果</b><span>点红、黑或绿，先看条件和当前价格。</span></li><li><b>看报价</b><span>输入份数，确认支付额、手续费和命中兑付。</span></li><li><b>实际下单</b><span>开始交易后点“买入”；持仓可盘中卖出。</span></li><li><b>结算复盘</b><span>封盘后由本地随机噪声结算，比较本轮净盈亏。</span></li></ol><p>当前版本使用本地热度与随机噪声：红色为热度 &gt; 102，黑色为热度 &lt; 98，绿色为 98–102（含边界）。不是 Monad 链上事件。</p></section>
+    <section class="how-to-play local-only" aria-labelledby="quick-play-title"><div class="how-to-heading"><strong id="quick-play-title">第一次来？按这四步完成一轮</strong><a href="#rules" id="rules-link-inline">完整玩法与结算规则 ↓</a></div><ol><li><b>选结果</b><span>点红、黑或绿，先看条件和当前价格。</span></li><li><b>看报价</b><span>输入份数，确认支付额、手续费和命中兑付。</span></li><li><b>实际下单</b><span>开始交易后点“买入”；持仓可盘中卖出。</span></li><li><b>结算复盘</b><span>封盘后由本地随机噪声结算，比较本轮净盈亏。</span></li></ol><p>当前版本使用本地热度与随机噪声：红色为热度 &gt; 102，黑色为热度 &lt; 98，绿色为 98–102（含边界）。不是 Monad 链上事件。</p></section>
     <section id="monad-panel" class="panel monad-panel" aria-labelledby="monad-title" data-wallet-state="disconnected" data-chain-state="idle">
       <div class="monad-heading">
         <div class="monad-brand"><span class="monad-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M16 3 29 16 16 29 3 16Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/><rect x="11" y="11" width="10" height="10" rx="3" fill="currentColor"/></svg></span><div><p class="small-label">MONAD / TESTNET</p><h2 id="monad-title">连接你的钱包</h2></div></div>
@@ -268,11 +621,61 @@
         </div>
       </div>
       <details class="monad-config"><summary>手动添加网络 / 连接帮助</summary><dl><div><dt>网络名称</dt><dd>Monad Testnet</dd></div><div><dt>Chain ID</dt><dd>10143 <small>0x279f</small></dd></div><div><dt>货币符号</dt><dd>MON <small>测试币</small></dd></div><div class="monad-config-rpc"><dt>RPC 地址</dt><dd><code id="monad-config-rpc">https://testnet-rpc.monad.xyz</code><button id="monad-copy-rpc" class="monad-text-button" type="button">复制 RPC</button></dd></div></dl><p id="monad-config-message" class="monad-message" role="status" aria-live="polite">钱包不支持自动切网时，可在钱包的网络设置中手动填写。浏览器内未检测到扩展时，请换用已安装钱包的桌面浏览器。</p></details>
-      <div class="monad-scope"><span>钱包 MON 与模拟积分独立。当前买卖和结算仍在本地，不请求签名或扣除 MON。</span><a href="https://faucet.monad.xyz" target="_blank" rel="noopener noreferrer">测试网领水 ↗</a></div>
+      <section id="faucet-section" class="faucet-section" aria-labelledby="faucet-title" data-low="false"><div class="faucet-heading"><div><h3 id="faucet-title">免费领取测试网 MON</h3><p id="faucet-hint">连接钱包后可一键复制地址，再粘贴到水龙头页面。</p></div><button id="faucet-copy" class="monad-action monad-primary" type="button" disabled>复制我的地址</button></div><ul id="faucet-list" class="faucet-list" aria-label="Monad 测试网水龙头"></ul><p class="faucet-note">均在新标签页打开第三方或官方页面；本站不代领、不保存地址。额度和条件随水龙头调整，以对方页面为准。测试网 MON 没有价值，不能兑换游戏积分。</p></section>
       </div>
     </section>
-    <div class="overview" aria-label="账户与模拟市场概览"><div><span>你的可用积分</span><strong id="balance">1,000.00</strong><small>未投入持仓的账户余额</small></div><div><span>预计清仓净值 / 累计盈亏</span><strong id="equity">1,000.00</strong><small id="total-pnl">+0.00 · 清仓估算口径</small></div><div><span>做市资金余额</span><strong id="reserve">1,000.00</strong><small>含交易收入与手续费 · 负责兑付</small></div><div><span>本地模拟成交</span><strong><b id="trade-count">0</b><em id="trade-rate">0 笔 / 近 1 秒</em></strong><small>已接受的模拟成交数，非链上 TPS</small></div></div>
-    <div id="game" class="arena-grid">
+    <section id="chain-market" class="chain-market chain-only" aria-labelledby="chain-title" data-contract="none">
+      <section class="panel chain-setup" aria-labelledby="chain-title">
+        <div class="panel-header"><div><p class="small-label">MONAD TESTNET / 链上市场合约</p><h2 id="chain-title">用测试网 MON 交易</h2></div><span id="chain-contract-state" class="phase-pill">未设置合约</span></div>
+        <div class="chain-setup-grid">
+          <div class="chain-contract"><span>市场合约</span><strong id="chain-address">尚未设置</strong><div class="chain-links"><a id="chain-address-link" target="_blank" rel="noopener noreferrer" hidden>在浏览器查看合约 ↗</a><button id="chain-share" class="monad-text-button" type="button" hidden>复制分享链接</button><button id="chain-change" class="monad-text-button" type="button" hidden>更换合约</button></div></div>
+          <div class="chain-stats"><div><span>做市储备</span><strong id="chain-house">—</strong><small>MON · 覆盖所有可能兑付</small></div><div><span>待领取兑付</span><strong id="chain-unclaimed">—</strong><small>MON · 已结算未领取</small></div><div><span>流动性参数</span><strong id="chain-liquidity">—</strong><small>LMSR b · 越大报价越稳</small></div></div>
+        </div>
+        <div id="chain-setup-forms" class="chain-forms">
+          <form id="chain-attach-form" class="chain-form"><label for="chain-address-input">使用已有市场合约</label><div class="chain-input-row"><input id="chain-address-input" placeholder="0x…" spellcheck="false" autocomplete="off" inputmode="text"><button class="monad-action monad-primary" type="submit">校验并使用</button></div><small>只接受链上代码与本页内置合约完全一致的地址。</small></form>
+          <form id="chain-deploy-form" class="chain-form"><label for="chain-deploy-amount">用钱包部署新市场</label><div class="chain-input-row"><input id="chain-deploy-amount" type="number" inputmode="decimal" min="0.02" step="0.01" value="0.3" aria-describedby="chain-deploy-help"><span>MON 初始储备</span><button class="monad-action" type="submit">部署合约</button></div><small id="chain-deploy-help">储备随部署转入合约，用于兑付赢家；你将成为管理者，可在回合之间取回储备。Monad 的储备余额规则（下限 10 MON）对合约转出的适用范围文档未写明：若小额储备下卖出或领取被回滚，请把储备注资到 10 MON 以上再试。</small></form>
+        </div>
+        <details id="chain-manage" class="monad-config chain-manage" hidden><summary>为做市储备注资 / 管理</summary><div class="chain-forms"><form id="chain-fund-form" class="chain-form"><label for="chain-fund-amount">任何人都可以注资</label><div class="chain-input-row"><input id="chain-fund-amount" type="number" inputmode="decimal" min="0" step="0.01" value="0.1"><span>MON</span><button class="monad-action" type="submit">注资</button></div><small>注资不可由注资人取回，只增加做市储备与下一轮流动性。</small></form><form id="chain-withdraw-form" class="chain-form" ><div id="chain-owner-tools" hidden><label for="chain-withdraw-amount">管理者取回储备</label><div class="chain-input-row"><input id="chain-withdraw-amount" type="number" inputmode="decimal" min="0" step="0.01" value="0.1"><span>MON</span><button class="monad-action" type="submit">取回</button></div><small>仅在本轮结算后可用；待领取的兑付不能被取回。</small></div></form></div></details>
+        <p id="chain-message" class="monad-message" role="status" aria-live="polite"></p>
+        <p id="chain-read-error" class="monad-message chain-read-error" role="status" aria-live="polite"></p>
+      </section>
+      <div class="arena-grid">
+        <div class="market-column">
+          <section class="panel arena" aria-labelledby="chain-arena-title">
+            <div class="panel-header"><div><p class="small-label" id="chain-round-label">链上回合</p><h2 id="chain-arena-title">真实 MON 价格发现</h2></div><span id="chain-phase" class="phase-pill ready">等待合约</span></div>
+            <div class="round-controls"><div class="countdown"><div id="chain-countdown-dial" class="countdown-dial"><strong id="chain-time">60.0</strong><span>秒</span></div><span id="chain-window-label">55 秒交易 + 5 秒封盘</span></div><button id="chain-round-action" class="start-button" type="button" disabled><span id="chain-round-action-label">先设置市场合约</span><b aria-hidden="true">↗</b></button></div>
+            <div id="chain-timer" class="time-track" role="progressbar" aria-label="链上回合剩余时间" aria-valuemin="0" aria-valuemax="60" aria-valuenow="60"><span id="chain-time-bar"></span><i title="最后 5 秒封盘"></i></div>
+            <div class="price-cards" role="group" aria-label="选择链上交易份额"><button type="button" class="price-card red selected" data-color="red" aria-pressed="true"><span class="card-title"><b>↗ 红 · 上行</b><small>收盘热度 &gt; 102</small></span><strong id="chain-price-red">0.333</strong><span class="price-unit">市场价格 · × 0.001 MON / 份</span><span class="scenario-line"><span class="scenario-label">当前热度场景概率</span> <b id="chain-odds-red">—</b></span></button><button type="button" class="price-card black" data-color="black" aria-pressed="false"><span class="card-title"><b>↘ 黑 · 下行</b><small>收盘热度 &lt; 98</small></span><strong id="chain-price-black">0.333</strong><span class="price-unit">市场价格 · × 0.001 MON / 份</span><span class="scenario-line"><span class="scenario-label">当前热度场景概率</span> <b id="chain-odds-black">—</b></span></button><button type="button" class="price-card green" data-color="green" aria-pressed="false"><span class="card-title"><b>＝ 绿 · 区间</b><small>98 ≤ 收盘热度 ≤ 102</small></span><strong id="chain-price-green">0.333</strong><span class="price-unit">市场价格 · × 0.001 MON / 份</span><span class="scenario-line"><span class="scenario-label">当前热度场景概率</span> <b id="chain-odds-green">—</b></span></button></div>
+            <p id="chain-scenario-note" class="scenario-note">场景概率假设后续无人再用行动券，只计算区块哈希噪声；它不同于交易价格，也不代表最终胜率。</p>
+            <div class="chart-header"><span>三色份额价格 · 链上采样</span><div class="chart-legend"><span><i class="red-dot"></i>红</span><span><i class="black-dot"></i>黑</span><span><i class="green-dot"></i>绿</span></div></div>
+            <div class="chart-wrap"><svg id="chain-chart" viewBox="0 0 650 220" role="img" aria-label="链上份额价格曲线"></svg><div id="chain-chart-prompt" class="chart-prompt"><span>每一笔链上成交，都改变价格。</span><small>开局后，本页每 1.5 秒读取一次合约报价</small></div></div><div class="chart-foot"><span>每份命中兑付 0.001 MON；未命中兑付 0</span><span>阴影区：最后 5 秒封盘</span></div>
+            <div class="influence-zone"><div class="heat-readout"><span>链上热度</span><strong id="chain-heat">100</strong><small id="chain-noise-label">区块哈希噪声 ±12</small></div><div class="influence-controls"><div class="ticket-heading"><b>你的链上控场</b><span id="chain-ticket-dots" class="ticket-dots" aria-hidden="true"><i></i><i></i><i></i></span></div><p id="chain-tickets">你的链上行动券 3 / 3</p><div class="action-buttons"><button id="chain-heat-up" class="action-button warm" type="button" disabled>↗ 加热 +1</button><button id="chain-heat-down" class="action-button cool" type="button" disabled>↘ 降温 −1</button></div></div></div>
+            <p id="chain-phase-note" class="phase-note">设置或部署市场合约后，这里显示链上回合。</p>
+          </section>
+          <section class="panel portfolio" aria-labelledby="chain-portfolio-title">
+            <div class="panel-header"><div><p class="small-label">链上持仓与兑付</p><h2 id="chain-portfolio-title">你的 MON 账本</h2></div><button id="chain-claim" class="outline-button" type="button" disabled>暂无可领取</button></div>
+            <div class="pnl-strip"><div><span>可领取兑付 · MON</span><strong id="chain-claimable">—</strong></div><div><span>本轮投入 · MON</span><strong id="chain-spent">0.00000</strong></div><div><span>钱包余额 · MON</span><strong id="chain-wallet-balance">—</strong></div></div>
+            <div class="table-scroll"><table class="position-table"><thead><tr><th>持仓</th><th>份数</th><th>平均成本 MON</th><th>参考市值 MON</th><th>市价盈亏</th><th>操作</th></tr></thead><tbody><tr><td><span class="color-tag red"><i></i>红</span></td><td id="chain-holding-red">0</td><td id="chain-basis-red">—</td><td id="chain-value-red">0.00000</td><td id="chain-pnl-red">0.00000</td><td><button id="chain-sell-red" data-chain-sell="red" type="button" class="table-button" disabled>卖出</button></td></tr><tr><td><span class="color-tag black"><i></i>黑</span></td><td id="chain-holding-black">0</td><td id="chain-basis-black">—</td><td id="chain-value-black">0.00000</td><td id="chain-pnl-black">0.00000</td><td><button id="chain-sell-black" data-chain-sell="black" type="button" class="table-button" disabled>卖出</button></td></tr><tr><td><span class="color-tag green"><i></i>绿</span></td><td id="chain-holding-green">0</td><td id="chain-basis-green">—</td><td id="chain-value-green">0.00000</td><td id="chain-pnl-green">0.00000</td><td><button id="chain-sell-green" data-chain-sell="green" type="button" class="table-button" disabled>卖出</button></td></tr></tbody></table></div><p class="subtle-note">持仓和成本直接读自合约，只统计当前回合。参考市值 = 份数 × 现价 × 0.001 MON，不含卖出滑点、手续费和 gas。</p>
+          </section>
+        </div>
+        <aside class="panel order-panel" aria-labelledby="chain-order-title">
+          <div class="panel-header"><div><p class="small-label">钱包签名，链上成交</p><h2 id="chain-order-title">MON 订单</h2></div><span id="chain-selected-chip" class="color-tag red"><i></i>红 · 上行</span></div>
+          <div class="trade-tabs" role="group" aria-label="买入或卖出"><button data-side="buy" class="selected" type="button" aria-pressed="true">买入份额</button><button data-side="sell" type="button" aria-pressed="false">卖出份额</button></div>
+          <div class="quantity-heading"><label for="chain-shares">交易份数</label><span id="chain-available">钱包 — MON</span></div><div class="quantity-control"><input id="chain-shares" type="number" inputmode="numeric" min="1" max="1000" step="1" value="50" autocomplete="off" aria-describedby="chain-quantity-help"><span>份</span></div>
+          <div class="quantity-presets"><button type="button" data-shares="25">25 份</button><button type="button" data-shares="50" class="selected">50 份</button><button type="button" data-shares="100">100 份</button><button id="chain-max-shares" type="button">最多</button></div><p id="chain-quantity-help" class="input-help">单笔 1–1,000 份，每份命中兑付 0.001 MON；报价由合约 LMSR 实时计算。</p>
+          <div class="quote-summary"><span id="chain-quote-total-label">预计支付（含费用）</span><strong><b id="chain-quote-total">—</b><small>测试网 MON</small></strong></div><dl class="quote-details"><div><dt>当前价格</dt><dd id="chain-quote-spot">—</dd></div><div><dt>成交平均价</dt><dd id="chain-quote-average">—</dd></div><div><dt>份额成交金额</dt><dd id="chain-quote-gross">—</dd></div><div><dt>手续费 <small>0.3%</small></dt><dd id="chain-quote-fee">—</dd></div><div><dt>本单对价格的影响</dt><dd id="chain-quote-impact">—</dd></div></dl>
+          <div id="chain-win-preview" class="win-preview" hidden><div><span id="chain-win-label">若红盘命中，持有到结算</span><b id="chain-quote-win-payout">—</b></div><div><span>扣除本单成本后净收益</span><strong id="chain-quote-win-profit">—</strong></div><small id="chain-quote-roi">—</small></div>
+          <button id="chain-submit" class="primary-button" type="button" disabled><span id="chain-submit-label">暂不可交易</span><b aria-hidden="true">→</b></button><p id="chain-quote-note" class="quote-note">先设置市场合约。</p>
+          <details class="rules"><summary>链上模式怎么玩？<span>＋</span></summary><ol><li>同一合约里的所有钱包共用一个市场：任何人都可以开局、交易、行动和结算。</li><li>买入时 MON 直接转入合约，卖出与兑付由合约转回钱包；每笔都需钱包确认并支付 gas。</li><li>每个地址每轮 3 张行动券，全场热度最多偏离 ±9；最后 5 秒封盘。</li><li>开局时登记一个约 57 秒后的随机区块，结算噪声取自它的哈希。出块者可施加影响，仅适合测试网演示。</li><li>做市储备覆盖所有可能兑付；合约报价、持仓与结算都可在区块浏览器核对。</li></ol></details>
+        </aside>
+      </div>
+      <div class="bottom-grid">
+        <section class="panel trades-panel"><div class="panel-header"><h2>最近链上成交</h2><span id="chain-trade-count" class="section-caption">读取合约事件</span></div><div class="table-scroll"><table class="trade-table"><thead><tr><th>地址 / 区块</th><th>方向</th><th>份数</th><th>支付 / 到账 MON</th><th>交易</th></tr></thead><tbody id="chain-trades-body"><tr><td colspan="5" class="empty-cell">开局后，这里列出合约事件里的真实成交。</td></tr></tbody></table></div></section>
+        <section class="panel history-panel"><div class="panel-header"><h2>我的链上交易</h2><span class="section-caption">本页提交 · 可在浏览器核对</span></div><ol id="chain-tx-list" class="chain-tx-list"></ol><p class="subtle-note">余额低于 10 MON 时，Monad 的储备余额规则只允许每 3 个区块转出一次 MON，本页会在连续买入前自动等待。</p></section>
+      </div>
+    </section>
+    <div class="overview local-only" aria-label="账户与模拟市场概览"><div><span>你的可用积分</span><strong id="balance">1,000.00</strong><small>未投入持仓的账户余额</small></div><div><span>预计清仓净值 / 累计盈亏</span><strong id="equity">1,000.00</strong><small id="total-pnl">+0.00 · 清仓估算口径</small></div><div><span>做市资金余额</span><strong id="reserve">1,000.00</strong><small>含交易收入与手续费 · 负责兑付</small></div><div><span>本地模拟成交</span><strong><b id="trade-count">0</b><em id="trade-rate">0 笔 / 近 1 秒</em></strong><small>已接受的模拟成交数，非链上 TPS</small></div></div>
+    <div id="game" class="arena-grid local-only">
       <div class="market-column">
         <section class="panel arena" aria-labelledby="arena-title">
           <div class="panel-header"><div><p class="small-label" id="round-label">第 01 轮 / 模拟区块 000</p><h2 id="arena-title">价格发现进行时</h2></div><span id="phase" class="phase-pill ready">准备开场</span></div>
@@ -310,11 +713,11 @@
         <details id="rules" class="rules" open><summary>完整玩法与结算规则<span>−</span></summary><p class="rules-goal">目标：通过判断本轮结果、盘中交易或持有到期，让自己的本轮净盈亏高于其他参与者。</p><ol><li><b>选择结果：</b>点红、黑、绿卡片查看当前市场价和模型场景估计。场景估计只是本地模型参考，不是保证胜率。</li><li><b>确认报价：</b>输入 1–1,000 整数份。报价列出预计支付、成交均价、0.3% 手续费和命中时兑付。下单时会按最新价格重新计算。</li><li><b>提交买入：</b>开始一轮后有 55 秒交易时间。点“买入”会从模拟余额扣款并记入持仓账本；不会连接钱包或花费 MON。</li><li><b>盘中退出或等结算：</b>交易窗口内可卖出自己已有的份额；也可继续持有。每份命中兑付 1 积分，未命中兑付 0，手续费已计入本轮净盈亏。</li><li><b>理解本地结果：</b>最后 5 秒封盘。当前版本先按行动后的热度加上本地模拟随机噪声决定结果：热度 &gt; 102 为红，热度 &lt; 98 为黑，98–102（含边界）为绿。结果不来自真实区块或外部事件。</li><li><b>行动券与对手：</b>每轮最多 3 张行动券，可加热 +1 或降温 −1，也可保留。Bot 会按各自策略、余额和持仓真实买卖；它们不知道未来结果。场次按净盈亏排名。</li></ol><p>红黑绿份额价格由本地成交推动；场景估计、市场价格和最终结果是不同信息。便宜的颜色若命中仍按每份 1 积分兑付，但不会因为支持者少就自动获胜。本地积分没有现金价值，模拟成交不代表链上交易。</p></details>
       </aside>
     </div>
-    <section class="panel bots-panel" aria-labelledby="bots-title"><div class="panel-header"><div><p class="small-label">规则策略，同场交易</p><h2 id="bots-title">Bot 交易观察</h2></div><span id="bot-summary" class="section-caption">2 位对手 · 无未来信息</span></div><div class="bot-explainer"><span><i>↗</i><b>动量策略</b> 观察价格趋势与当前信号</span><span><i>⇄</i><b>价值策略</b> 比较场景概率与市场价格</span><span>都受余额、持仓与行动券约束</span></div><div class="table-scroll bot-table-wrap"><table class="bot-table"><thead><tr><th>参与者 / 当前持仓</th><th>策略</th><th>成交笔数</th><th>预计清仓净值</th><th>清仓估算盈亏</th><th>最大回撤</th><th>行动券</th></tr></thead><tbody id="bots-body"></tbody></table></div></section>
-    <div id="history-section" class="bottom-grid"><section class="panel trades-panel"><div class="panel-header"><h2>最近成交</h2><span class="section-caption">实际模拟账本 · 非展示动画</span></div><div class="table-scroll"><table class="trade-table"><thead><tr><th>时间 / 参与者</th><th>方向</th><th>份数</th><th>平均价</th><th>手续费</th><th>支付 / 到账</th></tr></thead><tbody id="trades-body"><tr><td colspan="6" class="empty-cell">开场后，这里记录每一笔实际成交。</td></tr></tbody></table></div></section><section class="panel history-panel"><div class="panel-header"><h2>收盘记录</h2><span id="record-count" class="section-caption">0 轮</span></div><div id="results-list" class="results-list"><p class="empty-message">第一轮，从你的判断开始。</p></div><div class="feed-heading"><span>场内动态</span><i></i></div><ol id="feed" class="feed"></ol></section></div>
-    <div id="notice" class="notice" role="status" aria-live="polite">纯本地模拟，积分不可兑现。准备好后，开始第一轮。</div>
+    <section class="panel bots-panel local-only" aria-labelledby="bots-title"><div class="panel-header"><div><p class="small-label">规则策略，同场交易</p><h2 id="bots-title">Bot 交易观察</h2></div><span id="bot-summary" class="section-caption">2 位对手 · 无未来信息</span></div><div class="bot-explainer"><span><i>↗</i><b>动量策略</b> 观察价格趋势与当前信号</span><span><i>⇄</i><b>价值策略</b> 比较场景概率与市场价格</span><span>都受余额、持仓与行动券约束</span></div><div class="table-scroll bot-table-wrap"><table class="bot-table"><thead><tr><th>参与者 / 当前持仓</th><th>策略</th><th>成交笔数</th><th>预计清仓净值</th><th>清仓估算盈亏</th><th>最大回撤</th><th>行动券</th></tr></thead><tbody id="bots-body"></tbody></table></div></section>
+    <div id="history-section" class="bottom-grid local-only"><section class="panel trades-panel"><div class="panel-header"><h2>最近成交</h2><span class="section-caption">实际模拟账本 · 非展示动画</span></div><div class="table-scroll"><table class="trade-table"><thead><tr><th>时间 / 参与者</th><th>方向</th><th>份数</th><th>平均价</th><th>手续费</th><th>支付 / 到账</th></tr></thead><tbody id="trades-body"><tr><td colspan="6" class="empty-cell">开场后，这里记录每一笔实际成交。</td></tr></tbody></table></div></section><section class="panel history-panel"><div class="panel-header"><h2>收盘记录</h2><span id="record-count" class="section-caption">0 轮</span></div><div id="results-list" class="results-list"><p class="empty-message">第一轮，从你的判断开始。</p></div><div class="feed-heading"><span>场内动态</span><i></i></div><ol id="feed" class="feed"></ol></section></div>
+    <div id="notice" class="notice local-only" role="status" aria-live="polite">纯本地模拟，积分不可兑现。准备好后，开始第一轮。</div>
   </main>
-  <footer><span>BLOCKPULSE <i>/</i> 观察 · 交易 · 复盘</span><span>支持 Monad 测试网钱包 · 交易仍为模拟积分 · 不构成收益承诺</span></footer>
+  <footer><span>BLOCKPULSE <i>/</i> 观察 · 交易 · 复盘</span><span>模拟积分不可兑换 · 测试网 MON 无价值 · 不构成收益承诺</span></footer>
 </div>
 <script>
 (() => {
@@ -757,6 +1160,16 @@ const MONAD_TESTNET = Object.freeze({
   nativeCurrency: Object.freeze({ name: 'Testnet MON Token', symbol: 'MON', decimals: 18 }),
 });
 
+// Third-party limits change often; the UI tells users to trust each faucet's own page.
+const MONAD_FAUCETS = Object.freeze([
+  Object.freeze({ name: 'Monad 官方', url: 'https://faucet.monad.xyz', tag: '官方', limit: '额度随钱包活跃度变化', requirement: '完成人机验证即可领取' }),
+  Object.freeze({ name: 'QuickNode', url: 'https://faucet.quicknode.com/monad/testnet', tag: '免登录', limit: '每个地址 12 小时一次', requirement: '无需账号或主网余额，发帖可加倍' }),
+  Object.freeze({ name: 'Alchemy', url: 'https://www.alchemy.com/faucets/monad-testnet', tag: '每日', limit: '每 24 小时约 1 MON', requirement: '地址需持有少量以太坊主网 ETH' }),
+  Object.freeze({ name: 'aPriori', url: 'https://stake.apr.io/faucet', tag: '连接钱包', limit: '额度以页面显示为准', requirement: '连接钱包后点击领取' }),
+  Object.freeze({ name: 'thirdweb', url: 'https://thirdweb.com/monad-testnet', tag: '需登录', limit: '每日约 0.01 MON', requirement: '需登录 thirdweb 账号' }),
+  Object.freeze({ name: 'OKX Web3', url: 'https://web3.okx.com/faucet/monad/66', tag: '任务', limit: '完成页面任务后领取', requirement: '库存不足时可能暂停' }),
+]);
+
 const ADDRESS = /^0x[\da-f]{40}$/i;
 const HEX = /^0x[\da-f]+$/i;
 const isAddress = value => typeof value === 'string' && ADDRESS.test(value);
@@ -949,6 +1362,7 @@ function createWalletClient({ readTimeoutMs = 8000, now = Date.now } = {}) {
 
   return {
     getState: () => state,
+    getProvider: () => provider,
     subscribe(listener) { listeners.add(listener); listener(state); return () => listeners.delete(listener); },
     connect,
     switchNetwork,
@@ -1040,7 +1454,7 @@ async function readMonadHead({ fetcher = globalThis.fetch, signal, timeoutMs = 8
   }
 }
 
-return { MONAD_TESTNET, MonadError, shortenAddress, formatMon, walletErrorMessage, createWalletClient, discoverWallets, readMonadHead };
+return { MONAD_TESTNET, MONAD_FAUCETS, MonadError, shortenAddress, formatMon, walletErrorMessage, createWalletClient, discoverWallets, readMonadHead };
 })();
 const MonadMonitor = (() => {
 const { readMonadHead } = MonadNetwork;
@@ -1129,12 +1543,12 @@ function createHeadMonitor({ read = readMonadHead, intervalMs = 5000, setTimer =
 return { createHeadMonitor };
 })();
 const MonadUI = (() => {
-const { MONAD_TESTNET, createWalletClient, discoverWallets, formatMon, shortenAddress } = MonadNetwork;
+const { MONAD_FAUCETS, MONAD_TESTNET, createWalletClient, discoverWallets, formatMon, shortenAddress } = MonadNetwork;
 const { createHeadMonitor } = MonadMonitor;
 
 function mountMonad() {
   const $ = id => document.getElementById(id);
-  if (!$('monad-panel')) return;
+  if (!$('monad-panel')) return null;
   const wallet = createWalletClient();
   const monitor = createHeadMonitor();
   let wallets = [];
@@ -1179,7 +1593,7 @@ function mountMonad() {
     setText('wallet-network', chainText);
     setText('wallet-state', state.reading ? '正在读取钱包' : state.pending ? '等待钱包确认' : ready ? '测试网已连接' : connected && state.status === 'wrong-network' ? '需要切换网络' : connected ? '状态待刷新' : '尚未连接');
     const selected = wallets.find(item => item.provider === selectedProvider);
-    const message = state.reading ? '正在读取账户与余额…' : ready ? state.balanceWei === 0n ? '测试网余额为 0，可从下方领水；模拟交易不需要 MON。' : '账户已就绪，可以继续体验模拟交易。' : connected && onMonad ? '余额暂未读到，可点击“刷新余额”重试。' : connected ? '确认 Monad 测试网后，即可查看 MON 余额。' : selected ? '仅请求账户授权，模拟交易不消耗 MON。' : '选择一个钱包以继续，也可以直接体验模拟交易。';
+    const message = state.reading ? '正在读取账户与余额…' : ready ? state.balanceWei === 0n ? '测试网余额为 0，可从下方水龙头领取；模拟积分模式不需要 MON。' : '账户已就绪，可切换到“测试网 MON”用真实测试币交易。' : connected && onMonad ? '余额暂未读到，可点击“刷新余额”重试。' : connected ? '确认 Monad 测试网后，即可查看 MON 余额。' : selected ? '连接只请求账户授权；每笔链上交易都会在钱包中单独确认。' : '选择一个钱包以继续，也可以直接体验模拟交易。';
     setText('wallet-message', state.message || message);
     $('wallet-message').hidden = !wallets.length && !state.message;
     setText('wallet-shortcut-label', state.reading ? '读取中…' : state.pending ? '等待确认…' : connected ? shortenAddress(state.account) : '连接钱包');
@@ -1202,6 +1616,38 @@ function mountMonad() {
     $('wallet-disconnect').hidden = !connected && !state.pending;
     setText('wallet-disconnect', state.pending && !connected ? '取消本站连接' : '断开本站连接');
     $('wallet-shortcut').disabled = state.pending;
+    $('faucet-copy').disabled = !connected;
+    $('faucet-section').dataset.low = String(ready && state.balanceWei < 50000000000000000n);
+    setText('faucet-hint', !connected ? '连接钱包后可一键复制地址，再粘贴到水龙头页面。' : ready && state.balanceWei < 50000000000000000n ? '余额不足 0.05 MON，先领一些测试币再上链交易。' : '复制地址后粘贴到任一水龙头页面即可领取。');
+  }
+
+  function renderFaucets() {
+    $('faucet-list').replaceChildren(...MONAD_FAUCETS.map(faucet => {
+      const item = document.createElement('li');
+      const link = document.createElement('a');
+      link.className = 'faucet-card';
+      link.href = faucet.url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      const title = document.createElement('span');
+      title.className = 'faucet-title';
+      const name = document.createElement('strong');
+      name.textContent = faucet.name;
+      const tag = document.createElement('span');
+      tag.className = 'faucet-tag';
+      tag.textContent = faucet.tag;
+      title.append(name, tag);
+      const limit = document.createElement('small');
+      limit.textContent = faucet.limit;
+      const requirement = document.createElement('small');
+      requirement.textContent = faucet.requirement;
+      const open = document.createElement('span');
+      open.className = 'faucet-open';
+      open.textContent = '前往领取 ↗';
+      link.append(title, limit, requirement, open);
+      item.append(link);
+      return item;
+    }));
   }
 
   function renderChoices() {
@@ -1252,6 +1698,7 @@ function mountMonad() {
     }));
   }
 
+  renderFaucets();
   const unsubscribeWallet = wallet.subscribe(renderWallet);
   const discovery = discoverWallets(window, next => {
     wallets = next;
@@ -1371,6 +1818,19 @@ function mountMonad() {
       setText('wallet-copy-message', '浏览器未允许自动复制，已展开完整地址，可手动复制。');
     }
   });
+  listen($('faucet-copy'), 'click', async () => {
+    const account = wallet.getState().account;
+    if (!account) return;
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(account);
+      setText('faucet-hint', `已复制 ${shortenAddress(account)}，粘贴到水龙头页面即可。`);
+    } catch {
+      $('wallet-address-details').open = true;
+      $('wallet-full-address').select();
+      setText('faucet-hint', '浏览器未允许自动复制，已展开完整地址，可手动复制。');
+    }
+  });
   listen($('monad-copy-rpc'), 'click', async () => {
     try {
       if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
@@ -1388,20 +1848,1142 @@ function mountMonad() {
   listen(window, 'pagehide', () => monitor.setEnvironment({ visible: false }));
   listen(window, 'pageshow', syncEnvironment);
 
-  return () => {
-    handlers.forEach(remove => remove());
-    unsubscribeWallet();
-    unsubscribeMonitor();
-    discovery.dispose();
-    monitor.dispose();
-    wallet.disconnect();
+  return {
+    wallet,
+    dispose() {
+      handlers.forEach(remove => remove());
+      unsubscribeWallet();
+      unsubscribeMonitor();
+      discovery.dispose();
+      monitor.dispose();
+      wallet.disconnect();
+    },
   };
 }
 
 return { mountMonad };
 })();
+const MarketArtifact = (() => {
+// Generated by scripts/build-contract.mjs from contracts/src/BlockPulseMarket.sol. Do not edit.
+const MARKET_ARTIFACT = Object.freeze({
+  "bytecode": "0x60806040526040516128f03803806128f0833981016040819052610022916100d5565b60146001600160401b038216108061004457506107d06001600160401b038216115b15610062576040516327df2edd60e11b815260040160405180910390fd5b5f80546001600160e01b03191633600160a01b600160e01b0319811691909117600160a01b6001600160401b03851602179091553460018190556040519081527f5af8184bef8e4b45eb9f6ed7734d04da38ced226495548f46e0c8ff8d7d9a5249060200160405180910390a250610102565b5f602082840312156100e5575f5ffd5b81516001600160401b03811681146100fb575f5ffd5b9392505050565b6127e18061010f5f395ff3fe6080604052600436106101de575f3560e01c806362f791c0116100fd5780639f81aed711610092578063bf333f2c11610062578063bf333f2c146104f9578063d36e3ebe1461050d578063d5d44d8014610556578063fa98cc3714610581575f5ffd5b80639f81aed7146104a3578063a76c69e2146104b7578063b60d4288146104dc578063ba1d61cf146104e4575f5ffd5b80638a19c8bc116100cd5780638a19c8bc146104305780638b3e0476146104455780638da5cb5b1461045957806395b4ea301461048f575f5ffd5b806362f791c0146103da578063669416b8146103ed5780636eb2d9a21461040257806384af185014610416575f5ffd5b8063402914f5116101735780634e71d92d116101435780634e71d92d1461036857806355e3f0861461037c578063613c22571461039057806361f6b445146103af575f5ffd5b8063402914f5146102e95780634125ff901461030857806345009be71461033557806346280a8014610349575f5ffd5b806323218411116101ae578063232184111461026f578063265121601461028e578063329c4bdd146102ba5780633e8ff57b146102d4575f5ffd5b806311da60b4146101f1578063148e250d1461020557806318c33e46146102345780631ba68d8814610248575f5ffd5b366101ed576101eb6105a0565b005b5f5ffd5b3480156101fc575f5ffd5b506101eb6105ed565b348015610210575f5ffd5b50610221680821ab0d441498000081565b6040519081526020015b60405180910390f35b34801561023f575f5ffd5b50610221600381565b348015610253575f5ffd5b5061025c600981565b60405160079190910b815260200161022b565b34801561027a575f5ffd5b506101eb610289366004612525565b61063e565b348015610299575f5ffd5b506102ad6102a836600461253c565b61077e565b60405161022b9190612569565b3480156102c5575f5ffd5b5061022166038d7ea4c6800081565b3480156102df575f5ffd5b506102216103e881565b3480156102f4575f5ffd5b5061022161030336600461253c565b610b03565b348015610313575f5ffd5b5061031d6107d081565b6040516001600160401b03909116815260200161022b565b348015610340575f5ffd5b50610221603781565b348015610354575f5ffd5b506101eb6103633660046125aa565b610bc5565b348015610373575f5ffd5b506101eb610f5b565b348015610387575f5ffd5b506101eb611145565b34801561039b575f5ffd5b506101eb6103aa3660046125da565b6112d8565b3480156103ba575f5ffd5b506102216103c936600461253c565b60096020525f908152604090205481565b6101eb6103e8366004612600565b61136e565b3480156103f8575f5ffd5b5061022160025481565b34801561040d575f5ffd5b5061025c600c81565b348015610421575f5ffd5b5061022166470de4df82000081565b34801561043b575f5ffd5b5061022160035481565b348015610450575f5ffd5b50610221603c81565b348015610464575f5ffd5b505f54610477906001600160a01b031681565b6040516001600160a01b03909116815260200161022b565b34801561049a575f5ffd5b5061025c606481565b3480156104ae575f5ffd5b5061031d601481565b3480156104c2575f5ffd5b505f5461031d90600160a01b90046001600160401b031681565b6101eb6105a0565b3480156104ef575f5ffd5b5061022160015481565b348015610504575f5ffd5b50610221601e81565b348015610518575f5ffd5b5061052c610527366004612637565b611675565b6040805195865260208601949094529284019190915260608301521515608082015260a00161022b565b348015610561575f5ffd5b5061022161057036600461253c565b600a6020525f908152604090205481565b34801561058c575f5ffd5b506101eb61059b366004612671565b6118e3565b3460015f8282546105b1919061269e565b909155505060405134815233907f5af8184bef8e4b45eb9f6ed7734d04da38ced226495548f46e0c8ff8d7d9a5249060200160405180910390a2565b60035480158061061457505f81815260056020526040902060010154600160881b900460ff165b156106315760405162facebb60e61b815260040160405180910390fd5b61063a81611a43565b5050565b5f546001600160a01b03163314610668576040516330cd747160e01b815260040160405180910390fd5b60045460ff161561068c5760405163558a1e0360e11b815260040160405180910390fd5b6004805460ff1916600117905560035480158015906106c357505f81815260056020526040902060010154600160881b900460ff16155b156106e157604051636592ca8160e11b815260040160405180910390fd5b600154821115610704576040516328b35f2160e01b815260040160405180910390fd5b8160015f82825461071591906126b1565b90915550505f5461072f906001600160a01b031683611ce3565b5f546040518381526001600160a01b03909116907f7084f5476618d8e60b11ef0d7d3f06914655adb8793e28ff7f018d4c76d505d59060200160405180910390a250506004805460ff19169055565b6107866124e8565b6003545f8181526005602090815260409182902083855280546001600160401b0380821693870193909352600160401b810490921692850192909252600160801b90046001600160801b031660608401526001810154600781900b6080850152600160881b900460ff166107fa575f6107fd565b60015b60ff90811660a08501526001820154600160801b810490911660c0850152600160401b810460070b60e0850152600160901b900463ffffffff16610100840152610845612507565b825f036108865760405180606001604052806704a03ce68d21555581526020016704a03ce68d21555581526020016704a03ce68d215556815250905061091e565b6001820154600160881b900460ff16156108cf576001820154670de0b6b3a7640000908290600160801b900460ff16600381106108c5576108c56126c4565b602002015261091e565b60408051606081019182905261091b91600285019060039082845b8154815260200190600101908083116108ea5750508654600160801b90046001600160801b03169250611d58915050565b90505b5f5b6003811015610a535782600201816003811061093e5761093e6126c4565b01548561094c83600961269e565b601f811061095c5761095c6126c4565b6020020152818160038110610973576109736126c4565b60200201518561098483600c61269e565b601f8110610994576109946126c4565b602090810291909101919091525f8581526006825260408082206001600160a01b038a1683529092522081600381106109cf576109cf6126c4565b0154856109dd83601461269e565b601f81106109ed576109ed6126c4565b602090810291909101919091525f8581526007825260408082206001600160a01b038a168352909252208160038110610a2857610a286126c4565b015485610a3683601961269e565b601f8110610a4657610a466126c4565b6020020152600101610920565b506001546101e08501526002546102008501525f8054600160a01b90046001600160401b031661022086015243610240860152426102608601528381526008602090815260408083206001600160a01b03891684529091529020546102e0850152610abd85610b03565b6103008501525f546001600160a01b0316610380850152610adc611e7e565b6103a08501525060010154600160b01b90046001600160401b03166103c083015250919050565b6001600160a01b0381165f908152600a60209081526040808320546009909252909120548015801590610b4d57505f81815260056020526040902060010154600160881b900460ff165b15610bbf575f8181526006602090815260408083206001600160a01b0387168452825280832084845260059092529091206001015466038d7ea4c680009190600160801b900460ff1660038110610ba657610ba66126c4565b0154610bb291906126d8565b610bbc908361269e565b91505b50919050565b60045460ff1615610be95760405163558a1e0360e11b815260040160405180910390fd5b6004805460ff191660011790555f80610c00611efc565b91509150610c0e8585611f82565b610c183383611fd3565b5f828152600660209081526040808320338452909152812060ff871660038110610c4457610c446126c4565b0154905084811015610c695760405163fdc9902d60e01b815260040160405180910390fd5b6040805160608101918290525f91600285019060039082845b815481526020019060010190808311610c82575050505050905085818860ff1660038110610cb257610cb26126c4565b60200201818151610cc391906126b1565b9052506040805160608101918290525f918291610d1991600288019060039082845b815481526020019060010190808311610ce55750508954889350600160801b90046001600160801b031691505f90506120cb565b925092505086811015610d3f57604051638199f5f360e01b815260040160405180910390fd5b806001541080610d75575066038d7ea4c68000610d5b846121ef565b610d6591906126d8565b81600154610d7391906126b1565b105b15610d93576040516328b35f2160e01b815260040160405180910390fd5b5f868152600760209081526040808320338452909152812060ff8b1660038110610dbf57610dbf6126c4565b01549050888514610de45784610dd58a836126d8565b610ddf9190612703565b610de6565b805b610df090826126b1565b5f888152600760209081526040808320338452909152902060ff8c1660038110610e1c57610e1c6126c4565b0155610e2889866126b1565b5f888152600660209081526040808320338452909152902060ff8c1660038110610e5457610e546126c4565b01819055508160015f828254610e6a91906126b1565b9091555084905060ff8b1660038110610e8557610e856126c4565b6020020151866002018b60ff1660038110610ea257610ea26126c4565b015560018681018054601290610ec6908490600160901b900463ffffffff16612716565b825463ffffffff9182166101009390930a9283029190920219909116179055506040805160ff8c1681525f60208201529081018a90526060810183905260808101849052339088907f5dc850f206eb954eeab9ec4bbb6a0d8b1878bb5a101991b62f18ab9cf245e4529060a00160405180910390a3610f453383611ce3565b50506004805460ff191690555050505050505050565b60045460ff1615610f7f5760405163558a1e0360e11b815260040160405180910390fd5b6004805460ff191660011790556003545f8181526005602052604090208115801590610fb757506001810154600160881b900460ff16155b8015610fc75750610fc78161221c565b8015610fe457508054600160401b90046001600160401b03164015155b15610ff457610ff282611a43565b505b335f908152600a6020908152604080832054600990925290912054801580159061103557505f81815260056020526040902060010154600160881b900460ff165b156110ad575f818152600660209081526040808320338452825280832084845260059092529091206001015466038d7ea4c680009190600160801b900460ff1660038110611085576110856126c4565b015461109191906126d8565b61109b908361269e565b335f9081526009602052604081205591505b815f036110cd576040516312d37ee560e31b815260040160405180910390fd5b335f908152600a60205260408120819055600280548492906110f09084906126b1565b9091555061110090503383611ce3565b60405182815233907fd8138f8a3f377c5259ca548e70e4c2de94f129f5a11036a15b69513cba2b426a9060200160405180910390a250506004805460ff191690555050565b600354801580159061116f57505f81815260056020526040902060010154600160881b900460ff16155b8015611181575061117f81611a43565b155b156111895750565b66470de4df82000060015410156111b35760405163388766fd60e01b815260040160405180910390fd5b5f6111bc611e7e565b90506111c960018361269e565b60038190555f81815260056020526040812080546001600160401b0342811667ffffffffffffffff1990921691909117825560018201805443808416600160b01b0267ffffffffffffffff60b01b19909216919091179091559254939550909261123e92600160a01b9091049091169061269e565b81546001600160401b03908116600160401b92821683026001600160801b0390811691909117600160801b9186169190910217808455600184018054606467ffffffffffffffff1990911617905560408051428152939091049091166020830152810183905283907ffd9d17e5565deea3d25918d95fc398673b9445ef0a96d12eaf3ab2b198756c659060600160405180910390a2505050565b5f546001600160a01b03163314611302576040516330cd747160e01b815260040160405180910390fd5b60146001600160401b038216108061132457506107d06001600160401b038216115b15611342576040516327df2edd60e11b815260040160405180910390fd5b5f80546001600160401b03909216600160a01b0267ffffffffffffffff60a01b19909216919091179055565b60045460ff16156113925760405163558a1e0360e11b815260040160405180910390fd5b6004805460ff191660011790555f806113a9611efc565b915091506113b78484611f82565b6113c13383611fd3565b6040805160608101918290525f91600284019060039082845b8154815260200190600101908083116113da575050505050905083818660ff166003811061140a5761140a6126c4565b6020020181815161141b919061269e565b9052506040805160608101918290525f91829161147291600287019060039082845b81548152602001906001019080831161143d5750508854889350600160801b90046001600160801b03169150600190506120cb565b9250925050803410156114985760405163cd1c886760e01b815260040160405180910390fd5b66038d7ea4c680006114a9846121ef565b6114b391906126d8565b816001546114c1919061269e565b10156114e0576040516328b35f2160e01b815260040160405180910390fd5b8060015f8282546114f1919061269e565b9091555083905060ff88166003811061150c5761150c6126c4565b6020020151846002018860ff1660038110611529576115296126c4565b01556001848101805460129061154d908490600160901b900463ffffffff16612716565b825463ffffffff9182166101009390930a9283029190920219909116179055505f8581526006602090815260408083203384529091529020869060ff89166003811061159b5761159b6126c4565b015f8282546115aa919061269e565b90915550505f8581526007602090815260408083203384529091529020819060ff8916600381106115dd576115dd6126c4565b015f8282546115ec919061269e565b90915550506040805160ff89168152600160208201529081018790526060810182905260808101839052339086907f5dc850f206eb954eeab9ec4bbb6a0d8b1878bb5a101991b62f18ab9cf245e4529060a00160405180910390a380341115611662576116623361165d83346126b1565b611ce3565b50506004805460ff191690555050505050565b5f5f5f5f5f6116848887611f82565b6003545f81815260056020526040812091158015906116af57506001820154600160881b900460ff16155b90505f816116d75760405180606001604052805f81526020015f81526020015f815250611708565b60408051606081019182905290600285019060039082845b8154815260200190600101908083116116ef5750505050505b90505f8261171d57611718611e7e565b611730565b8354600160801b90046001600160801b03165b905080158061176057508a158015611760575089828d60ff1660038110611759576117596126c4565b6020020151105b1561177d575f5f5f5f5f98509850985098509850505050506118d8565b5f6040518060600160405280845f6003811061179b5761179b6126c4565b60200201518152602001846001600381106117b8576117b86126c4565b60200201518152602001846002600381106117d5576117d56126c4565b6020020151905290508b15611813578a818e60ff16600381106117fa576117fa6126c4565b6020020181815161180b919061269e565b90525061183e565b8a818e60ff1660038110611829576118296126c4565b6020020181815161183a91906126b1565b9052505b61184a8382848f6120cb565b919b509950975061185b8183611d58565b8d60ff166003811061186f5761186f6126c4565b602002015196505f66038d7ea4c68000611888836121ef565b61189291906126d8565b90508c6118bd5788600154101580156118b8575080896001546118b591906126b1565b10155b6118cf565b80896001546118cc919061269e565b10155b96505050505050505b939792965093509350565b5f5f6118ed611efc565b915091506118fb3383611fd3565b5f828152600860209081526040808320338452909152902054600311611934576040516366f3ef9b60e01b815260040160405180910390fd5b5f83611941575f19611944565b60015b6001830154611956919060070b612732565b905061196460096064612732565b60070b8160070b1380611987575061197e60096064612761565b60070b8160070b125b156119a5576040516319cc535d60e21b815260040160405180910390fd5b5f83815260086020908152604080832033845290915281208054600192906119ce90849061269e565b909155505060018201805467ffffffffffffffff19166001600160401b03831617905533837fc3146739d18b1829ceb8b6abe9478d24c4de2e3f0874a591ce8f8ee69022f97486611a20575f19611a23565b60015b60408051918252600786900b60208301520160405180910390a350505050565b5f818152600560205260408120611a598161221c565b611a755760405162facebb60e61b815260040160405180910390fd5b8054600160401b90046001600160401b03164080611b0957611a9843600161269e565b82546fffffffffffffffff00000000000000001916600160401b6001600160401b03928316810291909117808555604051919004909116815284907f0413b1d85e8ac9f33409164f1760e8e77ecad919de18ccbb938c5cb01adbdf2d9060200160405180910390a2505f9392505050565b5f611b16600c6002612790565b611b21906001612732565b604080516020810185905290810187905230606082015260079190910b91505f90600c908390608001604051602081830303815290604052805190602001205f1c611b6c91906127b6565b611b769190612761565b60018501549091505f90611b8e90839060070b612732565b90505f611b9d60646002612732565b60070b8260070b13611bcf57611bb560026064612761565b60070b8260070b12611bc8576002611bd1565b6001611bd1565b5f5b90505f66038d7ea4c68000876002018360ff1660038110611bf457611bf46126c4565b0154611c0091906126d8565b90508060015f828254611c1391906126b1565b925050819055508060025f828254611c2b919061269e565b909155505060018701805460ff60881b1960ff8516600160801b810260ff60801b196001600160401b038916600160401b021670ffffffffffffffffff000000000000000019909416939093179290921716600160881b1790915560408051918252600785810b602084015286900b908201526060810182905289907fa4f2d777c7e1374f8e6a462cc4bbd80f7b3b55bca83777d4113756db56ef511a9060800160405180910390a250600198975050505050505050565b5f826001600160a01b0316826040515f6040518083038185875af1925050503d805f8114611d2c576040519150601f19603f3d011682016040523d82523d5f602084013e611d31565b606091505b5050905080611d53576040516312171d8360e31b815260040160405180910390fd5b505050565b611d60612507565b5f611d6a846121ef565b9050611d74612507565b5f5f5b6003811015611e1457611dd286670de0b6b3a7640000808a8560038110611da057611da06126c4565b6020020151611daf90896126b1565b611db991906126d8565b611dc391906126d8565b611dcd9190612703565b61225a565b838260038110611de457611de46126c4565b6020020152828160038110611dfb57611dfb6126c4565b6020020151611e0a908361269e565b9150600101611d77565b505f5b6003811015611e745781670de0b6b3a7640000848360038110611e3c57611e3c6126c4565b6020020151611e4b91906126d8565b611e559190612703565b858260038110611e6757611e676126c4565b6020020152600101611e17565b5050505092915050565b5f670f3f0e0e4bf10b7b670de0b6b3a7640000600a611ea466038d7ea4c6800083612703565b600154611eb191906126d8565b611ebc9060086126d8565b611ec69190612703565b611ed091906126d8565b611eda9190612703565b9050680821ab0d4414980000811115611ef95750680821ab0d44149800005b90565b6003545f818152600560205260409020811580611f2457506001810154600160881b900460ff165b80611f4557508054611f41906037906001600160401b031661269e565b4210155b80611f6157508054600160401b90046001600160401b03164310155b15611f7e5760405162b5f6bf60e41b815260040160405180910390fd5b9091565b60028260ff161115611fa757604051631cf7e9c560e01b815260040160405180910390fd5b801580611fb557506103e881115b1561063a57604051636edcc52360e01b815260040160405180910390fd5b6001600160a01b0382165f90815260096020526040902054818103611ff757505050565b801580159061201d57505f81815260056020526040902060010154600160881b900460ff165b156120af575f8181526006602090815260408083206001600160a01b0387168452825280832084845260059092529091206001015466038d7ea4c680009190600160801b900460ff1660038110612076576120766126c4565b015461208291906126d8565b6001600160a01b0384165f908152600a6020526040812080549091906120a990849061269e565b90915550505b506001600160a01b039091165f90815260096020526040902055565b5f8080806120e866038d7ea4c68000670de0b6b3a7640000612703565b9050841561215d57806120fb8988612331565b6121058989612331565b61210f91906126b1565b6121199190612703565b61212490600161269e565b9350612710612134601e866126d8565b6121409061270f61269e565b61214a9190612703565b9250612156838561269e565b91506121e4565b5f816121698989612331565b6121738b8a612331565b61217d91906126b1565b6121879190612703565b90505f8111612196575f6121a1565b6121a16001826126b1565b94506127106121b1601e876126d8565b6121bd9061270f61269e565b6121c79190612703565b93508385116121d6575f6121e0565b6121e084866126b1565b9250505b509450945094915050565b80516020820151811015612204575060208101515b6040820151811015612217575060408101515b919050565b80545f9061223590603c906001600160401b031661269e565b421015801561225457508154600160401b90046001600160401b031643115b92915050565b5f61226e670de0b6b3a7640000602a6126d8565b821061227b57505f919050565b5f61228e67099e8db03256ce5d84612703565b90505f6122a367099e8db03256ce5d836126d8565b6122ad90856126b1565b9050670de0b6b3a76400008060015b8215612306576122d4670de0b6b3a7640000826126d8565b6122de85856126d8565b6122e89190612703565b92506122f4838361269e565b91506122ff816127c9565b90506122bc565b50838161231b670de0b6b3a7640000806126d8565b6123259190612703565b901c9695505050505050565b5f5f61233c846121ef565b90505f5f5b600381101561238d5761237985670de0b6b3a76400008089856003811061236a5761236a6126c4565b6020020151611daf90886126b1565b612383908361269e565b9150600101612341565b50670de0b6b3a76400006123a0826123d9565b6123aa90866126d8565b6123b49190612703565b6123c6670de0b6b3a7640000846126d8565b6123d0919061269e565b95945050505050565b5f5b6123ee670de0b6b3a764000060026126d8565b821061241a576123ff600283612703565b915061241367099e8db03256ce5d8261269e565b90506123db565b5f61242d670de0b6b3a76400008461269e565b670de0b6b3a764000061244081866126b1565b61244a91906126d8565b6124549190612703565b90505f670de0b6b3a764000061246a83806126d8565b6124749190612703565b9050815f60015b82156124c85761248b8184612703565b612495908361269e565b9150670de0b6b3a76400006124aa85856126d8565b6124b49190612703565b92506124c160028261269e565b905061247b565b506124d48160026126d8565b6124de908661269e565b9695505050505050565b604051806103e00160405280601f906020820280368337509192915050565b60405180606001604052806003906020820280368337509192915050565b5f60208284031215612535575f5ffd5b5035919050565b5f6020828403121561254c575f5ffd5b81356001600160a01b0381168114612562575f5ffd5b9392505050565b6103e0810181835f5b601f811015612591578151835260209283019290910190600101612572565b50505092915050565b803560ff81168114612217575f5ffd5b5f5f5f606084860312156125bc575f5ffd5b6125c58461259a565b95602085013595506040909401359392505050565b5f602082840312156125ea575f5ffd5b81356001600160401b0381168114612562575f5ffd5b5f5f60408385031215612611575f5ffd5b61261a8361259a565b946020939093013593505050565b80358015158114612217575f5ffd5b5f5f5f60608486031215612649575f5ffd5b6126528461259a565b925061266060208501612628565b929592945050506040919091013590565b5f60208284031215612681575f5ffd5b61256282612628565b634e487b7160e01b5f52601160045260245ffd5b808201808211156122545761225461268a565b818103818111156122545761225461268a565b634e487b7160e01b5f52603260045260245ffd5b80820281158282048414176122545761225461268a565b634e487b7160e01b5f52601260045260245ffd5b5f82612711576127116126ef565b500490565b63ffffffff81811683821601908111156122545761225461268a565b600781810b9083900b01677fffffffffffffff8113677fffffffffffffff19821217156122545761225461268a565b600782810b9082900b03677fffffffffffffff198112677fffffffffffffff821317156122545761225461268a565b5f8260070b8260070b028060070b91508082146127af576127af61268a565b5092915050565b5f826127c4576127c46126ef565b500690565b5f600182016127da576127da61268a565b506001019056",
+  "runtime": "0x6080604052600436106101de575f3560e01c806362f791c0116100fd5780639f81aed711610092578063bf333f2c11610062578063bf333f2c146104f9578063d36e3ebe1461050d578063d5d44d8014610556578063fa98cc3714610581575f5ffd5b80639f81aed7146104a3578063a76c69e2146104b7578063b60d4288146104dc578063ba1d61cf146104e4575f5ffd5b80638a19c8bc116100cd5780638a19c8bc146104305780638b3e0476146104455780638da5cb5b1461045957806395b4ea301461048f575f5ffd5b806362f791c0146103da578063669416b8146103ed5780636eb2d9a21461040257806384af185014610416575f5ffd5b8063402914f5116101735780634e71d92d116101435780634e71d92d1461036857806355e3f0861461037c578063613c22571461039057806361f6b445146103af575f5ffd5b8063402914f5146102e95780634125ff901461030857806345009be71461033557806346280a8014610349575f5ffd5b806323218411116101ae578063232184111461026f578063265121601461028e578063329c4bdd146102ba5780633e8ff57b146102d4575f5ffd5b806311da60b4146101f1578063148e250d1461020557806318c33e46146102345780631ba68d8814610248575f5ffd5b366101ed576101eb6105a0565b005b5f5ffd5b3480156101fc575f5ffd5b506101eb6105ed565b348015610210575f5ffd5b50610221680821ab0d441498000081565b6040519081526020015b60405180910390f35b34801561023f575f5ffd5b50610221600381565b348015610253575f5ffd5b5061025c600981565b60405160079190910b815260200161022b565b34801561027a575f5ffd5b506101eb610289366004612525565b61063e565b348015610299575f5ffd5b506102ad6102a836600461253c565b61077e565b60405161022b9190612569565b3480156102c5575f5ffd5b5061022166038d7ea4c6800081565b3480156102df575f5ffd5b506102216103e881565b3480156102f4575f5ffd5b5061022161030336600461253c565b610b03565b348015610313575f5ffd5b5061031d6107d081565b6040516001600160401b03909116815260200161022b565b348015610340575f5ffd5b50610221603781565b348015610354575f5ffd5b506101eb6103633660046125aa565b610bc5565b348015610373575f5ffd5b506101eb610f5b565b348015610387575f5ffd5b506101eb611145565b34801561039b575f5ffd5b506101eb6103aa3660046125da565b6112d8565b3480156103ba575f5ffd5b506102216103c936600461253c565b60096020525f908152604090205481565b6101eb6103e8366004612600565b61136e565b3480156103f8575f5ffd5b5061022160025481565b34801561040d575f5ffd5b5061025c600c81565b348015610421575f5ffd5b5061022166470de4df82000081565b34801561043b575f5ffd5b5061022160035481565b348015610450575f5ffd5b50610221603c81565b348015610464575f5ffd5b505f54610477906001600160a01b031681565b6040516001600160a01b03909116815260200161022b565b34801561049a575f5ffd5b5061025c606481565b3480156104ae575f5ffd5b5061031d601481565b3480156104c2575f5ffd5b505f5461031d90600160a01b90046001600160401b031681565b6101eb6105a0565b3480156104ef575f5ffd5b5061022160015481565b348015610504575f5ffd5b50610221601e81565b348015610518575f5ffd5b5061052c610527366004612637565b611675565b6040805195865260208601949094529284019190915260608301521515608082015260a00161022b565b348015610561575f5ffd5b5061022161057036600461253c565b600a6020525f908152604090205481565b34801561058c575f5ffd5b506101eb61059b366004612671565b6118e3565b3460015f8282546105b1919061269e565b909155505060405134815233907f5af8184bef8e4b45eb9f6ed7734d04da38ced226495548f46e0c8ff8d7d9a5249060200160405180910390a2565b60035480158061061457505f81815260056020526040902060010154600160881b900460ff165b156106315760405162facebb60e61b815260040160405180910390fd5b61063a81611a43565b5050565b5f546001600160a01b03163314610668576040516330cd747160e01b815260040160405180910390fd5b60045460ff161561068c5760405163558a1e0360e11b815260040160405180910390fd5b6004805460ff1916600117905560035480158015906106c357505f81815260056020526040902060010154600160881b900460ff16155b156106e157604051636592ca8160e11b815260040160405180910390fd5b600154821115610704576040516328b35f2160e01b815260040160405180910390fd5b8160015f82825461071591906126b1565b90915550505f5461072f906001600160a01b031683611ce3565b5f546040518381526001600160a01b03909116907f7084f5476618d8e60b11ef0d7d3f06914655adb8793e28ff7f018d4c76d505d59060200160405180910390a250506004805460ff19169055565b6107866124e8565b6003545f8181526005602090815260409182902083855280546001600160401b0380821693870193909352600160401b810490921692850192909252600160801b90046001600160801b031660608401526001810154600781900b6080850152600160881b900460ff166107fa575f6107fd565b60015b60ff90811660a08501526001820154600160801b810490911660c0850152600160401b810460070b60e0850152600160901b900463ffffffff16610100840152610845612507565b825f036108865760405180606001604052806704a03ce68d21555581526020016704a03ce68d21555581526020016704a03ce68d215556815250905061091e565b6001820154600160881b900460ff16156108cf576001820154670de0b6b3a7640000908290600160801b900460ff16600381106108c5576108c56126c4565b602002015261091e565b60408051606081019182905261091b91600285019060039082845b8154815260200190600101908083116108ea5750508654600160801b90046001600160801b03169250611d58915050565b90505b5f5b6003811015610a535782600201816003811061093e5761093e6126c4565b01548561094c83600961269e565b601f811061095c5761095c6126c4565b6020020152818160038110610973576109736126c4565b60200201518561098483600c61269e565b601f8110610994576109946126c4565b602090810291909101919091525f8581526006825260408082206001600160a01b038a1683529092522081600381106109cf576109cf6126c4565b0154856109dd83601461269e565b601f81106109ed576109ed6126c4565b602090810291909101919091525f8581526007825260408082206001600160a01b038a168352909252208160038110610a2857610a286126c4565b015485610a3683601961269e565b601f8110610a4657610a466126c4565b6020020152600101610920565b506001546101e08501526002546102008501525f8054600160a01b90046001600160401b031661022086015243610240860152426102608601528381526008602090815260408083206001600160a01b03891684529091529020546102e0850152610abd85610b03565b6103008501525f546001600160a01b0316610380850152610adc611e7e565b6103a08501525060010154600160b01b90046001600160401b03166103c083015250919050565b6001600160a01b0381165f908152600a60209081526040808320546009909252909120548015801590610b4d57505f81815260056020526040902060010154600160881b900460ff165b15610bbf575f8181526006602090815260408083206001600160a01b0387168452825280832084845260059092529091206001015466038d7ea4c680009190600160801b900460ff1660038110610ba657610ba66126c4565b0154610bb291906126d8565b610bbc908361269e565b91505b50919050565b60045460ff1615610be95760405163558a1e0360e11b815260040160405180910390fd5b6004805460ff191660011790555f80610c00611efc565b91509150610c0e8585611f82565b610c183383611fd3565b5f828152600660209081526040808320338452909152812060ff871660038110610c4457610c446126c4565b0154905084811015610c695760405163fdc9902d60e01b815260040160405180910390fd5b6040805160608101918290525f91600285019060039082845b815481526020019060010190808311610c82575050505050905085818860ff1660038110610cb257610cb26126c4565b60200201818151610cc391906126b1565b9052506040805160608101918290525f918291610d1991600288019060039082845b815481526020019060010190808311610ce55750508954889350600160801b90046001600160801b031691505f90506120cb565b925092505086811015610d3f57604051638199f5f360e01b815260040160405180910390fd5b806001541080610d75575066038d7ea4c68000610d5b846121ef565b610d6591906126d8565b81600154610d7391906126b1565b105b15610d93576040516328b35f2160e01b815260040160405180910390fd5b5f868152600760209081526040808320338452909152812060ff8b1660038110610dbf57610dbf6126c4565b01549050888514610de45784610dd58a836126d8565b610ddf9190612703565b610de6565b805b610df090826126b1565b5f888152600760209081526040808320338452909152902060ff8c1660038110610e1c57610e1c6126c4565b0155610e2889866126b1565b5f888152600660209081526040808320338452909152902060ff8c1660038110610e5457610e546126c4565b01819055508160015f828254610e6a91906126b1565b9091555084905060ff8b1660038110610e8557610e856126c4565b6020020151866002018b60ff1660038110610ea257610ea26126c4565b015560018681018054601290610ec6908490600160901b900463ffffffff16612716565b825463ffffffff9182166101009390930a9283029190920219909116179055506040805160ff8c1681525f60208201529081018a90526060810183905260808101849052339088907f5dc850f206eb954eeab9ec4bbb6a0d8b1878bb5a101991b62f18ab9cf245e4529060a00160405180910390a3610f453383611ce3565b50506004805460ff191690555050505050505050565b60045460ff1615610f7f5760405163558a1e0360e11b815260040160405180910390fd5b6004805460ff191660011790556003545f8181526005602052604090208115801590610fb757506001810154600160881b900460ff16155b8015610fc75750610fc78161221c565b8015610fe457508054600160401b90046001600160401b03164015155b15610ff457610ff282611a43565b505b335f908152600a6020908152604080832054600990925290912054801580159061103557505f81815260056020526040902060010154600160881b900460ff165b156110ad575f818152600660209081526040808320338452825280832084845260059092529091206001015466038d7ea4c680009190600160801b900460ff1660038110611085576110856126c4565b015461109191906126d8565b61109b908361269e565b335f9081526009602052604081205591505b815f036110cd576040516312d37ee560e31b815260040160405180910390fd5b335f908152600a60205260408120819055600280548492906110f09084906126b1565b9091555061110090503383611ce3565b60405182815233907fd8138f8a3f377c5259ca548e70e4c2de94f129f5a11036a15b69513cba2b426a9060200160405180910390a250506004805460ff191690555050565b600354801580159061116f57505f81815260056020526040902060010154600160881b900460ff16155b8015611181575061117f81611a43565b155b156111895750565b66470de4df82000060015410156111b35760405163388766fd60e01b815260040160405180910390fd5b5f6111bc611e7e565b90506111c960018361269e565b60038190555f81815260056020526040812080546001600160401b0342811667ffffffffffffffff1990921691909117825560018201805443808416600160b01b0267ffffffffffffffff60b01b19909216919091179091559254939550909261123e92600160a01b9091049091169061269e565b81546001600160401b03908116600160401b92821683026001600160801b0390811691909117600160801b9186169190910217808455600184018054606467ffffffffffffffff1990911617905560408051428152939091049091166020830152810183905283907ffd9d17e5565deea3d25918d95fc398673b9445ef0a96d12eaf3ab2b198756c659060600160405180910390a2505050565b5f546001600160a01b03163314611302576040516330cd747160e01b815260040160405180910390fd5b60146001600160401b038216108061132457506107d06001600160401b038216115b15611342576040516327df2edd60e11b815260040160405180910390fd5b5f80546001600160401b03909216600160a01b0267ffffffffffffffff60a01b19909216919091179055565b60045460ff16156113925760405163558a1e0360e11b815260040160405180910390fd5b6004805460ff191660011790555f806113a9611efc565b915091506113b78484611f82565b6113c13383611fd3565b6040805160608101918290525f91600284019060039082845b8154815260200190600101908083116113da575050505050905083818660ff166003811061140a5761140a6126c4565b6020020181815161141b919061269e565b9052506040805160608101918290525f91829161147291600287019060039082845b81548152602001906001019080831161143d5750508854889350600160801b90046001600160801b03169150600190506120cb565b9250925050803410156114985760405163cd1c886760e01b815260040160405180910390fd5b66038d7ea4c680006114a9846121ef565b6114b391906126d8565b816001546114c1919061269e565b10156114e0576040516328b35f2160e01b815260040160405180910390fd5b8060015f8282546114f1919061269e565b9091555083905060ff88166003811061150c5761150c6126c4565b6020020151846002018860ff1660038110611529576115296126c4565b01556001848101805460129061154d908490600160901b900463ffffffff16612716565b825463ffffffff9182166101009390930a9283029190920219909116179055505f8581526006602090815260408083203384529091529020869060ff89166003811061159b5761159b6126c4565b015f8282546115aa919061269e565b90915550505f8581526007602090815260408083203384529091529020819060ff8916600381106115dd576115dd6126c4565b015f8282546115ec919061269e565b90915550506040805160ff89168152600160208201529081018790526060810182905260808101839052339086907f5dc850f206eb954eeab9ec4bbb6a0d8b1878bb5a101991b62f18ab9cf245e4529060a00160405180910390a380341115611662576116623361165d83346126b1565b611ce3565b50506004805460ff191690555050505050565b5f5f5f5f5f6116848887611f82565b6003545f81815260056020526040812091158015906116af57506001820154600160881b900460ff16155b90505f816116d75760405180606001604052805f81526020015f81526020015f815250611708565b60408051606081019182905290600285019060039082845b8154815260200190600101908083116116ef5750505050505b90505f8261171d57611718611e7e565b611730565b8354600160801b90046001600160801b03165b905080158061176057508a158015611760575089828d60ff1660038110611759576117596126c4565b6020020151105b1561177d575f5f5f5f5f98509850985098509850505050506118d8565b5f6040518060600160405280845f6003811061179b5761179b6126c4565b60200201518152602001846001600381106117b8576117b86126c4565b60200201518152602001846002600381106117d5576117d56126c4565b6020020151905290508b15611813578a818e60ff16600381106117fa576117fa6126c4565b6020020181815161180b919061269e565b90525061183e565b8a818e60ff1660038110611829576118296126c4565b6020020181815161183a91906126b1565b9052505b61184a8382848f6120cb565b919b509950975061185b8183611d58565b8d60ff166003811061186f5761186f6126c4565b602002015196505f66038d7ea4c68000611888836121ef565b61189291906126d8565b90508c6118bd5788600154101580156118b8575080896001546118b591906126b1565b10155b6118cf565b80896001546118cc919061269e565b10155b96505050505050505b939792965093509350565b5f5f6118ed611efc565b915091506118fb3383611fd3565b5f828152600860209081526040808320338452909152902054600311611934576040516366f3ef9b60e01b815260040160405180910390fd5b5f83611941575f19611944565b60015b6001830154611956919060070b612732565b905061196460096064612732565b60070b8160070b1380611987575061197e60096064612761565b60070b8160070b125b156119a5576040516319cc535d60e21b815260040160405180910390fd5b5f83815260086020908152604080832033845290915281208054600192906119ce90849061269e565b909155505060018201805467ffffffffffffffff19166001600160401b03831617905533837fc3146739d18b1829ceb8b6abe9478d24c4de2e3f0874a591ce8f8ee69022f97486611a20575f19611a23565b60015b60408051918252600786900b60208301520160405180910390a350505050565b5f818152600560205260408120611a598161221c565b611a755760405162facebb60e61b815260040160405180910390fd5b8054600160401b90046001600160401b03164080611b0957611a9843600161269e565b82546fffffffffffffffff00000000000000001916600160401b6001600160401b03928316810291909117808555604051919004909116815284907f0413b1d85e8ac9f33409164f1760e8e77ecad919de18ccbb938c5cb01adbdf2d9060200160405180910390a2505f9392505050565b5f611b16600c6002612790565b611b21906001612732565b604080516020810185905290810187905230606082015260079190910b91505f90600c908390608001604051602081830303815290604052805190602001205f1c611b6c91906127b6565b611b769190612761565b60018501549091505f90611b8e90839060070b612732565b90505f611b9d60646002612732565b60070b8260070b13611bcf57611bb560026064612761565b60070b8260070b12611bc8576002611bd1565b6001611bd1565b5f5b90505f66038d7ea4c68000876002018360ff1660038110611bf457611bf46126c4565b0154611c0091906126d8565b90508060015f828254611c1391906126b1565b925050819055508060025f828254611c2b919061269e565b909155505060018701805460ff60881b1960ff8516600160801b810260ff60801b196001600160401b038916600160401b021670ffffffffffffffffff000000000000000019909416939093179290921716600160881b1790915560408051918252600785810b602084015286900b908201526060810182905289907fa4f2d777c7e1374f8e6a462cc4bbd80f7b3b55bca83777d4113756db56ef511a9060800160405180910390a250600198975050505050505050565b5f826001600160a01b0316826040515f6040518083038185875af1925050503d805f8114611d2c576040519150601f19603f3d011682016040523d82523d5f602084013e611d31565b606091505b5050905080611d53576040516312171d8360e31b815260040160405180910390fd5b505050565b611d60612507565b5f611d6a846121ef565b9050611d74612507565b5f5f5b6003811015611e1457611dd286670de0b6b3a7640000808a8560038110611da057611da06126c4565b6020020151611daf90896126b1565b611db991906126d8565b611dc391906126d8565b611dcd9190612703565b61225a565b838260038110611de457611de46126c4565b6020020152828160038110611dfb57611dfb6126c4565b6020020151611e0a908361269e565b9150600101611d77565b505f5b6003811015611e745781670de0b6b3a7640000848360038110611e3c57611e3c6126c4565b6020020151611e4b91906126d8565b611e559190612703565b858260038110611e6757611e676126c4565b6020020152600101611e17565b5050505092915050565b5f670f3f0e0e4bf10b7b670de0b6b3a7640000600a611ea466038d7ea4c6800083612703565b600154611eb191906126d8565b611ebc9060086126d8565b611ec69190612703565b611ed091906126d8565b611eda9190612703565b9050680821ab0d4414980000811115611ef95750680821ab0d44149800005b90565b6003545f818152600560205260409020811580611f2457506001810154600160881b900460ff165b80611f4557508054611f41906037906001600160401b031661269e565b4210155b80611f6157508054600160401b90046001600160401b03164310155b15611f7e5760405162b5f6bf60e41b815260040160405180910390fd5b9091565b60028260ff161115611fa757604051631cf7e9c560e01b815260040160405180910390fd5b801580611fb557506103e881115b1561063a57604051636edcc52360e01b815260040160405180910390fd5b6001600160a01b0382165f90815260096020526040902054818103611ff757505050565b801580159061201d57505f81815260056020526040902060010154600160881b900460ff165b156120af575f8181526006602090815260408083206001600160a01b0387168452825280832084845260059092529091206001015466038d7ea4c680009190600160801b900460ff1660038110612076576120766126c4565b015461208291906126d8565b6001600160a01b0384165f908152600a6020526040812080549091906120a990849061269e565b90915550505b506001600160a01b039091165f90815260096020526040902055565b5f8080806120e866038d7ea4c68000670de0b6b3a7640000612703565b9050841561215d57806120fb8988612331565b6121058989612331565b61210f91906126b1565b6121199190612703565b61212490600161269e565b9350612710612134601e866126d8565b6121409061270f61269e565b61214a9190612703565b9250612156838561269e565b91506121e4565b5f816121698989612331565b6121738b8a612331565b61217d91906126b1565b6121879190612703565b90505f8111612196575f6121a1565b6121a16001826126b1565b94506127106121b1601e876126d8565b6121bd9061270f61269e565b6121c79190612703565b93508385116121d6575f6121e0565b6121e084866126b1565b9250505b509450945094915050565b80516020820151811015612204575060208101515b6040820151811015612217575060408101515b919050565b80545f9061223590603c906001600160401b031661269e565b421015801561225457508154600160401b90046001600160401b031643115b92915050565b5f61226e670de0b6b3a7640000602a6126d8565b821061227b57505f919050565b5f61228e67099e8db03256ce5d84612703565b90505f6122a367099e8db03256ce5d836126d8565b6122ad90856126b1565b9050670de0b6b3a76400008060015b8215612306576122d4670de0b6b3a7640000826126d8565b6122de85856126d8565b6122e89190612703565b92506122f4838361269e565b91506122ff816127c9565b90506122bc565b50838161231b670de0b6b3a7640000806126d8565b6123259190612703565b901c9695505050505050565b5f5f61233c846121ef565b90505f5f5b600381101561238d5761237985670de0b6b3a76400008089856003811061236a5761236a6126c4565b6020020151611daf90886126b1565b612383908361269e565b9150600101612341565b50670de0b6b3a76400006123a0826123d9565b6123aa90866126d8565b6123b49190612703565b6123c6670de0b6b3a7640000846126d8565b6123d0919061269e565b95945050505050565b5f5b6123ee670de0b6b3a764000060026126d8565b821061241a576123ff600283612703565b915061241367099e8db03256ce5d8261269e565b90506123db565b5f61242d670de0b6b3a76400008461269e565b670de0b6b3a764000061244081866126b1565b61244a91906126d8565b6124549190612703565b90505f670de0b6b3a764000061246a83806126d8565b6124749190612703565b9050815f60015b82156124c85761248b8184612703565b612495908361269e565b9150670de0b6b3a76400006124aa85856126d8565b6124b49190612703565b92506124c160028261269e565b905061247b565b506124d48160026126d8565b6124de908661269e565b9695505050505050565b604051806103e00160405280601f906020820280368337509192915050565b60405180606001604052806003906020820280368337509192915050565b5f60208284031215612535575f5ffd5b5035919050565b5f6020828403121561254c575f5ffd5b81356001600160a01b0381168114612562575f5ffd5b9392505050565b6103e0810181835f5b601f811015612591578151835260209283019290910190600101612572565b50505092915050565b803560ff81168114612217575f5ffd5b5f5f5f606084860312156125bc575f5ffd5b6125c58461259a565b95602085013595506040909401359392505050565b5f602082840312156125ea575f5ffd5b81356001600160401b0381168114612562575f5ffd5b5f5f60408385031215612611575f5ffd5b61261a8361259a565b946020939093013593505050565b80358015158114612217575f5ffd5b5f5f5f60608486031215612649575f5ffd5b6126528461259a565b925061266060208501612628565b929592945050506040919091013590565b5f60208284031215612681575f5ffd5b61256282612628565b634e487b7160e01b5f52601160045260245ffd5b808201808211156122545761225461268a565b818103818111156122545761225461268a565b634e487b7160e01b5f52603260045260245ffd5b80820281158282048414176122545761225461268a565b634e487b7160e01b5f52601260045260245ffd5b5f82612711576127116126ef565b500490565b63ffffffff81811683821601908111156122545761225461268a565b600781810b9083900b01677fffffffffffffff8113677fffffffffffffff19821217156122545761225461268a565b600782810b9082900b03677fffffffffffffff198112677fffffffffffffff821317156122545761225461268a565b5f8260070b8260070b028060070b91508082146127af576127af61268a565b5092915050565b5f826127c4576127c46126ef565b500690565b5f600182016127da576127da61268a565b506001019056",
+  "functions": {
+    "BASE_HEAT": "0x95b4ea30",
+    "FEE_BPS": "0xbf333f2c",
+    "MAX_DELAY": "0x4125ff90",
+    "MAX_HEAT_SHIFT": "0x1ba68d88",
+    "MAX_LIQUIDITY": "0x148e250d",
+    "MAX_SHARES": "0x3e8ff57b",
+    "MIN_DELAY": "0x9f81aed7",
+    "MIN_HOUSE_CASH": "0x84af1850",
+    "NOISE_RANGE": "0x6eb2d9a2",
+    "ROUND_SECONDS": "0x8b3e0476",
+    "SHARE_WEI": "0x329c4bdd",
+    "TICKETS": "0x18c33e46",
+    "TRADING_SECONDS": "0x45009be7",
+    "act": "0xfa98cc37",
+    "buy": "0x62f791c0",
+    "claim": "0x4e71d92d",
+    "claimable": "0x402914f5",
+    "credit": "0xd5d44d80",
+    "currentRound": "0x8a19c8bc",
+    "fund": "0xb60d4288",
+    "houseCash": "0xba1d61cf",
+    "lastRound": "0x61f6b445",
+    "owner": "0x8da5cb5b",
+    "quote": "0xd36e3ebe",
+    "randomDelay": "0xa76c69e2",
+    "sell": "0x46280a80",
+    "setRandomDelay": "0x613c2257",
+    "settle": "0x11da60b4",
+    "snapshot": "0x26512160",
+    "startRound": "0x55e3f086",
+    "unclaimed": "0x669416b8",
+    "withdrawHouse": "0x23218411"
+  },
+  "errors": {
+    "0x67314d74": "HeatLimit",
+    "0x388766fd": "HouseTooSmall",
+    "0xfdc9902d": "InsufficientHoldings",
+    "0xcd1c8867": "InsufficientPayment",
+    "0x28b35f21": "InsufficientReserve",
+    "0x1cf7e9c5": "InvalidColor",
+    "0x4fbe5dba": "InvalidDelay",
+    "0x6edcc523": "InvalidShares",
+    "0x0b5f6bf0": "MarketClosed",
+    "0x66f3ef9b": "NoTickets",
+    "0x30cd7471": "NotOwner",
+    "0x969bf728": "NothingToClaim",
+    "0xab143c06": "Reentrancy",
+    "0xcb259502": "RoundActive",
+    "0x3eb3aec0": "RoundNotReady",
+    "0x8199f5f3": "SlippageExceeded",
+    "0x90b8ec18": "TransferFailed"
+  },
+  "events": {
+    "Action": "0xc3146739d18b1829ceb8b6abe9478d24c4de2e3f0874a591ce8f8ee69022f974",
+    "Claimed": "0xd8138f8a3f377c5259ca548e70e4c2de94f129f5a11036a15b69513cba2b426a",
+    "Funded": "0x5af8184bef8e4b45eb9f6ed7734d04da38ced226495548f46e0c8ff8d7d9a524",
+    "RoundStarted": "0xfd9d17e5565deea3d25918d95fc398673b9445ef0a96d12eaf3ab2b198756c65",
+    "Settled": "0xa4f2d777c7e1374f8e6a462cc4bbd80f7b3b55bca83777d4113756db56ef511a",
+    "SettlementRearmed": "0x0413b1d85e8ac9f33409164f1760e8e77ecad919de18ccbb938c5cb01adbdf2d",
+    "Trade": "0x5dc850f206eb954eeab9ec4bbb6a0d8b1878bb5a101991b62f18ab9cf245e452",
+    "Withdrawn": "0x7084f5476618d8e60b11ef0d7d3f06914655adb8793e28ff7f018d4c76d505d5"
+  }
+});
+
+return { MARKET_ARTIFACT };
+})();
+const MonadMarket = (() => {
+const { MONAD_TESTNET, MonadError } = MonadNetwork;
+const { MARKET_ARTIFACT } = MarketArtifact;
+
+const MARKET_RULES = Object.freeze({
+  shareWei: 1000000000000000n,
+  tradingSeconds: 55,
+  roundSeconds: 60,
+  maxShares: 1000,
+  tickets: 3,
+  baseHeat: 100,
+  greenBand: Object.freeze([98, 102]),
+  noiseRange: 12,
+  maxHeatShift: 9,
+  feeBps: 30,
+  minDelay: 20,
+  maxDelay: 2000,
+  blockhashWindow: 256,
+  // Monad lets an account under its 10 MON reserve send value only once per 3 blocks.
+  reserveBlocks: 3,
+});
+
+// Shared market for the hosted page; a ?market= link or a locally saved address overrides it.
+const DEFAULT_MARKET_ADDRESS = '';
+
+const MARKET_COLORS = Object.freeze(['red', 'black', 'green']);
+const ZERO_ADDRESS = `0x${'0'.repeat(40)}`;
+const ADDRESS = /^0x[\da-f]{40}$/i;
+const HASH = /^0x[\da-f]{64}$/i;
+const WORD = 64;
+const MAX_WORD = 1n << 256n;
+const WAD = 1e18;
+
+const isMarketAddress = value => typeof value === 'string' && ADDRESS.test(value) && !/^0x0{40}$/i.test(value);
+
+const MARKET_ERRORS = Object.freeze({
+  NotOwner: '只有合约管理者可以执行这个操作。',
+  Reentrancy: '合约正在处理另一笔调用，请稍后重试。',
+  InvalidDelay: '随机区块延迟超出合约允许范围。',
+  RoundActive: '回合进行中，结算后才能取回储备。',
+  RoundNotReady: '本轮还没有到结算时间，或随机区块尚未产出。',
+  MarketClosed: '本轮已封盘或尚未开局，现在不能交易或行动。',
+  InvalidColor: '请选择红、黑或绿。',
+  InvalidShares: '份数必须是 1 至 1,000 的整数。',
+  InsufficientPayment: '报价在确认期间上涨，支付额度不够，请重新下单。',
+  InsufficientHoldings: '链上持仓不足，不能卖空。',
+  InsufficientReserve: '做市储备不足以覆盖所有可能兑付，交易未执行。',
+  SlippageExceeded: '成交价变化超过可接受范围，交易未执行。',
+  NoTickets: '本轮行动券已用完。',
+  HeatLimit: '热度已到达本轮可调整的上下限。',
+  HouseTooSmall: '做市储备低于 0.02 MON，请先为市场注资。',
+  NothingToClaim: '当前没有可领取的兑付。',
+  TransferFailed: 'MON 转账失败，请稍后重试。',
+});
+
+function word(value) {
+  let number = typeof value === 'boolean' ? BigInt(value) : BigInt(value);
+  if (number < 0n) number += MAX_WORD;
+  if (number < 0n || number >= MAX_WORD) throw new MonadError('ENCODE', '合约参数超出范围。');
+  return number.toString(16).padStart(WORD, '0');
+}
+
+function encodeCall(name, args = []) {
+  const selector = MARKET_ARTIFACT.functions[name];
+  if (!selector) throw new MonadError('ENCODE', `未知合约方法：${name}`);
+  return selector + args.map(word).join('');
+}
+
+function decodeWords(hex) {
+  if (typeof hex !== 'string' || !/^0x(?:[\da-f]{64})*$/i.test(hex)) {
+    throw new MonadError('INVALID_RESPONSE', '合约返回了无效数据，请确认合约地址与网络。');
+  }
+  const words = [];
+  for (let index = 2; index < hex.length; index += WORD) words.push(BigInt(`0x${hex.slice(index, index + WORD)}`));
+  return words;
+}
+
+const toSigned = value => (value >= MAX_WORD >> 1n ? value - MAX_WORD : value);
+
+function deployData(delay) {
+  if (!Number.isInteger(delay) || delay < MARKET_RULES.minDelay || delay > MARKET_RULES.maxDelay) {
+    throw new MonadError('ENCODE', '随机区块延迟超出合约允许范围。');
+  }
+  return MARKET_ARTIFACT.bytecode + word(delay);
+}
+
+/** Maps a custom error selector found anywhere in a wallet or RPC error to readable text. */
+function marketErrorMessage(error) {
+  let text = '';
+  try { text = JSON.stringify(error, (_, value) => (typeof value === 'bigint' ? value.toString() : value)) ?? ''; } catch { /* Cyclic wallet errors fall through. */ }
+  text += ` ${error?.message ?? ''}`;
+  for (const match of text.matchAll(/0x[\da-f]{8}/gi)) {
+    const name = MARKET_ARTIFACT.errors[match[0].toLowerCase()];
+    if (name) return MARKET_ERRORS[name];
+  }
+  return '';
+}
+
+function parseSnapshot(words, readAt = Date.now()) {
+  if (!Array.isArray(words) || words.length !== 31) throw new MonadError('INVALID_RESPONSE', '合约快照格式不符，请确认合约版本。');
+  const count = index => Number(words[index]);
+  const wad = index => Number(words[index]) / WAD;
+  const byColor = (start, read) => Object.freeze(Object.fromEntries(MARKET_COLORS.map((color, index) => [color, read(start + index)])));
+  if (words[6] > 2n) throw new MonadError('INVALID_RESPONSE', '合约返回了无效结果。');
+  return Object.freeze({
+    round: count(0),
+    startTime: count(1),
+    randomBlock: words[2],
+    liquidity: wad(3),
+    heat: Number(toSigned(words[4])),
+    settled: words[5] === 1n,
+    result: MARKET_COLORS[count(6)],
+    finalHeat: Number(toSigned(words[7])),
+    trades: count(8),
+    q: byColor(9, count),
+    prices: byColor(12, wad),
+    houseCash: words[15],
+    unclaimed: words[16],
+    randomDelay: count(17),
+    blockNumber: words[18],
+    timestamp: count(19),
+    holdings: byColor(20, count),
+    ticketsUsed: count(23),
+    claimable: words[24],
+    basis: byColor(25, index => words[index]),
+    owner: `0x${words[28].toString(16).padStart(40, '0')}`,
+    nextLiquidity: wad(29),
+    startBlock: words[30],
+    readAt,
+  });
+}
+
+/** Phase from the chain's own clock; nowSeconds should be extrapolated from the last read. */
+function marketPhase(snapshot, nowSeconds = snapshot.timestamp, head = snapshot.blockNumber) {
+  if (!snapshot.round) return 'idle';
+  if (snapshot.settled) return 'settled';
+  if (nowSeconds < snapshot.startTime + MARKET_RULES.tradingSeconds && head < snapshot.randomBlock) return 'trading';
+  if (nowSeconds >= snapshot.startTime + MARKET_RULES.roundSeconds && head > snapshot.randomBlock) return 'settleable';
+  return 'locked';
+}
+
+function scenarioOdds(heat) {
+  const counts = { red: 0, black: 0, green: 0 };
+  const [low, high] = MARKET_RULES.greenBand;
+  for (let noise = -MARKET_RULES.noiseRange; noise <= MARKET_RULES.noiseRange; noise += 1) {
+    const value = heat + noise;
+    counts[value > high ? 'red' : value < low ? 'black' : 'green'] += 1;
+  }
+  const total = 2 * MARKET_RULES.noiseRange + 1;
+  return Object.fromEntries(MARKET_COLORS.map(color => [color, counts[color] / total]));
+}
+
+function createRpc({ url = MONAD_TESTNET.rpcUrl, fetcher = (...args) => globalThis.fetch(...args), timeoutMs = 8000 } = {}) {
+  let nextId = 0;
+  return async function request(method, params = [], { signal } = {}) {
+    const controller = new AbortController();
+    const id = ++nextId;
+    let timedOut = false;
+    const abort = () => controller.abort();
+    if (signal?.aborted) controller.abort();
+    signal?.addEventListener('abort', abort, { once: true });
+    const timer = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
+    try {
+      if (controller.signal.aborted) throw new MonadError('ABORTED', '已取消读取。');
+      const response = await fetcher(url, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id, method, params }),
+        signal: controller.signal, credentials: 'omit', referrerPolicy: 'no-referrer',
+      });
+      if (!response.ok) throw new MonadError('RPC_HTTP', response.status === 429 ? '测试网 RPC 繁忙，请稍后重试。' : '测试网 RPC 暂不可用，请稍后重试。');
+      const body = await response.json();
+      if (body?.jsonrpc !== '2.0' || body.id !== id) throw new MonadError('RPC_RESPONSE', '测试网 RPC 返回错误，请稍后重试。');
+      if (body.error) {
+        const error = new MonadError('RPC_ERROR', marketErrorMessage(body.error) || '测试网 RPC 拒绝了请求，请稍后重试。');
+        error.data = body.error.data;
+        throw error;
+      }
+      if (!Object.hasOwn(body, 'result')) throw new MonadError('RPC_RESPONSE', '测试网 RPC 返回错误，请稍后重试。');
+      return body.result;
+    } catch (error) {
+      if (signal?.aborted) throw new MonadError('ABORTED', '已取消读取。');
+      if (timedOut) throw new MonadError('RPC_TIMEOUT', '测试网 RPC 读取超时，请检查网络后重试。');
+      if (error instanceof MonadError) throw error;
+      throw new MonadError('RPC_UNAVAILABLE', '无法连接测试网 RPC，请检查网络或稍后重试。');
+    } finally {
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', abort);
+    }
+  };
+}
+
+function createMarketClient({ address, rpc = createRpc() }) {
+  if (!isMarketAddress(address)) throw new MonadError('INVALID_ADDRESS', '请输入有效的合约地址。');
+  const to = address.toLowerCase();
+  const call = async (name, args, options) => decodeWords(await rpc('eth_call', [{ to, data: encodeCall(name, args) }, 'latest'], options));
+  return Object.freeze({
+    address: to,
+    async verify(options) {
+      const code = await rpc('eth_getCode', [to, 'latest'], options);
+      return typeof code === 'string' && code.toLowerCase() === MARKET_ARTIFACT.runtime.toLowerCase();
+    },
+    async snapshot(user, options) {
+      return parseSnapshot(await call('snapshot', [isMarketAddress(user) ? user : ZERO_ADDRESS], options));
+    },
+    async quote(color, side, shares, options) {
+      const index = MARKET_COLORS.indexOf(color);
+      if (index < 0 || (side !== 'buy' && side !== 'sell')) throw new MonadError('ENCODE', '请选择颜色和方向。');
+      const [gross, fee, total, priceAfter, solvent] = await call('quote', [index, side === 'buy', shares], options);
+      return Object.freeze({ gross, fee, total, priceAfter: Number(priceAfter) / WAD, solvent: solvent === 1n });
+    },
+    /** Reads Trade logs for one round, newest window first, within the public RPC's 100-block log range. */
+    async trades(round, fromBlock, toBlock, { maxWindows = 4, ...options } = {}) {
+      const trades = [];
+      let end = BigInt(toBlock);
+      const start = BigInt(fromBlock);
+      for (let window = 0; window < maxWindows && end >= start; window += 1) {
+        const from = end - 99n > start ? end - 99n : start;
+        const logs = await rpc('eth_getLogs', [{
+          address: to, fromBlock: `0x${from.toString(16)}`, toBlock: `0x${end.toString(16)}`,
+          topics: [MARKET_ARTIFACT.events.Trade, `0x${word(round)}`],
+        }], options);
+        if (!Array.isArray(logs)) throw new MonadError('RPC_RESPONSE', '成交记录格式无效。');
+        for (const log of logs.reverse()) {
+          const [color, isBuy, shares, total, fee] = decodeWords(log.data);
+          if (color > 2n || !HASH.test(log.transactionHash ?? '')) continue;
+          trades.push(Object.freeze({
+            trader: `0x${String(log.topics?.[2] ?? '').slice(-40)}`,
+            color: MARKET_COLORS[Number(color)], side: isBuy === 1n ? 'buy' : 'sell',
+            shares: Number(shares), total, fee, blockNumber: BigInt(log.blockNumber), hash: log.transactionHash,
+          }));
+        }
+        end = from - 1n;
+      }
+      return trades;
+    },
+  });
+}
+
+const marketCalls = Object.freeze({
+  start: () => ({ data: encodeCall('startRound') }),
+  settle: () => ({ data: encodeCall('settle') }),
+  claim: () => ({ data: encodeCall('claim') }),
+  act: heatUp => ({ data: encodeCall('act', [heatUp]) }),
+  buy: (color, shares, value) => ({ data: encodeCall('buy', [MARKET_COLORS.indexOf(color), shares]), value }),
+  sell: (color, shares, minProceeds) => ({ data: encodeCall('sell', [MARKET_COLORS.indexOf(color), shares, minProceeds]) }),
+  fund: value => ({ data: encodeCall('fund'), value }),
+  withdraw: amount => ({ data: encodeCall('withdrawHouse', [amount]) }),
+});
+
+async function sendTransaction(provider, { from, to, data, value = 0n }) {
+  const params = { from, data, ...(to ? { to } : {}), ...(value > 0n ? { value: `0x${value.toString(16)}` } : {}) };
+  const hash = await provider.request({ method: 'eth_sendTransaction', params: [params] });
+  if (typeof hash !== 'string' || !HASH.test(hash)) throw new MonadError('INVALID_RESPONSE', '钱包没有返回有效的交易哈希。');
+  return hash;
+}
+
+async function waitForReceipt(rpc, hash, { timeoutMs = 90000, intervalMs = 700, sleep = ms => new Promise(resolve => setTimeout(resolve, ms)), now = Date.now } = {}) {
+  const deadline = now() + timeoutMs;
+  while (now() < deadline) {
+    let receipt = null;
+    try { receipt = await rpc('eth_getTransactionReceipt', [hash]); } catch { /* Transient RPC errors keep polling until the deadline. */ }
+    if (receipt && typeof receipt === 'object') {
+      return Object.freeze({
+        ok: receipt.status === '0x1',
+        blockNumber: BigInt(receipt.blockNumber),
+        contractAddress: isMarketAddress(receipt.contractAddress) ? receipt.contractAddress : null,
+        hash,
+      });
+    }
+    await sleep(intervalMs);
+  }
+  throw new MonadError('TX_TIMEOUT', '交易已提交，但 90 秒内未确认，可在浏览器中按哈希查看。');
+}
+
+/** Blocks for about 57 s, so the random block lands between trading close (55 s) and round end (60 s). */
+async function estimateRandomDelay(rpc, sample = 200) {
+  const latest = await rpc('eth_getBlockByNumber', ['latest', false]);
+  const head = BigInt(latest?.number ?? '0x0');
+  const span = head > BigInt(sample) ? BigInt(sample) : head;
+  if (span < 2n) return 150;
+  const older = await rpc('eth_getBlockByNumber', [`0x${(head - span).toString(16)}`, false]);
+  const seconds = Number(BigInt(latest.timestamp) - BigInt(older.timestamp));
+  const blockTime = seconds > 0 ? seconds / Number(span) : 0.4;
+  return Math.min(MARKET_RULES.maxDelay, Math.max(MARKET_RULES.minDelay, Math.ceil(57 / blockTime)));
+}
+
+function formatMonPrecise(wei, digits = 4) {
+  if (typeof wei !== 'bigint' || wei < 0n) return '—';
+  const scale = 10n ** BigInt(18 - digits);
+  const rounded = (wei + scale / 2n) / scale;
+  if (wei > 0n && rounded === 0n) return `<0.${'0'.repeat(digits - 1)}1`;
+  const base = 10n ** BigInt(digits);
+  return `${(rounded / base).toLocaleString('en-US')}.${(rounded % base).toString().padStart(digits, '0')}`;
+}
+
+function parseMon(text) {
+  if (typeof text !== 'string' || !/^\d{1,9}(?:\.\d{1,18})?$/.test(text.trim())) return null;
+  const [whole, fraction = ''] = text.trim().split('.');
+  return BigInt(whole) * 10n ** 18n + BigInt(fraction.padEnd(18, '0'));
+}
+
+return { MARKET_RULES, DEFAULT_MARKET_ADDRESS, MARKET_COLORS, isMarketAddress, encodeCall, decodeWords, toSigned, deployData, marketErrorMessage, parseSnapshot, marketPhase, scenarioOdds, createRpc, createMarketClient, marketCalls, sendTransaction, waitForReceipt, estimateRandomDelay, formatMonPrecise, parseMon };
+})();
+const PriceChart = (() => {
+const CHART_COLORS = Object.freeze(['red', 'black', 'green']);
+const PAINT = Object.freeze({ red: 'var(--red)', black: 'var(--blue)', green: 'var(--green)' });
+
+/** Draws three outcome price lines; points are { timeMs, prices } within one round. */
+function drawPriceChart(svg, { durationMs, lockMs, points, elapsedMs, prices, label, title }) {
+  const width = Math.max(230, svg.getBoundingClientRect().width || 650);
+  const height = 210, left = 32, right = width - 10, top = 13, bottom = 178;
+  const x = ms => left + Math.min(1, Math.max(0, ms / durationMs)) * (right - left);
+  const y = p => top + (1 - p) * (bottom - top);
+  const visible = points.filter(point => point.prices && point.timeMs <= elapsedMs);
+  if (!visible.length) visible.push({ timeMs: 0, prices });
+  if (visible.at(-1).timeMs !== elapsedMs) visible.push({ timeMs: elapsedMs, prices });
+  const sampleEvery = Math.max(1, Math.ceil(visible.length / 600));
+  const sampled = visible.filter((_, index) => index % sampleEvery === 0 || index === visible.length - 1);
+  const seconds = durationMs / 1000;
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  svg.setAttribute('aria-label', label);
+  svg.innerHTML = `<title>${title}</title><rect x="${x(lockMs)}" y="${top}" width="${right - x(lockMs)}" height="${bottom - top}" class="chart-lock"/>
+    ${[0, 0.25, 0.5, 0.75, 1].map(p => `<line x1="${left}" x2="${right}" y1="${y(p)}" y2="${y(p)}" class="chart-grid"/><text x="0" y="${y(p) + 3}" class="chart-text">${p.toFixed(2)}</text>`).join('')}
+    ${[0, 0.25, 0.5, 0.75, 1].map(f => `<text x="${x(f * durationMs)}" y="203" text-anchor="${f === 0 ? 'start' : f === 1 ? 'end' : 'middle'}" class="chart-text">${Math.round(f * seconds)}s</text>`).join('')}
+    ${CHART_COLORS.map(c => `<path d="${sampled.map((p, i) => `${i ? 'L' : 'M'}${x(p.timeMs).toFixed(2)},${y(p.prices[c]).toFixed(2)}`).join(' ')}" class="chart-line" style="stroke:${PAINT[c]}"/><circle cx="${x(elapsedMs)}" cy="${y(prices[c])}" r="3" style="fill:${PAINT[c]}"/>`).join('')}`;
+}
+
+return { drawPriceChart };
+})();
+const MonadMarketUI = (() => {
+const { MONAD_TESTNET, MonadError, shortenAddress, walletErrorMessage } = MonadNetwork;
+const { DEFAULT_MARKET_ADDRESS, MARKET_COLORS, MARKET_RULES, createMarketClient, createRpc, deployData, estimateRandomDelay, formatMonPrecise, isMarketAddress, marketCalls, marketErrorMessage, marketPhase, parseMon, scenarioOdds, sendTransaction, waitForReceipt } = MonadMarket;
+const { drawPriceChart } = PriceChart;
+
+const MARKET_ADDRESS_KEY = 'blockpulse-market-address';
+const TRADE_MODE_KEY = 'blockpulse-trade-mode';
+const LABELS = Object.freeze({ red: '红', black: '黑', green: '绿' });
+const NAMES = Object.freeze({ red: '红 · 上行', black: '黑 · 下行', green: '绿 · 区间' });
+const PHASE_TEXT = Object.freeze({ none: '等待合约', loading: '读取中', idle: '等待开局', trading: '链上交易中', locked: '封盘 · 等随机区块', settleable: '可以结算', settled: '本轮已结算' });
+const PHASE_CLASS = Object.freeze({ none: 'ready', loading: 'ready', idle: 'ready', trading: 'trading', locked: 'locked', settleable: 'locked', settled: 'settled' });
+const PHASE_NOTES = Object.freeze({
+  none: '设置或部署市场合约后，这里显示链上回合。所有买卖都直接使用钱包里的测试网 MON。',
+  loading: '正在读取链上市场…',
+  idle: '还没有回合。任何人都可以开局，开局只需支付 gas。',
+  trading: '前 55 秒可买卖和使用行动券，以链上区块时间为准。每笔操作都要在钱包中确认。',
+  locked: '已封盘：等待开局时登记的随机区块产出，之后任何人都能结算。',
+  settleable: '随机区块已产出。结算会按“热度 + 区块哈希噪声”确定结果，任何人都可以提交。',
+  settled: '已结算。命中份额每份可领 0.001 MON；开始下一轮后，未领取的兑付仍会保留。',
+});
+const POLL_MS = 1500;
+const ERROR_POLL_MS = 5000;
+const TRADES_MS = 4000;
+const SLIPPAGE_PERCENT = 3n;
+const SHARE_MON = 0.001;
+const MIN_DEPLOY_WEI = 20000000000000000n;
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+const fmt = (n, digits = 2) => (Number.isFinite(n) ? n.toLocaleString('zh-CN', { minimumFractionDigits: digits, maximumFractionDigits: digits }) : '—');
+const signed = (n, digits = 4) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${fmt(Math.abs(n), digits)}`;
+const pnlClass = n => (n > 0.0000005 ? 'gain' : n < -0.0000005 ? 'loss' : '');
+const mon = wei => Number(wei) / 1e18;
+
+function readStorage(key) {
+  try { return localStorage.getItem(key); } catch { return null; }
+}
+
+function writeStorage(key, value) {
+  try {
+    if (value === null) localStorage.removeItem(key);
+    else localStorage.setItem(key, value);
+  } catch { /* Storage is optional. */ }
+}
+
+function mountMarket(monad) {
+  const $ = id => document.getElementById(id);
+  const root = $('chain-market');
+  if (!root) return () => {};
+  const wallet = monad?.wallet ?? null;
+  const rpc = createRpc();
+  const html = document.documentElement;
+  const setText = (id, value) => { if ($(id).textContent !== value) $(id).textContent = value; };
+
+  const linked = new URLSearchParams(location.search).get('market');
+  let mode = isMarketAddress(linked) || readStorage(TRADE_MODE_KEY) === 'chain' ? 'chain' : 'local';
+  let client = null;
+  let checking = false;
+  let showSetup = false;
+  let snapshot = null;
+  let readError = '';
+  let selectedColor = 'red';
+  let selectedSide = 'buy';
+  let quote = null;
+  let quoteError = '';
+  let quoteKey = '';
+  let quoteVersion = 0;
+  let quoteTimer;
+  let pending = null;
+  let lastTxBlock = null;
+  let history = [];
+  let historyRound = 0;
+  let trades = [];
+  let tradesRound = 0;
+  let tradesAt = 0;
+  let tradesLoading = false;
+  let pollTimer;
+  let polling = false;
+  let lastAccount = null;
+  let lastChain = null;
+  let chartKey = '';
+  const txLog = [];
+
+  function setMessage(text) { setText('chain-message', text); }
+
+  function walletInfo() {
+    const state = wallet?.getState() ?? null;
+    const provider = wallet?.getProvider?.() ?? null;
+    const account = state?.account ?? null;
+    const onMonad = state?.chainId === MONAD_TESTNET.chainIdHex;
+    const ready = Boolean(account && onMonad && provider && state.status !== 'refreshing');
+    const reason = !wallet ? '当前页面无法使用钱包。' : !account ? '先在上方连接钱包，链上交易需要钱包确认。' : !onMonad ? '先在上方切换到 Monad Testnet。' : !ready ? '钱包状态刷新中，请稍候。' : '';
+    return { state, provider, account, ready, reason };
+  }
+
+  const chainNow = () => (snapshot ? snapshot.timestamp + (Date.now() - snapshot.readAt) / 1000 : Date.now() / 1000);
+  const phase = () => (!client ? 'none' : !snapshot ? 'loading' : marketPhase(snapshot, chainNow()));
+  const sharesInput = () => {
+    const value = Number($('chain-shares').value);
+    return Number.isInteger(value) && value >= 1 && value <= MARKET_RULES.maxShares ? value : null;
+  };
+  const active = () => mode === 'chain' && !document.hidden;
+
+  function schedule() {
+    clearTimeout(pollTimer);
+    if (!active() || !client) return;
+    pollTimer = setTimeout(async () => { await refresh(); schedule(); }, readError ? ERROR_POLL_MS : POLL_MS);
+  }
+
+  function setMode(next) {
+    mode = next;
+    writeStorage(TRADE_MODE_KEY, mode);
+    html.dataset.tradeMode = mode;
+    document.querySelectorAll('[data-trade-mode]').forEach(button => {
+      const selected = button.dataset.tradeMode === mode;
+      button.classList.toggle('selected', selected);
+      button.setAttribute('aria-pressed', String(selected));
+    });
+    setText('mode-tag-label', mode === 'chain' ? '测试网 MON' : '积分模拟');
+    if (mode === 'chain') void refresh();
+    schedule();
+    render();
+  }
+
+  async function useAddress(address, { announce = true } = {}) {
+    let candidate;
+    try { candidate = createMarketClient({ address, rpc }); } catch (error) { setMessage(error.message); return false; }
+    checking = true;
+    setMessage(`正在校验合约 ${shortenAddress(address)} 的链上代码…`);
+    render();
+    try {
+      if (!(await candidate.verify())) {
+        setMessage('该地址上的代码与 BlockPulse 市场合约不一致，未使用。请确认地址，并确认它部署在 Monad 测试网。');
+        return false;
+      }
+      client = candidate;
+      showSetup = false;
+      snapshot = null;
+      history = [];
+      historyRound = 0;
+      trades = [];
+      tradesRound = 0;
+      quote = null;
+      quoteKey = '';
+      writeStorage(MARKET_ADDRESS_KEY, client.address);
+      if (announce) setMessage('合约代码校验通过，已连接链上市场。');
+      await refresh();
+      return true;
+    } catch (error) {
+      setMessage(error.message || '暂时无法校验合约，请稍后重试。');
+      return false;
+    } finally {
+      checking = false;
+      schedule();
+      render();
+    }
+  }
+
+  function recordHistory() {
+    if (!snapshot?.round || snapshot.settled) return;
+    const elapsedMs = Math.min(60000, Math.max(0, (snapshot.timestamp - snapshot.startTime) * 1000));
+    if (!history.length && snapshot.trades === 0) history.push({ timeMs: 0, prices: snapshot.prices });
+    if (!history.length || history.at(-1).timeMs < elapsedMs) history.push({ timeMs: elapsedMs, prices: snapshot.prices });
+    if (history.length > 600) history.splice(0, history.length - 600);
+  }
+
+  async function refresh() {
+    if (!client || polling) return;
+    polling = true;
+    const current = client;
+    try {
+      const next = await current.snapshot(walletInfo().account);
+      if (current !== client) return;
+      readError = '';
+      if (next.round !== historyRound) {
+        historyRound = next.round;
+        history = [];
+        chartKey = '';
+      }
+      snapshot = next;
+      recordHistory();
+      void refreshQuote();
+      void refreshTrades();
+    } catch (error) {
+      if (current === client) readError = error.message || '读取链上市场失败。';
+    } finally {
+      polling = false;
+      render();
+    }
+  }
+
+  async function refreshTrades(force = false) {
+    if (!client || !snapshot?.round || tradesLoading) return;
+    if (!force && snapshot.round === tradesRound && Date.now() - tradesAt < TRADES_MS) return;
+    tradesLoading = true;
+    const current = client;
+    const round = snapshot.round;
+    try {
+      const list = await current.trades(round, snapshot.startBlock, snapshot.blockNumber);
+      if (current === client && snapshot?.round === round) {
+        trades = list;
+        tradesRound = round;
+        tradesAt = Date.now();
+      }
+    } catch { /* Logs are best effort; the snapshot stays authoritative. */ } finally {
+      tradesLoading = false;
+      renderTrades();
+    }
+  }
+
+  async function refreshQuote() {
+    const amount = sharesInput();
+    const key = client && snapshot ? `${client.address}:${snapshot.round}:${snapshot.trades}:${snapshot.settled}:${selectedColor}:${selectedSide}:${amount}` : '';
+    if (key === quoteKey) return;
+    quoteKey = key;
+    const version = ++quoteVersion;
+    quote = null;
+    quoteError = '';
+    if (!client || !snapshot) { renderOrder(); return; }
+    if (!amount) { quoteError = '请输入 1 至 1,000 的整数份数。'; renderOrder(); return; }
+    if (selectedSide === 'sell' && snapshot.holdings[selectedColor] < amount) { quoteError = '链上持仓不足，不能卖空。'; renderOrder(); return; }
+    try {
+      const next = await client.quote(selectedColor, selectedSide, amount);
+      if (version === quoteVersion) quote = { ...next, shares: amount };
+    } catch (error) {
+      if (version === quoteVersion) quoteError = error.message || '报价读取失败。';
+    } finally {
+      if (version === quoteVersion) renderOrder();
+    }
+  }
+
+  // Under Monad's reserve rule, a low-balance account may send value only once per 3 blocks.
+  async function waitReserveWindow() {
+    if (lastTxBlock === null) return;
+    const target = lastTxBlock + BigInt(MARKET_RULES.reserveBlocks);
+    for (let attempt = 0; attempt < 25; attempt += 1) {
+      if (BigInt(await rpc('eth_blockNumber')) >= target) return;
+      await sleep(300);
+    }
+  }
+
+  async function runTx(label, build, { sendsValue = false, toMarket = true } = {}) {
+    const info = walletInfo();
+    if (pending) return null;
+    if (!info.ready) { setMessage(info.reason); render(); return null; }
+    if (toMarket && !client) { setMessage('请先设置市场合约。'); render(); return null; }
+    pending = { label };
+    const entry = { label, hash: '', status: 'pending' };
+    setMessage(`${label}：请在钱包中确认…`);
+    render();
+    try {
+      if (sendsValue) await waitReserveWindow();
+      const call = await build();
+      const hash = await sendTransaction(info.provider, { from: info.account, ...(toMarket ? { to: client.address } : {}), ...call });
+      entry.hash = hash;
+      txLog.unshift(entry);
+      txLog.splice(8);
+      setMessage(`${label}：已提交，等待区块确认…`);
+      render();
+      const receipt = await waitForReceipt(rpc, hash);
+      lastTxBlock = receipt.blockNumber;
+      entry.status = receipt.ok ? 'ok' : 'failed';
+      if (!receipt.ok) throw new MonadError('TX_REVERTED', '交易已上链但执行失败，gas 已扣除。余额低于 10 MON 时，Monad 限制 3 个区块内连续转出 MON，请稍等几秒再试。');
+      setMessage(`${label}：已在区块 ${receipt.blockNumber.toLocaleString('en-US')} 确认。`);
+      return receipt;
+    } catch (error) {
+      if (entry.hash && entry.status === 'pending') entry.status = 'unknown';
+      setMessage(marketErrorMessage(error) || walletErrorMessage(error));
+      return null;
+    } finally {
+      pending = null;
+      quoteKey = '';
+      await refresh();
+      void wallet?.refresh();
+      void refreshTrades(true);
+      render();
+    }
+  }
+
+  function renderSetup() {
+    const verified = Boolean(client);
+    root.dataset.contract = checking ? 'checking' : verified ? 'verified' : 'none';
+    setText('chain-contract-state', checking ? '校验中' : verified ? '代码已校验' : '未设置合约');
+    setText('chain-address', verified ? client.address : '尚未设置');
+    $('chain-address').title = verified ? client.address : '';
+    $('chain-address-link').hidden = !verified;
+    if (verified) $('chain-address-link').href = `${MONAD_TESTNET.explorerUrl}/address/${client.address}`;
+    $('chain-share').hidden = !verified;
+    $('chain-change').hidden = !verified;
+    setText('chain-change', showSetup ? '收起更换' : '更换合约');
+    $('chain-setup-forms').hidden = verified && !showSetup;
+    setText('chain-house', snapshot ? formatMonPrecise(snapshot.houseCash) : '—');
+    setText('chain-unclaimed', snapshot ? formatMonPrecise(snapshot.unclaimed) : '—');
+    setText('chain-liquidity', snapshot ? `${fmt(snapshot.round && !snapshot.settled ? snapshot.liquidity : snapshot.nextLiquidity, 1)} 份` : '—');
+    $('chain-manage').hidden = !verified;
+    const info = walletInfo();
+    const owner = Boolean(snapshot && info.account && snapshot.owner === info.account.toLowerCase());
+    $('chain-owner-tools').hidden = !owner;
+    const busy = Boolean(pending) || checking;
+    root.querySelectorAll('#chain-setup-forms button, #chain-manage button').forEach(button => { button.disabled = busy; });
+    if (readError) setText('chain-read-error', `读取失败：${readError} 将自动重试。`);
+    else setText('chain-read-error', '');
+  }
+
+  function renderClock() {
+    const current = phase();
+    const remaining = snapshot?.round && !snapshot.settled ? Math.max(0, snapshot.startTime + MARKET_RULES.roundSeconds - chainNow()) : snapshot?.settled ? 0 : MARKET_RULES.roundSeconds;
+    setText('chain-time', fmt(remaining, 1));
+    $('chain-time-bar').style.width = `${100 * remaining / MARKET_RULES.roundSeconds}%`;
+    $('chain-timer').setAttribute('aria-valuenow', fmt(remaining, 1));
+    $('chain-countdown-dial').style.setProperty('--remaining', `${100 * remaining / MARKET_RULES.roundSeconds}%`);
+    const urgent = current === 'locked' || current === 'settleable';
+    $('chain-countdown-dial').classList.toggle('urgent', urgent);
+    $('chain-timer').classList.toggle('urgent', urgent);
+    const untilClose = snapshot ? snapshot.startTime + MARKET_RULES.tradingSeconds - chainNow() : 0;
+    setText('chain-window-label', current === 'trading' ? `距封盘约 ${fmt(Math.max(0, untilClose), 1)} 秒` : current === 'locked' ? `随机区块 #${snapshot.randomBlock.toLocaleString('en-US')}` : current === 'settleable' ? '等待任何人提交结算' : '55 秒交易 + 5 秒封盘');
+    if (current !== $('chain-phase').dataset.phase) render();
+  }
+
+  function renderArena() {
+    const current = phase();
+    const info = walletInfo();
+    const odds = snapshot?.round ? scenarioOdds(snapshot.heat) : scenarioOdds(MARKET_RULES.baseHeat);
+    const settled = current === 'settled';
+    const prices = snapshot?.prices ?? { red: 1 / 3, black: 1 / 3, green: 1 / 3 };
+    $('chain-phase').dataset.phase = current;
+    setText('chain-phase', PHASE_TEXT[current]);
+    $('chain-phase').className = `phase-pill ${PHASE_CLASS[current]}`;
+    setText('chain-round-label', snapshot?.round ? `链上第 ${String(snapshot.round).padStart(2, '0')} 轮 / 区块 #${snapshot.blockNumber.toLocaleString('en-US')}` : snapshot ? `尚未开局 / 区块 #${snapshot.blockNumber.toLocaleString('en-US')}` : '链上回合');
+    const action = current === 'settleable' ? 'settle' : current === 'idle' || current === 'settled' ? 'start' : '';
+    $('chain-round-action').dataset.action = action;
+    $('chain-round-action').disabled = !action || Boolean(pending) || !info.ready;
+    setText('chain-round-action-label', { none: '先设置市场合约', loading: '读取中…', idle: '开始第一轮', trading: '链上交易中', locked: '等待随机区块', settleable: '结算本轮', settled: '开始下一轮' }[current]);
+    $('chain-round-action').title = action && !info.ready ? info.reason : '';
+    root.querySelectorAll('.arena [data-color]').forEach(button => {
+      const color = button.dataset.color;
+      const selected = color === selectedColor;
+      button.classList.toggle('selected', selected);
+      button.setAttribute('aria-pressed', String(selected));
+      setText(`chain-price-${color}`, fmt(prices[color], 3));
+      setText(`chain-odds-${color}`, settled ? (snapshot.result === color ? '已命中' : '未命中') : `${fmt(odds[color] * 100, 1)}%`);
+    });
+    root.querySelectorAll('.scenario-label').forEach(node => { node.textContent = settled ? '本轮链上结果' : '当前热度场景概率'; });
+    root.querySelectorAll('.price-unit').forEach(node => { node.textContent = settled ? '到期兑付 · × 0.001 MON' : '市场价格 · × 0.001 MON / 份'; });
+    $('chain-chart-prompt').hidden = Boolean(snapshot?.round);
+    const heat = snapshot?.round ? (settled ? snapshot.finalHeat : snapshot.heat) : MARKET_RULES.baseHeat;
+    setText('chain-heat', String(heat));
+    setText('chain-noise-label', settled ? `行动热度 ${snapshot.heat} · 区块噪声 ${signed(snapshot.finalHeat - snapshot.heat, 0)}` : `区块哈希噪声 ±${MARKET_RULES.noiseRange} · 热度上下限 ±${MARKET_RULES.maxHeatShift}`);
+    const ticketsLeft = snapshot?.round && !settled ? MARKET_RULES.tickets - snapshot.ticketsUsed : MARKET_RULES.tickets;
+    setText('chain-tickets', `你的链上行动券 ${ticketsLeft} / ${MARKET_RULES.tickets} · 每次需钱包确认`);
+    $('chain-ticket-dots').querySelectorAll('i').forEach((dot, index) => dot.classList.toggle('used', index >= ticketsLeft));
+    const canAct = current === 'trading' && info.ready && !pending && ticketsLeft > 0;
+    $('chain-heat-up').disabled = !canAct || heat >= MARKET_RULES.baseHeat + MARKET_RULES.maxHeatShift;
+    $('chain-heat-down').disabled = !canAct || heat <= MARKET_RULES.baseHeat - MARKET_RULES.maxHeatShift;
+    setText('chain-phase-note', PHASE_NOTES[current]);
+    setText('chain-scenario-note', settled ? '结果已由合约确定：卡片显示到期兑付价。份额价格曲线来自本页轮询采样。' : '场景概率假设后续无人再用行动券，只计算区块哈希噪声；它不同于交易价格，也不代表最终胜率。');
+    drawChart(prices);
+  }
+
+  function drawChart(prices) {
+    const svg = $('chain-chart');
+    const elapsedMs = snapshot?.round ? Math.min(60000, Math.max(0, (snapshot.settled ? 60 : chainNow() - snapshot.startTime) * 1000)) : 0;
+    const width = Math.round(svg.getBoundingClientRect().width || 650);
+    const key = `${snapshot?.round}:${history.length}:${snapshot?.settled}:${Math.round(elapsedMs / 500)}:${width}`;
+    if (key === chartKey) return;
+    chartKey = key;
+    drawPriceChart(svg, {
+      durationMs: MARKET_RULES.roundSeconds * 1000, lockMs: MARKET_RULES.tradingSeconds * 1000, points: history, elapsedMs, prices,
+      label: `链上份额价格，红 ${fmt(prices.red, 3)}、黑 ${fmt(prices.black, 3)}、绿 ${fmt(prices.green, 3)}`,
+      title: '本页轮询链上合约得到的价格采样',
+    });
+  }
+
+  function renderOrder() {
+    const current = phase();
+    const info = walletInfo();
+    const buy = selectedSide === 'buy';
+    const amount = sharesInput();
+    const owned = snapshot?.round && !snapshot.settled ? snapshot.holdings[selectedColor] : 0;
+    const price = snapshot?.prices?.[selectedColor] ?? 1 / 3;
+    const balance = info.state?.balanceWei;
+    $('chain-selected-chip').className = `color-tag ${selectedColor}`;
+    $('chain-selected-chip').innerHTML = `<i></i>${NAMES[selectedColor]}`;
+    setText('chain-available', buy ? `钱包 ${typeof balance === 'bigint' ? formatMonPrecise(balance) : '—'} MON` : `链上持有 ${fmt(owned, 0)} 份`);
+    setText('chain-quote-total-label', buy ? '预计支付（含费用）' : '预计到账（扣除费用）');
+    root.querySelectorAll('[data-side]').forEach(button => {
+      const selected = button.dataset.side === selectedSide;
+      button.classList.toggle('selected', selected);
+      button.setAttribute('aria-pressed', String(selected));
+    });
+    root.querySelectorAll('[data-shares]').forEach(button => {
+      const selected = Number(button.dataset.shares) === amount;
+      button.classList.toggle('selected', selected);
+      button.setAttribute('aria-pressed', String(selected));
+    });
+    setText('chain-max-shares', buy ? '最多' : owned > 1000 ? '卖 1,000 份' : '卖出 100%');
+    $('chain-max-shares').disabled = current !== 'trading' || Boolean(pending) || (!buy && owned < 1);
+    const ready = quote && quote.shares === amount;
+    setText('chain-quote-total', ready ? formatMonPrecise(quote.total, 5) : '—');
+    setText('chain-quote-spot', `${fmt(price * SHARE_MON, 6)} MON / 份`);
+    setText('chain-quote-average', ready ? `${fmt(mon(quote.gross) / amount, 6)} MON / 份` : '—');
+    setText('chain-quote-gross', ready ? formatMonPrecise(quote.gross, 5) : '—');
+    setText('chain-quote-fee', ready ? formatMonPrecise(quote.fee, 6) : '—');
+    setText('chain-quote-impact', ready ? `${signed((quote.priceAfter - price) * 100, 2)} 个百分点` : '—');
+    $('chain-win-preview').hidden = !buy || !ready || current === 'settled';
+    if (buy && ready) {
+      const payout = amount * SHARE_MON;
+      const profit = payout - mon(quote.total);
+      setText('chain-win-label', `若${LABELS[selectedColor]}盘命中，持有到结算`);
+      setText('chain-quote-win-payout', `兑付 ${fmt(payout, 3)} MON`);
+      setText('chain-quote-win-profit', signed(profit, 5));
+      $('chain-quote-win-profit').className = pnlClass(profit);
+      setText('chain-quote-roi', `命中净回报 ${signed(profit / mon(quote.total) * 100, 1)}%；未命中最多损失 ${formatMonPrecise(quote.total, 5)} MON，另需支付 gas。`);
+    }
+    const reason = current !== 'trading' ? (current === 'none' ? '先设置市场合约。' : '当前不在交易时间。')
+      : !info.ready ? info.reason
+        : quoteError || (!ready ? '正在读取链上报价…' : !quote.solvent ? '做市储备不足以覆盖所有可能兑付。' : '');
+    $('chain-submit').disabled = Boolean(reason) || Boolean(pending);
+    setText('chain-submit-label', pending ? `${pending.label}…` : current === 'trading' ? `${buy ? '买入' : '卖出'}${LABELS[selectedColor]}色份额` : current === 'settled' ? '本轮已结算' : '暂不可交易');
+    setText('chain-quote-note', reason || `下单时重新报价，并${buy ? `多付 ${SLIPPAGE_PERCENT}% 作为价格保护，未用部分由合约当笔退回` : `设置 ${SLIPPAGE_PERCENT}% 最低到账保护`}。`);
+  }
+
+  function renderPortfolio() {
+    const info = walletInfo();
+    const live = snapshot?.round && !snapshot.settled;
+    let spent = 0;
+    for (const color of MARKET_COLORS) {
+      const owned = snapshot?.round ? snapshot.holdings[color] : 0;
+      const basis = snapshot?.round ? mon(snapshot.basis[color]) : 0;
+      const price = snapshot?.prices?.[color] ?? 0;
+      const value = owned * price * SHARE_MON;
+      spent += basis;
+      setText(`chain-holding-${color}`, fmt(owned, 0));
+      setText(`chain-basis-${color}`, owned ? fmt(basis / owned, 6) : '—');
+      setText(`chain-value-${color}`, fmt(value, 5));
+      setText(`chain-pnl-${color}`, owned || basis ? signed(value - basis, 5) : '0.00000');
+      $(`chain-pnl-${color}`).className = pnlClass(value - basis);
+      $(`chain-sell-${color}`).disabled = !live || phase() !== 'trading' || owned < 1 || Boolean(pending) || !info.ready;
+    }
+    setText('chain-claimable', snapshot ? formatMonPrecise(snapshot.claimable) : '—');
+    setText('chain-spent', fmt(spent, 5));
+    setText('chain-wallet-balance', typeof info.state?.balanceWei === 'bigint' ? formatMonPrecise(info.state.balanceWei) : '—');
+    const claimable = snapshot?.claimable ?? 0n;
+    $('chain-claim').disabled = claimable === 0n || Boolean(pending) || !info.ready;
+    setText('chain-claim', claimable > 0n ? `领取 ${formatMonPrecise(claimable)} MON` : '暂无可领取');
+  }
+
+  function renderTrades() {
+    const body = $('chain-trades-body');
+    const rows = trades.slice(0, 9).map(trade => {
+      const row = document.createElement('tr');
+      const who = document.createElement('td');
+      const account = walletInfo().account?.toLowerCase();
+      who.textContent = trade.trader === account ? '你' : shortenAddress(trade.trader);
+      const block = document.createElement('small');
+      block.textContent = `区块 #${trade.blockNumber.toLocaleString('en-US')}`;
+      who.append(block);
+      const side = document.createElement('td');
+      const tag = document.createElement('span');
+      tag.className = `trade-side ${trade.side}`;
+      tag.textContent = `${trade.side === 'buy' ? '买' : '卖'}${LABELS[trade.color]}`;
+      side.append(tag);
+      const shares = document.createElement('td');
+      shares.textContent = fmt(trade.shares, 0);
+      const total = document.createElement('td');
+      total.textContent = `${trade.side === 'buy' ? '−' : '+'}${formatMonPrecise(trade.total, 5)}`;
+      const link = document.createElement('td');
+      const anchor = document.createElement('a');
+      anchor.href = `${MONAD_TESTNET.explorerUrl}/tx/${trade.hash}`;
+      anchor.target = '_blank';
+      anchor.rel = 'noopener noreferrer';
+      anchor.textContent = '查看 ↗';
+      link.append(anchor);
+      row.append(who, side, shares, total, link);
+      return row;
+    });
+    if (rows.length) body.replaceChildren(...rows);
+    else {
+      const row = document.createElement('tr');
+      const cell = document.createElement('td');
+      cell.colSpan = 5;
+      cell.className = 'empty-cell';
+      cell.textContent = snapshot?.round ? '本轮还没有链上成交。' : '开局后，这里列出合约事件里的真实成交。';
+      row.append(cell);
+      body.replaceChildren(row);
+    }
+    setText('chain-trade-count', snapshot?.round ? `第 ${snapshot.round} 轮 · 合约记录 ${snapshot.trades} 笔` : '读取合约事件');
+  }
+
+  function renderTxs() {
+    const list = $('chain-tx-list');
+    if (!txLog.length) {
+      const empty = document.createElement('li');
+      empty.className = 'chain-tx-empty';
+      empty.textContent = '本页提交的交易会列在这里，可跳转区块浏览器核对。';
+      list.replaceChildren(empty);
+      return;
+    }
+    list.replaceChildren(...txLog.map(entry => {
+      const item = document.createElement('li');
+      item.dataset.status = entry.status;
+      const label = document.createElement('span');
+      label.textContent = entry.label;
+      const status = document.createElement('small');
+      status.textContent = { pending: '确认中', ok: '已确认', failed: '执行失败', unknown: '状态未知' }[entry.status];
+      const anchor = document.createElement('a');
+      anchor.href = `${MONAD_TESTNET.explorerUrl}/tx/${entry.hash}`;
+      anchor.target = '_blank';
+      anchor.rel = 'noopener noreferrer';
+      anchor.textContent = `${entry.hash.slice(0, 10)}… ↗`;
+      item.append(label, status, anchor);
+      return item;
+    }));
+  }
+
+  function render() {
+    if (mode !== 'chain') return;
+    renderSetup();
+    renderArena();
+    renderClock();
+    renderOrder();
+    renderPortfolio();
+    renderTrades();
+    renderTxs();
+  }
+
+  async function onRoundAction() {
+    const action = $('chain-round-action').dataset.action;
+    if (action === 'settle') {
+      const receipt = await runTx('结算本轮', () => marketCalls.settle());
+      if (receipt && snapshot && !snapshot.settled) setMessage('随机区块已超过 256 个区块无法读取，合约已登记新的随机区块，请几秒后再结算一次。');
+    } else if (action === 'start') {
+      const before = snapshot?.round ?? 0;
+      const receipt = await runTx(before ? '开始下一轮' : '开始第一轮', () => marketCalls.start());
+      if (receipt && snapshot?.round === before) setMessage('上一轮的随机区块已过期，合约已重新登记随机区块，请几秒后再开局。');
+    }
+  }
+
+  async function maxShares() {
+    if (!client) return;
+    if (selectedSide === 'sell') {
+      const owned = snapshot?.holdings[selectedColor] ?? 0;
+      $('chain-shares').value = String(Math.max(1, Math.min(1000, owned)));
+    } else {
+      const balance = walletInfo().state?.balanceWei;
+      if (typeof balance !== 'bigint') { setMessage('读到钱包余额后才能计算最多可买份数。'); return; }
+      // Keep room for gas, which Monad charges on the full gas limit.
+      const budget = balance - 30000000000000000n;
+      let low = 0;
+      let high = 1000;
+      while (low < high) {
+        const mid = Math.ceil((low + high) / 2);
+        const next = await client.quote(selectedColor, 'buy', mid);
+        if (next.solvent && next.total * (100n + SLIPPAGE_PERCENT) / 100n <= budget) low = mid;
+        else high = mid - 1;
+      }
+      if (!low) { setMessage('钱包余额不足以买入 1 份并支付 gas，可先从水龙头领取 MON。'); return; }
+      $('chain-shares').value = String(low);
+    }
+    quoteKey = '';
+    void refreshQuote();
+    renderOrder();
+  }
+
+  function submitOrder() {
+    const amount = sharesInput();
+    const color = selectedColor;
+    if (!amount || !client) return;
+    if (selectedSide === 'buy') {
+      void runTx(`买入${LABELS[color]} ${amount} 份`, async () => {
+        const fresh = await client.quote(color, 'buy', amount);
+        if (!fresh.solvent) throw new MonadError('INSUFFICIENT_RESERVE', '做市储备不足以覆盖所有可能兑付，交易未提交。');
+        return marketCalls.buy(color, amount, fresh.total + fresh.total * SLIPPAGE_PERCENT / 100n + 1n);
+      }, { sendsValue: true });
+    } else {
+      void runTx(`卖出${LABELS[color]} ${amount} 份`, async () => {
+        const fresh = await client.quote(color, 'sell', amount);
+        return marketCalls.sell(color, amount, fresh.total * (100n - SLIPPAGE_PERCENT) / 100n);
+      });
+    }
+  }
+
+  async function deploy(event) {
+    event.preventDefault();
+    const value = parseMon($('chain-deploy-amount').value);
+    if (value === null || value < MIN_DEPLOY_WEI) { setMessage('初始储备至少 0.02 MON。储备越多，单轮可承接的成交越大。'); return; }
+    const receipt = await runTx('部署市场合约', async () => ({ data: deployData(await estimateRandomDelay(rpc)), value }), { sendsValue: true, toMarket: false });
+    if (receipt?.contractAddress) {
+      await useAddress(receipt.contractAddress, { announce: false });
+      setMessage(`市场合约已部署：${receipt.contractAddress}。复制分享链接，其他人即可进入同一个链上市场。`);
+    } else if (receipt) setMessage('部署交易已确认，但没有读到合约地址，请在区块浏览器中查看。');
+  }
+
+  function fund(event) {
+    event.preventDefault();
+    const value = parseMon($('chain-fund-amount').value);
+    if (!value) { setMessage('请输入有效的注资金额。'); return; }
+    void runTx(`注资 ${formatMonPrecise(value)} MON`, () => marketCalls.fund(value), { sendsValue: true });
+  }
+
+  function withdraw(event) {
+    event.preventDefault();
+    const value = parseMon($('chain-withdraw-amount').value);
+    if (!value) { setMessage('请输入有效的取回金额。'); return; }
+    void runTx(`取回储备 ${formatMonPrecise(value)} MON`, () => marketCalls.withdraw(value));
+  }
+
+  async function copyShareLink() {
+    if (!client) return;
+    const url = new URL(location.href);
+    url.search = `?market=${client.address}`;
+    url.hash = '';
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(url.href);
+      setMessage('分享链接已复制：打开它会直接进入这个链上市场。');
+    } catch {
+      setMessage(`浏览器未允许自动复制，请手动复制：${url.href}`);
+    }
+  }
+
+  document.querySelectorAll('[data-trade-mode]').forEach(button => button.addEventListener('click', () => setMode(button.dataset.tradeMode)));
+  root.querySelectorAll('.arena [data-color]').forEach(button => button.addEventListener('click', () => { selectedColor = button.dataset.color; void refreshQuote(); render(); }));
+  root.querySelectorAll('[data-side]').forEach(button => button.addEventListener('click', () => { selectedSide = button.dataset.side; void refreshQuote(); render(); }));
+  root.querySelectorAll('[data-shares]').forEach(button => button.addEventListener('click', () => { $('chain-shares').value = button.dataset.shares; void refreshQuote(); renderOrder(); }));
+  root.querySelectorAll('[data-chain-sell]').forEach(button => button.addEventListener('click', () => {
+    selectedColor = button.dataset.chainSell;
+    selectedSide = 'sell';
+    $('chain-shares').value = String(Math.min(1000, snapshot?.holdings[selectedColor] ?? 0));
+    quoteKey = '';
+    void refreshQuote();
+    render();
+    $('chain-submit').scrollIntoView({ block: 'nearest' });
+  }));
+  $('chain-shares').addEventListener('input', () => { clearTimeout(quoteTimer); quoteTimer = setTimeout(() => void refreshQuote(), 250); renderOrder(); });
+  $('chain-shares').addEventListener('keydown', event => { if (event.key === 'Enter' && !$('chain-submit').disabled) submitOrder(); });
+  $('chain-max-shares').addEventListener('click', () => { void maxShares().catch(error => setMessage(error.message)); });
+  $('chain-submit').addEventListener('click', submitOrder);
+  $('chain-round-action').addEventListener('click', () => { void onRoundAction(); });
+  $('chain-heat-up').addEventListener('click', () => { void runTx('链上加热 +1', () => marketCalls.act(true)); });
+  $('chain-heat-down').addEventListener('click', () => { void runTx('链上降温 −1', () => marketCalls.act(false)); });
+  $('chain-claim').addEventListener('click', () => { void runTx('领取兑付', () => marketCalls.claim()); });
+  $('chain-attach-form').addEventListener('submit', event => { event.preventDefault(); void useAddress($('chain-address-input').value.trim()); });
+  $('chain-deploy-form').addEventListener('submit', event => { void deploy(event); });
+  $('chain-fund-form').addEventListener('submit', fund);
+  $('chain-withdraw-form').addEventListener('submit', withdraw);
+  $('chain-share').addEventListener('click', () => { void copyShareLink(); });
+  $('chain-change').addEventListener('click', () => { showSetup = !showSetup; render(); });
+  document.addEventListener('visibilitychange', () => { schedule(); if (active()) void refresh(); });
+  window.addEventListener('resize', () => { chartKey = ''; if (mode === 'chain') renderArena(); });
+  wallet?.subscribe(state => {
+    if (state.account === lastAccount && state.chainId === lastChain) { if (mode === 'chain') { renderOrder(); renderPortfolio(); renderArena(); } return; }
+    lastAccount = state.account;
+    lastChain = state.chainId;
+    quoteKey = '';
+    void refresh();
+  });
+  const clock = setInterval(() => { if (active() && snapshot) { renderClock(); drawChart(snapshot.prices); } }, 250);
+
+  setMode(mode);
+  const initial = [linked, readStorage(MARKET_ADDRESS_KEY), DEFAULT_MARKET_ADDRESS].find(isMarketAddress);
+  if (initial) void useAddress(initial, { announce: false });
+  else setMessage('尚未设置市场合约：粘贴已有合约地址，或用钱包部署一个新的市场。');
+
+  return () => {
+    clearTimeout(pollTimer);
+    clearTimeout(quoteTimer);
+    clearInterval(clock);
+  };
+}
+
+return { MARKET_ADDRESS_KEY, TRADE_MODE_KEY, mountMarket };
+})();
+const ThemeSwitch = (() => {
+const THEME_KEY = 'blockpulse-theme';
+const THEME_CHOICES = Object.freeze(['system', 'light', 'dark']);
+const THEME_LABELS = Object.freeze({ system: '跟随系统', light: '浅色', dark: '深色' });
+const THEME_COLORS = Object.freeze({ light: '#f6f4fb', dark: '#10131c' });
+
+function resolveTheme(choice, prefersLight) {
+  return choice === 'light' || (choice !== 'dark' && prefersLight) ? 'light' : 'dark';
+}
+
+function nextTheme(choice) {
+  return THEME_CHOICES[(THEME_CHOICES.indexOf(choice) + 1) % THEME_CHOICES.length];
+}
+
+function mountTheme(button = document.getElementById('theme-toggle')) {
+  const media = window.matchMedia?.('(prefers-color-scheme: light)');
+  let choice = 'system';
+  try { choice = THEME_CHOICES.includes(localStorage.getItem(THEME_KEY)) ? localStorage.getItem(THEME_KEY) : 'system'; } catch { /* Storage is optional. */ }
+
+  function apply() {
+    const theme = resolveTheme(choice, Boolean(media?.matches));
+    const root = document.documentElement;
+    root.dataset.theme = theme;
+    root.dataset.themePreference = choice;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_COLORS[theme]);
+    if (!button) return;
+    button.dataset.choice = choice;
+    button.querySelector('.theme-label').textContent = THEME_LABELS[choice];
+    const label = `切换主题，当前${THEME_LABELS[choice]}${choice === 'system' ? `（${theme === 'light' ? '浅色' : '深色'}）` : ''}`;
+    button.setAttribute('aria-label', label);
+    button.title = label;
+  }
+
+  button?.addEventListener('click', () => {
+    choice = nextTheme(choice);
+    try { localStorage.setItem(THEME_KEY, choice); } catch { /* Storage is optional. */ }
+    apply();
+  });
+  media?.addEventListener?.('change', () => { if (choice === 'system') apply(); });
+  apply();
+}
+
+return { THEME_KEY, THEME_CHOICES, resolveTheme, nextTheme, mountTheme };
+})();
 const { createGame, resetGame, startRound, advance, executeTrade, playerAction, nextRound, quoteTrade, marketPrices, scenarioOdds, participantStats } = GameEngine;
 const { mountMonad } = MonadUI;
+const { mountMarket } = MonadMarketUI;
+const { mountTheme } = ThemeSwitch;
+const { drawPriceChart } = PriceChart;
 
 const $ = id => document.getElementById(id);
 const setText = (id, value) => { if ($(id).textContent !== value) $(id).textContent = value; };
@@ -1409,7 +2991,6 @@ const KEY = 'blockpulse-playground-v2';
 const COLORS = ['red', 'black', 'green'];
 const LABELS = { red: '红', black: '黑', green: '绿' };
 const NAMES = { red: '红 · 上行', black: '黑 · 下行', green: '绿 · 区间' };
-const PAINT = { red: 'var(--red)', black: 'var(--blue)', green: 'var(--green)' };
 const fmt = (n, digits = 2) => Number.isFinite(n) ? n.toLocaleString('zh-CN', { minimumFractionDigits: digits, maximumFractionDigits: digits }) : '—';
 const moneyFmt = (n, digits = 3) => n > 0 && n < 10 ** -digits ? `<${(10 ** -digits).toFixed(digits)}` : fmt(n, digits);
 const signed = (n, digits = 2) => `${n > 0 ? '+' : ''}${fmt(Math.abs(n) < 0.0000005 ? 0 : n, digits)}`;
@@ -1505,20 +3086,11 @@ function drawChart(prices) {
   const key = `${state.round}:${state.elapsedMs}:${state.history.length}:${width}`;
   if (key === chartKey) return;
   chartKey = key;
-  const height = 210, left = 32, right = width - 10, top = 13, bottom = 178;
-  const x = ms => left + ms / state.durationMs * (right - left);
-  const y = p => top + (1 - p) * (bottom - top);
-  const points = state.history.filter(p => p.prices && p.timeMs <= state.elapsedMs);
-  if (!points.length) points.push({ timeMs: 0, prices });
-  if (points.at(-1).timeMs !== state.elapsedMs) points.push({ timeMs: state.elapsedMs, prices });
-  const sampleEvery = Math.max(1, Math.ceil(points.length / 600));
-  const sampled = points.filter((_, i) => i % sampleEvery === 0 || i === points.length - 1);
-  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-  svg.setAttribute('aria-label', `第 ${state.round} 轮份额价格，红 ${fmt(prices.red, 3)}、黑 ${fmt(prices.black, 3)}、绿 ${fmt(prices.green, 3)} 积分每份`);
-  svg.innerHTML = `<title>本地模拟成交形成的价格，不是结果概率</title><rect x="${x(55000)}" y="${top}" width="${right - x(55000)}" height="${bottom - top}" fill="#ffb68e09"/>
-    ${[0, 0.25, 0.5, 0.75, 1].map(p => `<line x1="${left}" x2="${right}" y1="${y(p)}" y2="${y(p)}" class="chart-grid"/><text x="0" y="${y(p) + 3}" class="chart-text">${p.toFixed(2)}</text>`).join('')}
-    ${[0, 15000, 30000, 45000, 60000].map(ms => `<text x="${x(ms)}" y="203" text-anchor="${ms === 0 ? 'start' : ms === 60000 ? 'end' : 'middle'}" class="chart-text">${ms / 1000}s</text>`).join('')}
-    ${COLORS.map(c => `<path d="${sampled.map((p, i) => `${i ? 'L' : 'M'}${x(p.timeMs).toFixed(2)},${y(p.prices[c]).toFixed(2)}`).join(' ')}" class="chart-line" style="stroke:${PAINT[c]}"/><circle cx="${x(state.elapsedMs)}" cy="${y(prices[c])}" r="3" style="fill:${PAINT[c]}"/>`).join('')}`;
+  drawPriceChart(svg, {
+    durationMs: state.durationMs, lockMs: state.tradingDurationMs, points: state.history, elapsedMs: state.elapsedMs, prices,
+    label: `第 ${state.round} 轮份额价格，红 ${fmt(prices.red, 3)}、黑 ${fmt(prices.black, 3)}、绿 ${fmt(prices.green, 3)} 积分每份`,
+    title: '本地模拟成交形成的价格，不是结果概率',
+  });
 }
 
 function drawBots() {
@@ -1577,8 +3149,8 @@ function renderQuote(prices) {
   setText('max-shares', buy ? '最多' : player.holdings[selectedColor] > 1000 ? '卖 1,000 份' : '卖出 100%');
   $('max-shares').disabled = closed || (!buy && player.holdings[selectedColor] < 1);
   $('shares').disabled = closed;
-  document.querySelectorAll('[data-shares]').forEach(b => { const selected = Number(b.dataset.shares) === quantity; b.disabled = closed; b.classList.toggle('selected', selected); b.setAttribute('aria-pressed', String(selected)); });
-  document.querySelectorAll('[data-side]').forEach(b => { b.classList.toggle('selected', b.dataset.side === selectedSide); b.setAttribute('aria-pressed', String(b.dataset.side === selectedSide)); });
+  document.querySelectorAll('#game [data-shares]').forEach(b => { const selected = Number(b.dataset.shares) === quantity; b.disabled = closed; b.classList.toggle('selected', selected); b.setAttribute('aria-pressed', String(selected)); });
+  document.querySelectorAll('#game [data-side]').forEach(b => { b.classList.toggle('selected', b.dataset.side === selectedSide); b.setAttribute('aria-pressed', String(b.dataset.side === selectedSide)); });
   if (state.phase === 'settled') {
     ['quote-total', 'quote-average', 'quote-gross', 'quote-fee', 'quote-impact'].forEach(id => { $(id).textContent = '—'; });
     $('quote-spot').textContent = `${fmt(prices[selectedColor], 3)} / 份（到期兑付）`;
@@ -1638,10 +3210,10 @@ function render() {
   $('countdown-dial').classList.toggle('urgent', state.phase === 'locked');
   $('chart-prompt').hidden = state.phase !== 'ready';
   $('scenario-note').textContent = settled ? '结果已确认：三色卡片现在显示到期兑付价与命中结果；封盘前价格保留在曲线上。' : '场景概率假设后续无人再用行动券，只计算结算噪声；它不同于交易价格，也不代表最终胜率。噪声仅为本地模拟随机。';
-  document.querySelectorAll('.scenario-label').forEach(node => { node.textContent = settled ? '本轮到期结果' : '当前热度场景概率'; });
+  document.querySelectorAll('#game .scenario-label').forEach(node => { node.textContent = settled ? '本轮到期结果' : '当前热度场景概率'; });
   document.querySelectorAll('[data-bots]').forEach(b => { b.disabled = live(state); b.classList.toggle('selected', Number(b.dataset.bots) === state.botCount); b.setAttribute('aria-pressed', String(Number(b.dataset.bots) === state.botCount)); });
-  document.querySelectorAll('[data-color]').forEach(b => { b.classList.toggle('selected', b.dataset.color === selectedColor); b.setAttribute('aria-pressed', String(b.dataset.color === selectedColor)); });
-  document.querySelectorAll('.price-unit').forEach(node => { node.textContent = settled ? '到期兑付价 · 积分 / 份' : '市场价格 · 积分 / 份'; });
+  document.querySelectorAll('#game [data-color]').forEach(b => { b.classList.toggle('selected', b.dataset.color === selectedColor); b.setAttribute('aria-pressed', String(b.dataset.color === selectedColor)); });
+  document.querySelectorAll('#game .price-unit').forEach(node => { node.textContent = settled ? '到期兑付价 · 积分 / 份' : '市场价格 · 积分 / 份'; });
   for (const color of COLORS) {
     $(`price-${color}`).textContent = fmt(prices[color], 3);
     $(`odds-${color}`).textContent = settled ? (state.result.color === color ? '已命中' : '未命中') : percent(odds[color]);
@@ -1676,9 +3248,9 @@ function runOperation(operation) {
   catch (error) { showError(error.reason || error.message || '操作未成功，请查看当前阶段与账户余额。'); render(); }
 }
 
-document.querySelectorAll('[data-color]').forEach(b => b.addEventListener('click', () => runOperation(() => { selectedColor = b.dataset.color; })));
-document.querySelectorAll('[data-side]').forEach(b => b.addEventListener('click', () => runOperation(() => { selectedSide = b.dataset.side; })));
-document.querySelectorAll('[data-shares]').forEach(b => b.addEventListener('click', () => runOperation(() => { $('shares').value = b.dataset.shares; })));
+document.querySelectorAll('#game [data-color]').forEach(b => b.addEventListener('click', () => runOperation(() => { selectedColor = b.dataset.color; })));
+document.querySelectorAll('#game [data-side]').forEach(b => b.addEventListener('click', () => runOperation(() => { selectedSide = b.dataset.side; })));
+document.querySelectorAll('#game [data-shares]').forEach(b => b.addEventListener('click', () => runOperation(() => { $('shares').value = b.dataset.shares; })));
 $('shares').addEventListener('input', () => runOperation(() => {}));
 $('shares').addEventListener('keydown', e => { if (e.key === 'Enter' && !$('submit-trade').disabled) $('submit-trade').click(); });
 
@@ -1732,7 +3304,7 @@ function sellColors(colors) {
     notify(`已卖出 ${fmt(sold, 0)} 份持仓，分 ${count} 笔成交，扣费后到账 ${fmt(proceeds, 4)} 积分。`);
   });
 }
-document.querySelectorAll('[data-sell]').forEach(b => b.addEventListener('click', () => sellColors([b.dataset.sell])));
+document.querySelectorAll('#game [data-sell]').forEach(b => b.addEventListener('click', () => sellColors([b.dataset.sell])));
 $('sell-all').addEventListener('click', () => sellColors(COLORS));
 $('heat-up').addEventListener('click', () => runOperation(() => { state = playerAction(state, 1); notify(`已加热 +1，热度 ${state.heat}；剩余 ${playerOf(state).tickets} 张行动券。`); }));
 $('heat-down').addEventListener('click', () => runOperation(() => { state = playerAction(state, -1); notify(`已降温 −1，热度 ${state.heat}；剩余 ${playerOf(state).tickets} 张行动券。`); }));
@@ -1766,8 +3338,9 @@ setInterval(() => {
   }
   catch (error) { simulationFailed = true; showError(`本地进度无法继续：${error.reason || error.message}。请用右上角“重置积分”重新开始。`); }
 }, 100);
+mountTheme();
 render();
-mountMonad();
+mountMarket(mountMonad());
 
 })();
 </script>

@@ -4,7 +4,7 @@ import { performance } from 'node:perf_hooks';
 import {
   createGame, resetGame, startRound, advance, executeTrade, quoteTrade,
   playerAction, nextRound, marketPrices, scenarioOdds, participantStats, quoteBudget, actionPreview,
-  configureEvent, observeEvent, configureAutomation, GameError,
+  configureEvent, observeEvent, configureAutomation, armChainEvent, ingestBlocks, GameError,
 } from '../dist/game.js';
 
 const trader = (state, id = 'player') => state.participants.find(item => item.id === id);
@@ -281,6 +281,20 @@ test('player automation places real fills, records decisions, and stops on manua
   assert.equal(locked.phase, 'locked');
   assert.equal(locked.automation.enabled, false);
   assert.equal(locked.automation.lastDecision.action, 'stop');
+});
+
+test('player automation uses chain odds and stops at the busy-block lock', () => {
+  const baseline = Array.from({ length: 600 }, (_, index) => ({ number: 1000 + index, tx: index < 240 ? 3 : 1 }));
+  let state = armChainEvent(createGame(7, { mode: 'chain' }), baseline);
+  state = configureAutomation(startRound(state), { enabled: true, strategy: 'value', orderShares: 10, maxPosition: 50, edge: 0.01 });
+  state = ingestBlocks(state, Array.from({ length: 8 }, (_, index) => ({ number: state.event.startBlock + index + 1, tx: 1 })));
+  assert.ok(state.automation.decisions.length > 0);
+  assert.ok(state.trades.some(item => item.source === 'strategy'));
+  const lockBlocks = Array.from({ length: 157 }, (_, index) => ({ number: state.event.startBlock + state.event.observed + index + 1, tx: 1 }));
+  state = ingestBlocks(state, lockBlocks);
+  assert.equal(state.phase, 'locked');
+  assert.equal(state.automation.enabled, false);
+  assert.equal(state.automation.lastDecision.action, 'stop');
 });
 
 test('extreme legal inventory cannot create zero-cost positive buy shares', () => {

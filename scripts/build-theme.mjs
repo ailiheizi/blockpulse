@@ -3,7 +3,7 @@ import { pathToFileURL } from 'node:url';
 
 // Derives the light theme from the dark stylesheets: every rule that sets a hex color gets a
 // :root[data-theme="light"] override, so dark styles stay the single source of truth.
-const SOURCES = ['style.css', 'monad.css'];
+const SOURCES = ['style.css', 'monad.css', 'event.css'];
 const OUTPUT = 'theme-light.css';
 const LIGHT = ':root[data-theme="light"]';
 

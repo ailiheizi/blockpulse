@@ -14,8 +14,9 @@ test('Pages 产物完整内联脚本与样式，避免新页面读取旧版资�
   const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
   assert.equal(scripts.length, 2);
   assert.ok(scripts[0][1].length < 800, 'the head script only bootstraps theme and trade mode');
-  assert.equal([...html.matchAll(/<style>/g)].length, 3);
+  assert.equal([...html.matchAll(/<style>/g)].length, 4);
   assert.match(html, /id="chain-market"/);
   assert.match(html, /id="theme-toggle"/);
   for (const [, code] of scripts) assert.doesNotThrow(() => new Script(code));
+  assert.match(html, /id="event-panel"/);
 });

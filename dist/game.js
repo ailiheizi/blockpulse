@@ -1,7 +1,10 @@
 /** Local-only three-outcome LMSR simulator. Points cannot be redeemed.
- * Immutable reducers; bots run on deterministic 500 ms ticks, not frames.
- * Seeded settlement noise is a simulation, not secure blockchain randomness.
+ * Immutable reducers; bots run on deterministic ticks, not frames.
+ * Local mode ticks every 500 ms and settles on seeded noise, which is a simulation,
+ * not secure blockchain randomness. Chain mode ticks once per observed block and
+ * settles on the busy-block count read from Monad testnet.
  */
+import { EVENT_WINDOW_BLOCKS, EVENT_LOCK_BLOCKS, EVENT_TOLERANCE, BUSY_TX_MIN, CHAIN_BLOCK_MS, baselineFromBlocks, busyPmf, isBusy } from './chain-event.js';
 export const COLORS = Object.freeze(['red', 'black', 'green']);
 export const ROUND_DURATION_MS = 60000;
 export const TRADING_DURATION_MS = 55000;
@@ -32,6 +35,7 @@ const DEFAULT_PRIORS = Object.freeze({ red: 0.45, black: 0.45, green: 0.10 });
 const SIM_EVENT = Object.freeze({ mode: 'simulation', title: '未来目标区块交易笔数', startBlock: 0, closeBlock: 110,
   targetBlock: 120, headBlock: 0, baseline: 100, lower: 98, upper: 102, txCount: null, status: 'ready', source: '本地模拟事件' });
 const MIN_ROUND_RESERVE = 1;
+const MIN_PRIOR = 0.001;
 
 function findTrader(state, id) {
   const trader = state.participants.find(participant => participant.id === id);
@@ -88,7 +92,7 @@ function liquidationValue(state, trader) {
 }
 
 export function marketPrices(state) {
-  if (state.phase === 'settled' && state.result) {
+  if (state.phase === 'settled' && state.result && !state.result.voided) {
     return Object.fromEntries(COLORS.map(color => [color, color === state.result.color ? 1 : 0]));
   }
   const values = COLORS.map(color => state.market.q[color] / state.market.b);
@@ -101,7 +105,8 @@ export function marketPrices(state) {
 /** Exact discrete probabilities conditional on no further participant actions. */
 export function scenarioOdds(state) {
   if (state.phase === 'settled' && state.result) return marketPrices(state);
-  if (state.event.mode === 'monad') return { red: 1 / 3, black: 1 / 3, green: 1 / 3 };
+  if (state.mode === 'chain') return chainOdds(state);
+  if (state.event?.mode === 'monad') return { red: 1 / 3, black: 1 / 3, green: 1 / 3 };
   const odds = emptyPosition();
   for (let noise = -state.noiseRange; noise <= state.noiseRange; noise += 1) {
     const pressure = Math.max(-3, Math.min(3, state.heat - state.baseline));
@@ -110,6 +115,31 @@ export function scenarioOdds(state) {
   }
   const count = 2 * state.noiseRange + 1;
   return Object.fromEntries(COLORS.map(color => [color, odds[color] / count]));
+}
+
+const colorOf = (state, finalHeat) => finalHeat > state.greenBand[1] ? 'red' : finalHeat < state.greenBand[0] ? 'black' : 'green';
+
+// Exact odds for the busy-block event: blocks already seen are fixed, the rest
+// are modeled as independent draws at the baseline rate. Assumes no further actions.
+function chainOdds(state) {
+  const event = state.event;
+  if (!event) return Object.fromEntries(COLORS.map(color => [color, 1 / 3]));
+  const remaining = event.windowBlocks - event.observed;
+  const pmf = busyPmf(remaining, event.rate);
+  const odds = emptyPosition();
+  for (let more = 0; more <= remaining; more += 1) {
+    odds[colorOf(state, state.heat + event.busy + more - event.baseline)] += pmf[more];
+  }
+  return odds;
+}
+
+// Chain mode only: opening prices follow the scenario odds. Local rounds keep their fixed
+// priors, since unobservable local noise would otherwise leave bots nothing to trade on.
+// Only valid while no shares exist (ready phase).
+function applyPrior(state) {
+  if (state.mode !== 'chain') return;
+  const odds = scenarioOdds(state);
+  state.market.priors = Object.fromEntries(COLORS.map(color => [color, Math.max(odds[color], MIN_PRIOR)]));
 }
 
 export function participantStats(state, traderId) {
@@ -160,6 +190,9 @@ export function createGame(seed = 20261017, options = {}) {
   if (typeof seed !== 'number' || !Number.isFinite(seed)) fail('INVALID_SEED', '种子必须是有限数字');
   const botCount = options.botCount ?? 2;
   if (botCount !== 2 && botCount !== 20) fail('INVALID_BOT_COUNT', '请选择 2 或 20 位 Bot');
+  const mode = options.mode ?? 'local';
+  if (mode !== 'local' && mode !== 'chain') fail('INVALID_MODE', '请选择本地模拟或区块事件');
+  const chain = mode === 'chain';
   const normalizedSeed = Math.trunc(seed) >>> 0;
   const participants = [participant('player', '你', 'player')];
   for (let index = 0; index < botCount; index += 1) {
@@ -168,23 +201,27 @@ export function createGame(seed = 20261017, options = {}) {
       `${momentum ? '动量' : '价值'} Bot${index > 1 ? ` ${index + 1}` : ''}`, momentum ? 'momentum' : 'value'));
   }
   const state = {
-    schemaVersion: 3, phase: 'ready', round: 1, seed: normalizedSeed, botCount,
-    durationMs: ROUND_DURATION_MS, tradingDurationMs: TRADING_DURATION_MS,
-    elapsedMs: 0, remainingMs: ROUND_DURATION_MS, block: 0,
-    heat: 100, baseline: 100, greenBand: [98, 102], actionLimit: 3,
-    noiseRange: participants.length * 3 + 3,
+    schemaVersion: 3, mode, heatLimit: chain ? EVENT_TOLERANCE : null,
+    phase: 'ready', round: 1, seed: normalizedSeed, botCount,
+    durationMs: chain ? EVENT_WINDOW_BLOCKS * CHAIN_BLOCK_MS : ROUND_DURATION_MS,
+    tradingDurationMs: chain ? EVENT_LOCK_BLOCKS * CHAIN_BLOCK_MS : TRADING_DURATION_MS,
+    elapsedMs: 0, remainingMs: chain ? EVENT_WINDOW_BLOCKS * CHAIN_BLOCK_MS : ROUND_DURATION_MS, block: 0,
+    heat: 100, baseline: 100, greenBand: chain ? [100 - EVENT_TOLERANCE, 100 + EVENT_TOLERANCE] : [98, 102], actionLimit: 3,
+    noiseRange: chain ? 0 : participants.length * 3 + 3,
     market: { q: emptyPosition(), cash: 1000, initialReserve: 1000, b: DEFAULT_B, feeRate: 0.003, priors: { ...DEFAULT_PRIORS } },
     participants, initialTotal: participants.length * 1000 + 1000,
     history: [], events: [], trades: [], results: [], result: null, tradeCount: 0,
-    event: { ...SIM_EVENT }, _rngState: normalizedSeed, _noiseRngState: (normalizedSeed ^ 0x9e3779b9) >>> 0,
+    event: chain ? null : { ...SIM_EVENT }, _rngState: normalizedSeed, _noiseRngState: (normalizedSeed ^ 0x9e3779b9) >>> 0,
     _eventRngState: (normalizedSeed ^ 0x85ebca6b) >>> 0,
     automation: { enabled: false, strategy: 'value', orderShares: 10, maxPosition: 150, edge: 0.04, tradeCount: 0,
       lastDecision: { timeMs: 0, action: 'idle', reason: '尚未启用' }, decisions: [] },
     _nextAutomationMs: 1000, _nextTickMs: BLOCK_DURATION_MS, _nextEventId: 1, _nextTradeId: 1,
     _roundStartBalances: Object.fromEntries(participants.map(trader => [trader.id, trader.balance])),
   };
+  applyPrior(state);
   snapshot(state);
-  event(state, 'round_ready', '本地份额市场已准备：命中每份兑付 1 积分，积分不可兑换');
+  event(state, 'round_ready', chain ? '区块事件市场已准备：等待读取基准区块；命中每份兑付 1 积分，积分不可兑换'
+    : '本地份额市场已准备：命中每份兑付 1 积分，积分不可兑换');
   return state;
 }
 
@@ -193,6 +230,7 @@ export function resetGame(seed = 20261017, options = {}) {
 }
 
 export function configureEvent(state, spec) {
+  if (state.mode !== 'local') fail('NOT_LOCAL_EVENT', 'Monad目标区块模式只可用于本地事件回合');
   if (state.phase !== 'ready') fail('INVALID_PHASE', '只有准备中的回合可以更换事件');
   if (spec?.mode === 'simulation') {
     const next = copy(state);
@@ -219,6 +257,7 @@ function classifyEvent(eventSpec, txCount) {
 }
 
 export function observeEvent(state, observation) {
+  if (state.mode !== 'local') fail('NOT_LOCAL_EVENT', '忙区块事件请使用 ingestBlocks 记录');
   if (state.phase === 'settled') return state;
   const spec = state.event;
   if (spec.mode !== 'monad' || !observation || observation.mode !== 'monad' ||
@@ -273,7 +312,7 @@ export function configureAutomation(state, patch) {
       !Number.isFinite(config.edge) || config.edge < 0.01 || config.edge > 0.2) {
     fail('INVALID_AUTOMATION', '策略、份数、持仓上限或触发优势超出范围');
   }
-  if (config.enabled && (state.phase !== 'trading' || state.event.mode === 'monad' && state.event.headBlock >= state.event.closeBlock)) {
+  if (config.enabled && (state.phase !== 'trading' || state.event?.mode === 'monad' && state.event.headBlock >= state.event.closeBlock)) {
     fail('AUTOMATION_CLOSED', '仅可在本轮开放交易时启用自动策略');
   }
   next.automation = { ...config };
@@ -285,8 +324,8 @@ export function configureAutomation(state, patch) {
 export function actionPreview(state, delta) {
   if (delta !== 1 && delta !== -1) fail('INVALID_ACTION', '行动只支持 +1 加热或 −1 降温');
   const before = scenarioOdds(state);
-  if (state.event.mode === 'monad') return { delta, before, after: before, canExecute: false, reason: '本地操作不会改变真实链事件' };
-  if ((delta > 0 && state.heat >= state.baseline + 3) || (delta < 0 && state.heat <= state.baseline - 3)) {
+  if (state.event?.mode === 'monad') return { delta, before, after: before, canExecute: false, reason: '本地操作不会改变真实链事件' };
+  if (!shiftAllowed(state, delta)) {
     return { delta, before, after: before, canExecute: false, reason: '本地事件压力已达到 +3 / −3 上限' };
   }
   if (findTrader(state, 'player').tickets <= 0) return { delta, before, after: before, canExecute: false, reason: '本轮行动券已用完' };
@@ -298,13 +337,17 @@ export function actionPreview(state, delta) {
 
 export function startRound(state) {
   if (state.phase !== 'ready') fail('INVALID_PHASE', '只有准备中的回合可以开始');
-  if (state.event.mode === 'monad' && (state.event.status === 'expired' || state.event.status === 'verified' ||
+  if (state.event?.mode === 'monad' && (state.event.status === 'expired' || state.event.status === 'verified' ||
       state.event.headBlock >= state.event.closeBlock)) fail('EVENT_EXPIRED', '真实事件已到封盘区块，请重新准备目标区块');
   if (state.market.cash < MIN_ROUND_RESERVE) fail('RESERVE_EXHAUSTED', '做市储备不足 1 积分，请重置试玩');
+  if (state.mode === 'chain' && !state.event) fail('EVENT_NOT_ARMED', '尚未读取基准区块，不能开始区块事件');
   const next = copy(state);
   next.phase = 'trading';
   next._roundStartBalances = Object.fromEntries(next.participants.map(trader => [trader.id, trader.balance]));
-  event(next, 'round_started', '交易开始：前 55 秒可买卖和行动，最后 5 秒封盘等待结算');
+  if (next.mode === 'chain') {
+    const { windowBlocks, lockBlocks, startBlock, baseline } = next.event;
+    event(next, 'round_started', `事件开始：从区块 #${startBlock + 1} 起统计 ${windowBlocks} 个区块，基准 ${baseline} 个繁忙块；前 ${lockBlocks} 个区块可交易`);
+  } else event(next, 'round_started', '交易开始：前 55 秒可买卖和行动，最后 5 秒封盘等待结算');
   return next;
 }
 
@@ -441,6 +484,10 @@ export function executeTrade(state, traderId, color, side, shares) {
   return next;
 }
 
+const shiftAllowed = (state, delta) => state.mode === 'chain'
+  ? !state.heatLimit || Math.abs(state.heat + delta - state.baseline) <= state.heatLimit
+  : Math.abs(state.heat + delta - state.baseline) <= 3;
+
 /** Find the largest whole-share opening order that stays within a points budget. */
 export function quoteBudget(state, traderId, color, budget, side = 'buy') {
   findTrader(state, traderId);
@@ -464,7 +511,7 @@ export function quoteBudget(state, traderId, color, budget, side = 'buy') {
 }
 
 function applyAction(state, trader, delta) {
-  if ((delta > 0 && state.heat >= state.baseline + 3) || (delta < 0 && state.heat <= state.baseline - 3)) return false;
+  if (!shiftAllowed(state, delta)) return false;
   trader.tickets -= 1;
   state.heat += delta;
   event(state, 'action', `${trader.name}${delta > 0 ? '加热 +1' : '降温 −1'}`, { traderId: trader.id, participantId: trader.id, delta, heat: state.heat });
@@ -474,13 +521,13 @@ function applyAction(state, trader, delta) {
 }
 
 export function playerAction(state, delta) {
-  if (state.event.mode === 'monad') fail('REAL_EVENT_CONTROL_DISABLED', '本地操作不会改变真实链事件');
+  if (state.event?.mode === 'monad') fail('REAL_EVENT_CONTROL_DISABLED', '本地操作不会改变真实链事件');
   if (delta !== 1 && delta !== -1) fail('INVALID_ACTION', '行动只支持 +1 加热或 −1 降温');
   if (state.phase !== 'trading' || state.elapsedMs >= state.tradingDurationMs) fail('ACTION_CLOSED', '当前已封盘，不能行动');
-  if ((delta > 0 && state.heat >= state.baseline + 3) || (delta < 0 && state.heat <= state.baseline - 3)) {
-    fail('ACTION_LIMIT', '本地事件压力已达到 +3 / −3 上限');
-  }
-  if (findTrader(state, 'player').tickets <= 0) fail('NO_TICKETS', '本轮行动券已用完');
+  if (state.mode === 'chain' && findTrader(state, 'player').tickets <= 0) fail('NO_TICKETS', '本轮行动券已用完');
+  if (!shiftAllowed(state, delta)) fail(state.mode === 'chain' ? 'HEAT_LIMIT' : 'ACTION_LIMIT', state.mode === 'chain'
+    ? `全场热度最多偏离基准 ±${state.heatLimit}` : '本地事件压力已达到 +3 / −3 上限');
+  if (state.mode !== 'chain' && findTrader(state, 'player').tickets <= 0) fail('NO_TICKETS', '本轮行动券已用完');
   const next = copy(state);
   applyAction(next, findTrader(next, 'player'), delta);
   return next;
@@ -515,8 +562,9 @@ function botDecision(state, bot) {
   }
   if (state.event.mode !== 'monad' && bot.tickets > 0 && state.elapsedMs >= 10000 && random(state) < 0.025) {
     const preference = bot.holdings.red - bot.holdings.black;
-    if (preference !== 0) applyAction(state, bot, Math.sign(preference));
-    else if (bot.holdings.green > 0 && state.heat !== state.baseline) applyAction(state, bot, -Math.sign(state.heat - state.baseline));
+    const delta = preference !== 0 ? Math.sign(preference)
+      : bot.holdings.green > 0 && state.heat !== state.baseline ? -Math.sign(state.heat - state.baseline) : 0;
+    if (delta !== 0 && shiftAllowed(state, delta)) applyAction(state, bot, delta);
   }
 }
 
@@ -573,20 +621,30 @@ function playerAutomationDecision(state) {
   } else recordDecision(state, 'hold', quote.reason || '扣除费用后的预估优势不足或报价不可执行', { color: candidate.color, edge: netEdge });
 }
 
-function settle(state, verifiedEvent = null) {
+const drawNoise = state => Math.floor(random(state, '_noiseRngState') * (2 * state.noiseRange + 1)) - state.noiseRange;
+
+function settle(state, resolution = null) {
   const actionHeat = state.heat;
   const closingPrices = marketPrices(state);
-  const noise = Math.floor(random(state, '_noiseRngState') * (2 * state.noiseRange + 1)) - state.noiseRange;
+  const busyChain = state.mode === 'chain';
+  const noise = busyChain ? (typeof resolution === 'number' ? resolution : state.event.busy - state.event.baseline) : drawNoise(state);
   const finalHeat = actionHeat + noise;
-  let txCount = verifiedEvent?.txCount ?? state.event.txCount;
-  if (txCount === null || txCount === undefined) {
-    const pressure = Math.max(-3, Math.min(3, state.heat - state.baseline));
-    const expected = state.event.baseline + pressure * 3;
-    const eventNoise = Math.floor(random(state, '_eventRngState') * (2 * state.noiseRange + 1)) - state.noiseRange;
-    txCount = Math.max(0, Math.round(expected) + eventNoise);
-    state.event = { ...state.event, txCount, headBlock: state.event.targetBlock, status: 'simulated' };
+  let txCount = null;
+  let color;
+  if (busyChain) {
+    color = colorOf(state, finalHeat);
+  } else {
+    const verifiedEvent = resolution && typeof resolution === 'object' ? resolution : null;
+    txCount = verifiedEvent?.txCount ?? state.event.txCount;
+    if (txCount === null || txCount === undefined) {
+      const pressure = Math.max(-3, Math.min(3, state.heat - state.baseline));
+      const expected = state.event.baseline + pressure * 3;
+      const eventNoise = Math.floor(random(state, '_eventRngState') * (2 * state.noiseRange + 1)) - state.noiseRange;
+      txCount = Math.max(0, Math.round(expected) + eventNoise);
+      state.event = { ...state.event, txCount, headBlock: state.event.targetBlock, status: 'simulated' };
+    }
+    color = classifyEvent(state.event, txCount);
   }
-  const color = classifyEvent(state.event, txCount);
   const supportCounts = Object.fromEntries(COLORS.map(item => [item,
     state.participants.filter(trader => trader.holdings[item] > 0).length]));
   const totalPayout = state.participants.reduce((sum, trader) => sum + trader.holdings[color], 0);
@@ -617,18 +675,37 @@ function settle(state, verifiedEvent = null) {
       return { ...entry, rank };
     });
   state.result = { round: state.round, color, finalHeat, actionHeat, noise, closingPrices, payouts, profits, totalPayout,
-    tradeCount: state.tradeCount, marketCash: state.market.cash, eventTitle: state.event.title, eventMode: state.event.mode,
-    eventValue: txCount, eventLower: state.event.lower, eventUpper: state.event.upper, targetBlock: state.event.targetBlock,
-    eventSource: state.event.source, ...(verifiedEvent?.blockHash ? { eventHash: verifiedEvent.blockHash } : {}), supportCounts, ranking };
+    tradeCount: state.tradeCount, marketCash: state.market.cash, supportCounts, ranking };
+  if (busyChain) {
+    const { startBlock, windowBlocks, busy, baseline } = state.event;
+    state.result.event = { startBlock, endBlock: startBlock + windowBlocks, busy, baseline };
+  } else {
+    const verifiedEvent = resolution && typeof resolution === 'object' ? resolution : null;
+    state.result.eventTitle = state.event.title;
+    state.result.eventMode = state.event.mode;
+    state.result.eventValue = txCount;
+    state.result.eventLower = state.event.lower;
+    state.result.eventUpper = state.event.upper;
+    state.result.targetBlock = state.event.targetBlock;
+    state.result.eventSource = state.event.source;
+    if (verifiedEvent?.blockHash) state.result.eventHash = verifiedEvent.blockHash;
+  }
   state.results.push(copy(state.result));
-  event(state, 'settled', `结算完成：${{ red: '红', black: '黑', green: '绿' }[color]}命中，每份兑付 1 积分`, { color, noise, finalHeat, totalPayout, eventValue: txCount });
+  event(state, 'settled', `结算完成：${{ red: '红', black: '黑', green: '绿' }[color]}命中，每份兑付 1 积分`,
+    { color, noise, finalHeat, totalPayout, ...(txCount === null ? {} : { eventValue: txCount }) });
   updateStats(state);
   snapshot(state);
 }
 
+function runBots(state) {
+  const bots = state.participants.slice(1);
+  const offset = (state.block - 1) % bots.length;
+  for (let index = 0; index < bots.length; index += 1) botDecision(state, bots[(index + offset) % bots.length]);
+}
+
 export function advance(state, dtMs) {
   if (typeof dtMs !== 'number' || !Number.isFinite(dtMs) || dtMs < 0) fail('INVALID_TIME', '时间增量必须是非负有限数字');
-  if ((state.phase !== 'trading' && state.phase !== 'locked') || dtMs === 0) return state;
+  if (state.mode === 'chain' || (state.phase !== 'trading' && state.phase !== 'locked') || dtMs === 0) return state;
   const next = copy(state);
   const end = Math.min(next.durationMs, next.elapsedMs + dtMs);
   while (next._nextTickMs <= end) {
@@ -639,14 +716,10 @@ export function advance(state, dtMs) {
       next.phase = 'locked';
       next.automation.enabled = false;
       recordDecision(next, 'stop', '到达封盘时间，自动策略已停止');
-      event(next, 'locked', next.event.mode === 'monad' ? '已到交易时限，停止交易并等待真实目标区块确认' : '最后 5 秒已封盘：停止交易和行动，等待事件结果');
+      event(next, 'locked', next.event?.mode === 'monad' ? '已到交易时限，停止交易并等待真实目标区块确认' : '最后 5 秒已封盘：停止交易和行动，等待事件结果');
     }
-    if (next.phase === 'trading') {
-      const bots = next.participants.slice(1);
-      const offset = (next.block - 1) % bots.length;
-      for (let index = 0; index < bots.length; index += 1) botDecision(next, bots[(index + offset) % bots.length]);
-    }
-    if (next.event.mode === 'simulation') next.event.headBlock = next.block;
+    if (next.phase === 'trading') runBots(next);
+    if (next.event?.mode === 'simulation') next.event.headBlock = next.block;
     while (next._nextAutomationMs <= next.elapsedMs) {
       if (next.phase === 'trading') playerAutomationDecision(next);
       next._nextAutomationMs += 1000;
@@ -655,7 +728,97 @@ export function advance(state, dtMs) {
     snapshot(next);
   }
   clock(next, end);
-  if (end >= next.durationMs && next.event.mode === 'simulation') settle(next);
+  if (end >= next.durationMs && next.event?.mode === 'simulation') settle(next);
+  return next;
+}
+
+/** Arms the event from the most recent contiguous blocks; the window starts after the last one. */
+export function armChainEvent(state, blocks) {
+  if (state.mode !== 'chain') fail('NOT_CHAIN_EVENT', '只有区块事件场可以读取基准区块');
+  if (state.phase !== 'ready') fail('INVALID_PHASE', '只有准备中的回合可以更新基准');
+  if (!Array.isArray(blocks) || !blocks.every(block => Number.isSafeInteger(block?.number) && Number.isInteger(block.tx) && block.tx >= 0)) {
+    fail('INVALID_BLOCKS', '区块数据无效');
+  }
+  const baseline = baselineFromBlocks(blocks);
+  if (!baseline) fail('BASELINE_TOO_SHORT', '基准区块不足，暂不能开始');
+  const next = copy(state);
+  next.event = {
+    windowBlocks: EVENT_WINDOW_BLOCKS, lockBlocks: EVENT_LOCK_BLOCKS, tolerance: EVENT_TOLERANCE, busyTxMin: BUSY_TX_MIN,
+    startBlock: blocks.at(-1).number, observed: 0, busy: 0, series: [],
+    rate: baseline.rate, baseline: baseline.expected, sampleBlocks: baseline.sampleBlocks, sampleBusy: baseline.busyBlocks,
+  };
+  next.history = [];
+  applyPrior(next);
+  snapshot(next);
+  return next;
+}
+
+/** Feeds consecutive blocks after the start block; one block is one bot tick and one clock step. */
+export function ingestBlocks(state, blocks) {
+  if (state.mode !== 'chain' || !state.event) fail('NOT_CHAIN_EVENT', '当前不是区块事件场');
+  if (state.phase !== 'trading' && state.phase !== 'locked') return state;
+  const first = state.event.startBlock + state.event.observed + 1;
+  const fresh = blocks.filter(block => block.number >= first);
+  if (!fresh.length) return state;
+  fresh.forEach((block, index) => {
+    if (block.number !== first + index) fail('BLOCK_GAP', `区块不连续：期望 #${first + index}，收到 #${block.number}`);
+    if (!Number.isInteger(block.tx) || block.tx < 0) fail('INVALID_BLOCKS', '区块交易数无效');
+  });
+  const next = copy(state);
+  const e = next.event;
+  for (const block of fresh) {
+    if (next.phase === 'settled') break;
+    e.observed += 1;
+    if (isBusy(block.tx)) e.busy += 1;
+    e.series.push(e.busy);
+    clock(next, e.observed * CHAIN_BLOCK_MS);
+    next.block = e.observed;
+    if (e.observed >= e.lockBlocks && next.phase === 'trading') {
+      next.phase = 'locked';
+      next.automation.enabled = false;
+      recordDecision(next, 'stop', '达到区块封盘点，自动策略已停止');
+      event(next, 'locked', `已封盘：第 ${e.lockBlocks} 个区块已出，停止交易和行动，等待统计窗口结束`);
+    }
+    if (next.phase === 'trading') runBots(next);
+    while (next._nextAutomationMs <= next.elapsedMs) {
+      if (next.phase === 'trading') playerAutomationDecision(next);
+      next._nextAutomationMs += 1000;
+    }
+    updateStats(next);
+    snapshot(next);
+    if (e.observed >= e.windowBlocks) settle(next, e.busy - e.baseline);
+  }
+  return next;
+}
+
+/** Ends a chain round whose data stopped; open positions are refunded at their cost basis (fees included). */
+export function voidRound(state, reason = '链上数据中断') {
+  if (state.mode !== 'chain') fail('NOT_CHAIN_EVENT', '当前不是区块事件场');
+  if (state.phase !== 'trading' && state.phase !== 'locked') fail('INVALID_PHASE', '只有进行中的回合可以作废');
+  reason = String(reason).replace(/[。.]+$/, '');
+  const next = copy(state);
+  let refundUnits = 0;
+  for (const trader of next.participants) {
+    const basisUnits = COLORS.reduce((sum, color) => sum + units(trader.costBasis[color]), 0);
+    refundUnits += basisUnits;
+    trader.balance = points(units(trader.balance) + basisUnits);
+    trader.holdings = emptyPosition();
+    trader.costBasis = emptyPosition();
+  }
+  if (units(next.market.cash) < refundUnits) fail('INSUFFICIENT_RESERVE', '做市储备不足，无法退回成本');
+  next.market.cash = points(units(next.market.cash) - refundUnits);
+  next.market.q = emptyPosition();
+  const profits = Object.fromEntries(next.participants.map(trader => [trader.id, money(trader.balance - next._roundStartBalances[trader.id])]));
+  next.phase = 'settled';
+  next.automation.enabled = false;
+  recordDecision(next, 'stop', '区块事件作废，自动策略已停止');
+  next.result = {
+    voided: true, reason, round: next.round, profits, refunded: points(refundUnits),
+    observed: next.event.observed, tradeCount: next.tradeCount, marketCash: next.market.cash,
+  };
+  event(next, 'voided', `本轮作废：${reason}。未平仓份额已按含费成本退回，已平仓交易的损益保留`, { reason });
+  updateStats(next);
+  snapshot(next);
   return next;
 }
 
@@ -671,7 +834,7 @@ export function nextRound(state) {
   next.block = 0;
   next.tradeCount = 0;
   next.result = null;
-  next.event = { ...SIM_EVENT };
+  next.event = next.mode === 'chain' ? null : { ...SIM_EVENT };
   next.automation.enabled = false;
   next.automation.tradeCount = 0;
   next.automation.lastDecision = { timeMs: 0, action: 'idle', reason: '尚未启用' };
@@ -689,6 +852,7 @@ export function nextRound(state) {
     trader.costBasis = emptyPosition();
   }
   next._roundStartBalances = Object.fromEntries(next.participants.map(trader => [trader.id, trader.balance]));
+  applyPrior(next);
   snapshot(next);
   event(next, 'round_ready', `第 ${next.round} 轮已准备；余额、做市储备和累计盈亏保留`);
   return next;

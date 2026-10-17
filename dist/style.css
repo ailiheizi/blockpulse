@@ -56,3 +56,10 @@
 #game .automation-decision{font-size:9px;line-height:1.6;color:#a2b0c6;margin:10px 0 0}
 #game .automation-count{font-size:9px;color:#8777a2;display:block;margin-top:5px}
 @media(max-width:740px){#game .event-card{padding:15px;margin-top:14px}#game .bound{padding:8px}#game .bound span{font-size:8px}#game .bound strong{font-size:11px}#game .event-actions{align-items:flex-start}#game .event-contract-note{font-size:9px}}
+#game .support-line{display:block;margin-top:6px;color:#8f9db5;font-size:9px}
+#game .support-line b{color:#b9c5db;font-size:10px;font-weight:550}
+#game .result-ranking{margin-top:12px;padding-top:10px;border-top:1px solid #ffffff17}
+#game .result-ranking>strong{font-size:10px;color:#bac7dc;font-weight:550}
+#game .result-ranking ol{list-style:none;padding:0;margin:6px 0 0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 12px}
+#game .result-ranking li{display:flex;justify-content:space-between;gap:8px;font-size:9px;color:#aebbd1}
+#game .result-ranking li b{font-weight:550}

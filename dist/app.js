@@ -1,5 +1,8 @@
-import { createGame, resetGame, startRound, advance, executeTrade, playerAction, nextRound, quoteTrade, marketPrices, scenarioOdds, participantStats } from './game.js';
+import { createGame, resetGame, startRound, advance, executeTrade, playerAction, nextRound, quoteTrade, marketPrices, scenarioOdds, participantStats, armChainEvent, ingestBlocks, voidRound } from './game.js';
 import { mountMonad } from './monad-ui.js';
+import { createBlockFeed } from './block-feed.js';
+import { renderEventPanel } from './event-ui.js';
+import { CHAIN_BLOCK_MS } from './chain-event.js';
 
 const $ = id => document.getElementById(id);
 const setText = (id, value) => { if ($(id).textContent !== value) $(id).textContent = value; };
@@ -25,6 +28,14 @@ let lastPhase = '';
 let lastPersistAt = 0;
 let chartKey = '', botKey = '', tradeKey = '', resultKey = '', feedKey = '';
 let simulationFailed = false;
+// Chain rounds are session-only: the local game is parked in stash while one runs.
+const feed = createBlockFeed();
+let feedState = feed.getState();
+const stash = { local: null, chain: null };
+let chainEverLive = false;
+const REARM_BLOCKS = 20;
+const FEED_FRESH_MS = 10000;
+const chainMode = () => state.mode === 'chain';
 
 // Ignore v1 storage entirely. Validate schema, money, timers, inventories and the
 // deterministic scheduler before trusting a locally saved v2 session.
@@ -82,6 +93,7 @@ try {
 } catch { /* Storage is optional; an unavailable or invalid save never blocks play. */ }
 
 function persist() {
+  if (chainMode()) return;
   try { localStorage.setItem(KEY, JSON.stringify({ version: 2, state, form: { color: selectedColor, side: selectedSide, shares: $('shares').value } })); } catch { /* Private mode or full storage is fine. */ }
   lastPersistAt = performance.now();
 }
@@ -106,6 +118,10 @@ function drawChart(prices) {
   const height = 210, left = 32, right = width - 10, top = 13, bottom = 178;
   const x = ms => left + ms / state.durationMs * (right - left);
   const y = p => top + (1 - p) * (bottom - top);
+  const chain = chainMode();
+  const lockMs = state.tradingDurationMs;
+  const ticks = chain ? [0, 45, 90, 135, 180].map(block => [block * CHAIN_BLOCK_MS, block ? `${block}` : '0 块'])
+    : [0, 15000, 30000, 45000, 60000].map(ms => [ms, `${ms / 1000}s`]);
   const points = state.history.filter(p => p.prices && p.timeMs <= state.elapsedMs);
   if (!points.length) points.push({ timeMs: 0, prices });
   if (points.at(-1).timeMs !== state.elapsedMs) points.push({ timeMs: state.elapsedMs, prices });
@@ -113,9 +129,9 @@ function drawChart(prices) {
   const sampled = points.filter((_, i) => i % sampleEvery === 0 || i === points.length - 1);
   svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
   svg.setAttribute('aria-label', `第 ${state.round} 轮份额价格，红 ${fmt(prices.red, 3)}、黑 ${fmt(prices.black, 3)}、绿 ${fmt(prices.green, 3)} 积分每份`);
-  svg.innerHTML = `<title>本地模拟成交形成的价格，不是结果概率</title><rect x="${x(55000)}" y="${top}" width="${right - x(55000)}" height="${bottom - top}" fill="#ffb68e09"/>
+  svg.innerHTML = `<title>${chain ? '模拟成交形成的价格，开盘价取自基准区块的先验概率' : '本地模拟成交形成的价格，不是结果概率'}</title><rect x="${x(lockMs)}" y="${top}" width="${right - x(lockMs)}" height="${bottom - top}" fill="#ffb68e09"/>
     ${[0, 0.25, 0.5, 0.75, 1].map(p => `<line x1="${left}" x2="${right}" y1="${y(p)}" y2="${y(p)}" class="chart-grid"/><text x="0" y="${y(p) + 3}" class="chart-text">${p.toFixed(2)}</text>`).join('')}
-    ${[0, 15000, 30000, 45000, 60000].map(ms => `<text x="${x(ms)}" y="203" text-anchor="${ms === 0 ? 'start' : ms === 60000 ? 'end' : 'middle'}" class="chart-text">${ms / 1000}s</text>`).join('')}
+    ${ticks.map(([ms, text], index) => `<text x="${x(ms)}" y="203" text-anchor="${index === 0 ? 'start' : index === ticks.length - 1 ? 'end' : 'middle'}" class="chart-text">${text}</text>`).join('')}
     ${COLORS.map(c => `<path d="${sampled.map((p, i) => `${i ? 'L' : 'M'}${x(p.timeMs).toFixed(2)},${y(p.prices[c]).toFixed(2)}`).join(' ')}" class="chart-line" style="stroke:${PAINT[c]}"/><circle cx="${x(state.elapsedMs)}" cy="${y(prices[c])}" r="3" style="fill:${PAINT[c]}"/>`).join('')}`;
 }
 
@@ -149,10 +165,14 @@ function drawResults() {
   $('record-count').textContent = `${state.results.length} 轮`;
   $('results-list').innerHTML = state.results.length ? state.results.slice(-5).reverse().map(r => `<div class="result-row"><span>#${String(r.round).padStart(2, '0')}</span><span class="color-tag ${r.color}"><i></i>${LABELS[r.color]}收盘 <small>${r.finalHeat}</small></span><b class="${pnlClass(r.profits.player)}">${signed(r.profits.player)}</b></div>`).join('') : '<p class="empty-message">第一轮，从你的判断开始。</p>';
   $('result').hidden = state.phase !== 'settled';
-  if (state.phase === 'settled') {
+  if (state.phase === 'settled' && state.result.voided) {
+    const r = state.result;
+    $('result').className = 'result-box';
+    $('result').innerHTML = `<div class="result-heading"><span class="result-symbol">∅</span><strong>本轮作废 · 成本已退回</strong></div><span class="result-profit ${pnlClass(r.profits.player)}">${signed(r.profits.player)} <small>积分</small></span><p>${esc(r.reason)}。未平仓份额按含费成本退回，已平仓交易的损益保留；本轮不计入收盘记录。</p>`;
+  } else if (state.phase === 'settled') {
     const r = state.result;
     $('result').className = `result-box outcome-${r.color}`;
-    $('result').innerHTML = `<div class="result-heading"><span class="result-symbol">${r.color === 'red' ? '↗' : r.color === 'black' ? '↘' : '＝'}</span><strong>${LABELS[r.color]}盘命中 · 本轮已结算</strong></div><span class="result-profit ${pnlClass(r.profits.player)}">${signed(r.profits.player)} <small>积分</small></span><p>你的本轮净盈亏，已包含交易费用。持仓兑付 ${fmt(r.payouts.player)} 积分。</p><p>行动热度 ${r.actionHeat} ${r.noise >= 0 ? '+' : '−'} ${Math.abs(r.noise)} 模拟噪声 = 收盘 ${r.finalHeat}。份额已兑付并清零；下一轮保留余额。</p>`;
+    $('result').innerHTML = `<div class="result-heading"><span class="result-symbol">${r.color === 'red' ? '↗' : r.color === 'black' ? '↘' : '＝'}</span><strong>${LABELS[r.color]}盘命中 · 本轮已结算</strong></div><span class="result-profit ${pnlClass(r.profits.player)}">${signed(r.profits.player)} <small>积分</small></span><p>你的本轮净盈亏，已包含交易费用。持仓兑付 ${fmt(r.payouts.player)} 积分。</p><p>行动热度 ${r.actionHeat} ${r.noise >= 0 ? '+' : '−'} ${Math.abs(r.noise)} ${r.event ? `链上偏差（繁忙块 ${r.event.busy} − 基准 ${r.event.baseline}）` : '模拟噪声'} = 收盘 ${r.finalHeat}。份额已兑付并清零；下一轮保留余额。</p>`;
   }
 }
 
@@ -182,7 +202,9 @@ function renderQuote(prices) {
     $('quote-spot').textContent = `${fmt(prices[selectedColor], 3)} / 份（到期兑付）`;
     $('win-preview').hidden = true;
     $('submit-trade').disabled = true;
-    $('quote-note').textContent = '本轮份额已按结果兑付，卡片显示到期兑付价。下一轮重新从三色等价开始。';
+    $('quote-note').textContent = state.result.voided ? '本轮已作废，份额按成本退回。下一轮重新读取基准。'
+      : chainMode() ? '本轮份额已按结果兑付，卡片显示到期兑付价。下一轮按新的基准区块重新定开盘价。'
+      : '本轮份额已按结果兑付，卡片显示到期兑付价。下一轮重新从三色等价开始。';
     return;
   }
   let quote;
@@ -214,6 +236,13 @@ function render() {
   const player = playerOf(state), stats = participantStats(state, 'player');
   const prices = marketPrices(state), odds = scenarioOdds(state);
   const trading = state.phase === 'trading', settled = state.phase === 'settled';
+  const chain = chainMode(), e = state.event, voided = settled && state.result.voided;
+  const feedLive = feedState.status === 'live';
+  document.documentElement.dataset.game = chain ? 'chain' : 'local';
+  document.querySelectorAll('[data-game-mode]').forEach(b => { const on = b.dataset.gameMode === (chain ? 'chain' : 'local'); b.classList.toggle('selected', on); b.setAttribute('aria-pressed', String(on)); });
+  $('event-panel').hidden = !chain;
+  if (chain) renderEventPanel(state, feedState);
+  for (const color of COLORS) $(`band-${color}`).textContent = color === 'red' ? `收盘热度 > ${state.greenBand[1]}` : color === 'black' ? `收盘热度 < ${state.greenBand[0]}` : `${state.greenBand[0]} ≤ 收盘热度 ≤ ${state.greenBand[1]}`;
   $('balance').textContent = fmt(player.balance);
   $('equity').textContent = fmt(stats.equity);
   $('total-pnl').textContent = `${signed(stats.pnl)} · 预计清仓口径`;
@@ -221,28 +250,38 @@ function render() {
   $('reserve').textContent = fmt(state.market.cash);
   $('trade-count').textContent = fmt(state.tradeCount, 0);
   const lastSecond = state.trades.filter(t => t.timeMs > state.elapsedMs - 1000 && t.timeMs <= state.elapsedMs).length;
-  $('trade-rate').textContent = `${live(state) ? lastSecond : 0} 笔 / 近 1 秒`;
-  $('round-label').textContent = `第 ${String(state.round).padStart(2, '0')} 轮 / 模拟区块 ${String(state.block).padStart(3, '0')}`;
+  $('trade-rate').textContent = chain ? `${live(state) ? state.trades.filter(t => t.timeMs > state.elapsedMs - 3 * CHAIN_BLOCK_MS && t.timeMs <= state.elapsedMs).length : 0} 笔 / 近 3 个区块`
+    : `${live(state) ? lastSecond : 0} 笔 / 近 1 秒`;
+  $('round-label').textContent = chain ? `第 ${String(state.round).padStart(2, '0')} 轮 / 链上区块 ${String(state.block).padStart(3, '0')} / ${e ? e.windowBlocks : 180}`
+    : `第 ${String(state.round).padStart(2, '0')} 轮 / 模拟区块 ${String(state.block).padStart(3, '0')}`;
   $('phase').textContent = { ready: '准备开场', trading: '自由交易中', locked: '已封盘 · 等待结果', settled: '本轮已到期' }[state.phase];
   $('phase').className = `phase-pill ${state.phase}`;
-  $('time').textContent = fmt(state.remainingMs / 1000, 1);
-  $('window-label').textContent = trading ? `距封盘 ${fmt(Math.max(0, 55000 - state.elapsedMs) / 1000, 1)} 秒` : state.phase === 'locked' ? '买卖与行动均已停止' : '55 秒交易 + 5 秒封盘';
-  $('round-action').disabled = live(state) || simulationFailed;
-  setText('round-action-label', state.phase === 'ready' ? '开始 60 秒交易' : settled ? '继续下一轮' : state.phase === 'locked' ? '等待到期结算' : '交易进行中');
+  const blocksLeft = e ? e.windowBlocks - e.observed : 180;
+  $('time').textContent = chain ? String(blocksLeft) : fmt(state.remainingMs / 1000, 1);
+  $('time-unit').textContent = chain ? '区块' : '秒';
+  $('window-label').textContent = trading ? (chain ? `距封盘 ${e.lockBlocks - e.observed} 个区块` : `距封盘 ${fmt(Math.max(0, 55000 - state.elapsedMs) / 1000, 1)} 秒`)
+    : state.phase === 'locked' ? '买卖与行动均已停止' : chain ? '180 个区块窗口 · 最后 15 块封盘' : '55 秒交易 + 5 秒封盘';
+  $('round-action').disabled = live(state) || simulationFailed || (chain && state.phase === 'ready' && !feedLive);
+  setText('round-action-label', state.phase === 'ready' ? (chain ? (feedLive ? '开始链上事件' : '等待区块数据') : '开始 60 秒交易') : settled ? '继续下一轮' : state.phase === 'locked' ? (chain ? '等待窗口结束' : '等待到期结算') : '交易进行中');
   $('time-bar').style.width = `${100 * state.remainingMs / state.durationMs}%`;
   $('timer').setAttribute('aria-valuenow', fmt(state.remainingMs / 1000, 1));
   $('timer').classList.toggle('urgent', state.phase === 'locked');
   $('countdown-dial').style.setProperty('--remaining', `${100 * state.remainingMs / state.durationMs}%`);
   $('countdown-dial').classList.toggle('urgent', state.phase === 'locked');
   $('chart-prompt').hidden = state.phase !== 'ready';
-  $('scenario-note').textContent = settled ? '结果已确认：三色卡片现在显示到期兑付价与命中结果；封盘前价格保留在曲线上。' : '场景概率假设后续无人再用行动券，只计算结算噪声；它不同于交易价格，也不代表最终胜率。噪声仅为本地模拟随机。';
+  $('chart-prompt-note').textContent = chain ? '开盘价取自基准区块算出的先验概率，之后随成交和新区块变化' : '开始一轮，观察三色份额怎样从 1/3 出发';
+  $('chart-lock-note').textContent = chain ? '阴影区：最后 15 个区块封盘' : '阴影区：最后 5 秒封盘';
+  $('scenario-note').textContent = voided ? '本轮已作废，份额按成本退回。' : settled ? '结果已确认：三色卡片现在显示到期兑付价与命中结果；封盘前价格保留在曲线上。'
+    : chain ? '场景概率假设后续无人再用行动券，按基准繁忙比例推算剩余区块；它不同于交易价格，也不代表最终胜率。基准比例会随时段漂移。'
+    : '场景概率假设后续无人再用行动券，只计算结算噪声；它不同于交易价格，也不代表最终胜率。噪声仅为本地模拟随机。';
   document.querySelectorAll('.scenario-label').forEach(node => { node.textContent = settled ? '本轮到期结果' : '当前热度场景概率'; });
+  document.querySelectorAll('[data-game-mode]').forEach(b => { b.disabled = live(state); });
   document.querySelectorAll('[data-bots]').forEach(b => { b.disabled = live(state); b.classList.toggle('selected', Number(b.dataset.bots) === state.botCount); b.setAttribute('aria-pressed', String(Number(b.dataset.bots) === state.botCount)); });
   document.querySelectorAll('[data-color]').forEach(b => { b.classList.toggle('selected', b.dataset.color === selectedColor); b.setAttribute('aria-pressed', String(b.dataset.color === selectedColor)); });
   document.querySelectorAll('.price-unit').forEach(node => { node.textContent = settled ? '到期兑付价 · 积分 / 份' : '市场价格 · 积分 / 份'; });
   for (const color of COLORS) {
     $(`price-${color}`).textContent = fmt(prices[color], 3);
-    $(`odds-${color}`).textContent = settled ? (state.result.color === color ? '已命中' : '未命中') : percent(odds[color]);
+    $(`odds-${color}`).textContent = voided ? '已作废' : settled ? (state.result.color === color ? '已命中' : '未命中') : percent(odds[color]);
     const holdings = player.holdings[color], basis = player.costBasis[color];
     $(`holding-${color}`).textContent = fmt(holdings, 0);
     $(`basis-${color}`).textContent = holdings ? fmt(basis / holdings, 4) : '—';
@@ -255,15 +294,18 @@ function render() {
   $('position-value').textContent = fmt(stats.positionValue);
   $('sell-all').disabled = !trading || !COLORS.some(c => player.holdings[c] > 0);
   $('heat').textContent = state.heat;
-  $('noise-label').textContent = settled ? `本轮模拟噪声 ${signed(state.result.noise, 0)}` : `结算噪声 ±${state.noiseRange} · 本地模拟`;
-  $('tickets').textContent = `你的行动券 ${player.tickets} / 3 · 可保留不用`;
+  $('noise-label').textContent = voided ? '本轮作废' : chain ? (settled ? `本轮链上偏差 ${signed(state.result.noise, 0)}` : e ? `链上偏差 ${signed(e.busy - e.baseline, 0)} · 繁忙块 ${e.busy} − 基准 ${e.baseline}` : '链上偏差 · 等待基准')
+    : settled ? `本轮模拟噪声 ${signed(state.result.noise, 0)}` : `结算噪声 ±${state.noiseRange} · 本地模拟`;
+  $('tickets').textContent = `你的行动券 ${player.tickets} / 3 · ${chain ? `全场热度偏移上限 ±${state.heatLimit}` : '可保留不用'}`;
   $('ticket-dots').querySelectorAll('i').forEach((dot, index) => { dot.classList.toggle('used', index >= player.tickets); });
   $('heat-up').disabled = $('heat-down').disabled = !trading || player.tickets <= 0;
-  $('phase-note').textContent = { ready: '先开始一轮。前 55 秒可反复买卖及使用行动券，最后 5 秒等待结算。', trading: '动作不扣积分，只消耗行动券。Bot 也能行动；剩余噪声使单靠用券无法保证结果。', locked: '最后 5 秒：不能下单、卖出或控场。既有份额将在 60 秒时按模拟结果兑付。', settled: '到期兑付已入账。下轮保留余额与累计统计，热度和市场报价重新开始。' }[state.phase];
+  $('phase-note').textContent = chain ? { ready: '读到基准区块后即可开始。开场后统计接下来 180 个区块，前 165 个区块可买卖和行动。', trading: '动作不扣积分，只消耗行动券，且全场热度最多偏离 ±3。繁忙块数由链上决定，用券改变不了它。', locked: '最后 15 个区块：不能下单、卖出或控场。窗口结束后按链上结果兑付。', settled: voided ? '本轮作废，成本已退回。可开始下一轮，重新读取基准。' : '到期兑付已入账。下轮保留余额与累计统计，并按新的基准区块重新定开盘价。' }[state.phase]
+    : { ready: '先开始一轮。前 55 秒可反复买卖及使用行动券，最后 5 秒等待结算。', trading: '动作不扣积分，只消耗行动券。Bot 也能行动；剩余噪声使单靠用券无法保证结果。', locked: '最后 5 秒：不能下单、卖出或控场。既有份额将在 60 秒时按模拟结果兑付。', settled: '到期兑付已入账。下轮保留余额与累计统计，热度和市场报价重新开始。' }[state.phase];
   renderQuote(prices); drawChart(prices); drawBots(); drawTrades(); drawResults(); drawFeed();
   if (lastPhase !== state.phase) {
-    if (state.phase === 'locked') notify('已进入最后 5 秒封盘：买卖及行动停止，等待结算。');
-    if (settled) notify(`第 ${state.round} 轮${LABELS[state.result.color]}盘命中，你的本轮净盈亏 ${signed(state.result.profits.player)} 积分。`);
+    if (state.phase === 'locked') notify(chain ? '已进入最后 15 个区块封盘：买卖及行动停止，等待窗口结束。' : '已进入最后 5 秒封盘：买卖及行动停止，等待结算。');
+    if (voided) notify(`第 ${state.round} 轮已作废：${state.result.reason}。成本已退回，本轮盈亏 ${signed(state.result.profits.player)} 积分。`);
+    else if (settled) notify(`第 ${state.round} 轮${LABELS[state.result.color]}盘命中，你的本轮净盈亏 ${signed(state.result.profits.player)} 积分。`);
     lastPhase = state.phase;
     persist();
   }
@@ -335,15 +377,25 @@ $('sell-all').addEventListener('click', () => sellColors(COLORS));
 $('heat-up').addEventListener('click', () => runOperation(() => { state = playerAction(state, 1); notify(`已加热 +1，热度 ${state.heat}；剩余 ${playerOf(state).tickets} 张行动券。`); }));
 $('heat-down').addEventListener('click', () => runOperation(() => { state = playerAction(state, -1); notify(`已降温 −1，热度 ${state.heat}；剩余 ${playerOf(state).tickets} 张行动券。`); }));
 $('round-action').addEventListener('click', () => runOperation(() => {
-  if (state.phase === 'ready') { state = startRound(state); notify('本轮开始：55 秒内可持续买卖，最后 5 秒封盘。'); }
-  else if (state.phase === 'settled') { state = nextRound(state); clearKeys(); notify('已准备下一轮，余额与累计统计保留。点击开始，开启新的 60 秒。'); }
+  if (state.phase === 'ready' && chainMode()) {
+    const { status, blocks, lastBlockAt } = feed.getState();
+    if (status !== 'live' || Date.now() - lastBlockAt > FEED_FRESH_MS) throw new Error('区块数据不是最新的，请稍候再开始。');
+    state = startRound(armChainEvent(state, blocks));
+    notify(`事件开始：统计区块 #${state.event.startBlock + 1} 起的 ${state.event.windowBlocks} 个区块，基准 ${state.event.baseline} 个繁忙块。`);
+  } else if (state.phase === 'ready') { state = startRound(state); notify('本轮开始：55 秒内可持续买卖，最后 5 秒封盘。'); }
+  else if (state.phase === 'settled') {
+    state = nextRound(state); clearKeys();
+    if (chainMode()) { maybeArm(); notify('已准备下一轮，余额与累计统计保留。基准区块已更新，点击开始。'); }
+    else notify('已准备下一轮，余额与累计统计保留。点击开始，开启新的 60 秒。');
+  }
 }));
 $('rules-link').addEventListener('click', () => { $('rules').open = true; });
 
 function freshGame(botCount = state.botCount) {
   flushTime();
-  state = resetGame(freshSeed(), { botCount });
+  state = resetGame(freshSeed(), { botCount, mode: state.mode });
   simulationFailed = false;
+  if (chainMode()) maybeArm();
   selectedColor = 'red'; selectedSide = 'buy'; $('shares').value = '50';
   lastNow = performance.now(); lastPhase = ''; clearKeys(); showError();
   persist(); render(); notify(`新场次已准备：你与 ${botCount} 位 Bot 各有 1,000 积分，做市账户有 1,000 积分。`);
@@ -364,5 +416,65 @@ setInterval(() => {
   }
   catch (error) { simulationFailed = true; showError(`本地进度无法继续：${error.reason || error.message}。请用右上角“重置积分”重新开始。`); }
 }, 100);
+
+// Re-arm while idle so the opening prior tracks the chain; a started round is never re-armed.
+function maybeArm() {
+  if (!chainMode() || state.phase !== 'ready') return;
+  const { status, blocks } = feed.getState();
+  if (status !== 'live' || blocks.length < 300) return;
+  if (state.event && blocks.at(-1).number - state.event.startBlock < REARM_BLOCKS) return;
+  try { state = armChainEvent(state, blocks); clearKeys(); } catch (error) { showError(error.reason || error.message); }
+}
+
+function abortChainRound(reason) {
+  if (!chainMode() || !live(state)) return;
+  try { state = voidRound(state, reason); clearKeys(); showError(); }
+  catch (error) { simulationFailed = true; showError(`链上事件无法作废：${error.reason || error.message}。请用右上角“重置积分”重新开始。`); }
+}
+
+function enterChain() {
+  if (chainMode() || live(state)) return;
+  flushTime(); persist();
+  stash.local = state;
+  state = stash.chain ?? createGame(freshSeed(), { botCount: state.botCount, mode: 'chain' });
+  stash.chain = null;
+  chainEverLive = false; lastPhase = ''; clearKeys(); showError();
+  feedState = feed.getState();
+  void feed.start();
+  render(); notify('已切到链上事件场：正在读取最近 600 个区块作为基准，约需半分钟。');
+}
+
+function leaveChain(message) {
+  if (!chainMode() || live(state)) return;
+  stash.chain = state;
+  state = stash.local; stash.local = null;
+  feed.stop();
+  lastNow = performance.now(); lastPhase = ''; clearKeys(); showError();
+  render(); notify(message);
+}
+
+feed.subscribe(next => {
+  feedState = next;
+  if (!chainMode()) return;
+  if (next.status === 'live') { chainEverLive = true; maybeArm(); }
+  if (next.status === 'error') {
+    if (live(state)) abortChainRound(next.error || '链上数据中断');
+    else if (!chainEverLive) { leaveChain(`已回到本地随机场：${next.error || '无法读取测试网区块。'}`); return; }
+  }
+  render();
+});
+feed.onBlocks(fresh => {
+  if (!chainMode() || !state.event || !live(state)) return;
+  try { state = ingestBlocks(state, fresh); }
+  catch (error) { abortChainRound(error.reason || error.message || '链上数据异常'); }
+  render();
+});
+document.querySelectorAll('[data-game-mode]').forEach(b => b.addEventListener('click', () => {
+  try {
+    if (b.dataset.gameMode === 'chain') enterChain();
+    else leaveChain('已回到本地随机场，本地进度已保留。');
+  } catch (error) { showError(error.reason || error.message); }
+}));
+$('event-retry').addEventListener('click', () => { if (chainMode()) { showError(); void feed.start(); } });
 render();
 mountMonad();

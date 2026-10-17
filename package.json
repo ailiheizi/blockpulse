@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
+    "build:local": "node scripts/build-local.mjs",
     "test": "node --test tests/*.test.mjs"
   }
 }

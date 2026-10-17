@@ -2,6 +2,8 @@
 
 红黑绿预测、有限行动和两个规则 Bot 的浏览器玩法原型。所有区块、积分和结算在浏览器本地模拟；无钱包接入、无链上部署，积分不可兑换。
 
+[在线试玩](https://ailiheizi.github.io/blockpulse-demo/) · [自动部署记录](https://github.com/ailiheizi/blockpulse-demo/actions/workflows/pages.yml)
+
 ## 双击试玩（首选）
 
 在访达中打开本项目文件夹，双击根目录的 **`本地试玩.html`**，即可在浏览器试玩。这个单文件已内联网页样式和脚本，无需 Node.js、终端或本地服务器，也不需要上传项目。
@@ -40,7 +42,7 @@ cd "/Users/macos/Documents/temp 2/blockpulse-demo"
 1. 确认仓库套餐支持 Pages：公开仓库可使用 GitHub Free；私有仓库需要仓库所有者具备 GitHub Pro、Team 等相应套餐，见 [GitHub Pages 官方说明](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages)。
 2. 在仓库 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**。
 3. 审核并暂存、提交本次配置，然后推送到 `main`；也可在配置提交后，通过 **Actions → Deploy GitHub Pages → Run workflow** 手动发布。
-4. 等待工作流成功，以部署记录中显示的站点地址为准。未配置自定义域名时，预计地址为 [https://ailiheizi.github.io/blockpulse-demo/](https://ailiheizi.github.io/blockpulse-demo/)。
+4. 等待工作流成功，以部署记录中显示的站点地址为准。本站已发布到 [https://ailiheizi.github.io/blockpulse-demo/](https://ailiheizi.github.io/blockpulse-demo/)。
 
 如需保留私有仓库且没有支持私有仓库 Pages 的套餐，可改用 Cloudflare Workers 的静态资源托管，同样发布 `dist/`。以后增加服务端接口、共享排行榜或数据库时，也更适合考虑 Workers；当前原型不需要后端。
 

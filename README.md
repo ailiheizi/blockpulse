@@ -27,6 +27,23 @@ cd "/Users/macos/Documents/temp 2/blockpulse-demo"
 
 打不开时先查看终端：若提示缺少 Node.js，说明系统命令和本机运行时都不可用；启动器不会自动安装。若提示端口占用，启动器会保留现有进程，请确认原服务的地址与状态。网页刷新无效时，先确认服务终端仍然打开。
 
+## GitHub Pages 部署
+
+这是一个纯静态项目，可直接将 `dist/` 发布到 GitHub Pages。`index.html`、`style.css`、`app.js` 和 `game.js` 已经是完整网页，不需要安装依赖或构建；`server.mjs` 只用于本地提供静态文件，线上不需要运行 Node.js。游戏、Bot、计时和结算都在浏览器完成，进度通过 `localStorage` 保存在各自浏览器，不会跨设备同步。
+
+资源和模块均使用相对路径，兼容项目站点的 `/blockpulse-demo/` 子目录，无需配置基础路径或路由重写。`npm run build:local` 只生成双击试玩文件，不是 Pages 部署步骤。
+
+仓库内的 [Pages 工作流](.github/workflows/pages.yml) 会在每次推送到 `main` 分支时执行，也支持手动运行。流水线按“测试 → 打包静态资源 → 部署”顺序执行：先运行现有测试，通过后仅打包并发布 `dist/`，无需依赖安装或额外编译；测试失败则不会发布。其他分支不会覆盖正式站点。
+
+首次启用：
+
+1. 确认仓库套餐支持 Pages：公开仓库可使用 GitHub Free；私有仓库需要仓库所有者具备 GitHub Pro、Team 等相应套餐，见 [GitHub Pages 官方说明](https://docs.github.com/en/pages/getting-started-with-github-pages/what-is-github-pages)。
+2. 在仓库 **Settings → Pages → Build and deployment → Source** 选择 **GitHub Actions**。
+3. 审核并暂存、提交本次配置，然后推送到 `main`；也可在配置提交后，通过 **Actions → Deploy GitHub Pages → Run workflow** 手动发布。
+4. 等待工作流成功，以部署记录中显示的站点地址为准。未配置自定义域名时，预计地址为 [https://ailiheizi.github.io/blockpulse-demo/](https://ailiheizi.github.io/blockpulse-demo/)。
+
+如需保留私有仓库且没有支持私有仓库 Pages 的套餐，可改用 Cloudflare Workers 的静态资源托管，同样发布 `dist/`。以后增加服务端接口、共享排行榜或数据库时，也更适合考虑 Workers；当前原型不需要后端。
+
 ## 玩法
 
 1. 玩家与动量、回归两个 Bot 各有 1,000 积分。选择红（最终热度大于 100）、黑（小于 100）、绿（等于 100），投入 20、50 或 100 积分。

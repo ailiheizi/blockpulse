@@ -1,0 +1,143 @@
+.monad-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 8px 13px; border: 1px solid #b29afd55; border-radius: 9px; color: #d9cbff; background: #b29afd12; font-size: 11px; white-space: nowrap; }
+.monad-button:not(:disabled):hover { background: #b29afd22; border-color: #b29afd99; }
+.monad-button-mark { font-family: 'Avenir Next', system-ui, sans-serif; font-size: 13px; font-weight: 750; }
+.monad-panel { margin-top: 22px; border-color: #b29afd3d; background: linear-gradient(120deg, #252239a6, #171e2d); scroll-margin-top: 20px; }
+.monad-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 21px; }
+.monad-heading-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+.monad-text-button { min-height: 36px; padding: 5px 0; border: 0; color: var(--purple); background: transparent; font-size: 10px; white-space: nowrap; }
+.monad-text-button:hover { color: #e1d6ff; text-decoration: underline; }
+[data-collapsed="true"] .monad-heading { margin-bottom: 0; }
+.wallet-steps { display: flex; gap: 15px; padding: 0; margin: 0 0 18px; list-style: none; }
+.wallet-steps li { display: flex; align-items: center; gap: 6px; color: #7e8ba5; font-size: 10px; white-space: nowrap; }
+.wallet-steps li > span { display: grid; place-items: center; width: 21px; height: 21px; border: 1px solid #3b4156; border-radius: 50%; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 9px; }
+.wallet-steps [data-state="current"] { color: #d5c5ff; }
+.wallet-steps [data-state="current"] > span { border-color: #b29afd99; background: #b29afd18; }
+.wallet-steps [data-state="complete"] { color: #91cbb5; }
+.wallet-steps [data-state="complete"] > span { border-color: #78dfb862; background: #78dfb80b; }
+.monad-brand { display: flex; align-items: center; gap: 12px; }
+.monad-mark { display: grid; place-items: center; flex-shrink: 0; width: 39px; height: 39px; border: 1px solid #b29afd4d; border-radius: 11px; background: #b29afd13; color: #c9b6ff; font-family: 'Avenir Next', system-ui, sans-serif; font-size: 21px; font-weight: 650; }
+.monad-brand .small-label { margin-bottom: 3px; font-size: 9px; }
+.monad-brand h2 { font-size: 17px; }
+.monad-status { padding: 5px 9px; color: #ad9acb; background: #b29afd0a; border: 1px solid #b29afd24; border-radius: 20px; font-size: 10px; white-space: nowrap; }
+[data-wallet-state="connected"] .monad-status { color: #8ee0bf; background: #78dfb80a; border-color: #78dfb836; }
+[data-wallet-state="wrong-network"] .monad-status { color: #ffca9d; border-color: #ffb68e36; }
+.monad-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 25px; }
+.monad-wallet { min-width: 0; }
+.wallet-picker { display: flex; align-items: center; gap: 14px; }
+.wallet-picker label { flex-shrink: 0; color: #a5afc5; font-size: 11px; }
+.wallet-picker select { min-width: 0; flex: 1; width: 100%; max-width: 280px; min-height: 39px; padding: 8px 28px 8px 10px; border: 1px solid #403a56; border-radius: 8px; background: #151a27; color: #c6c9dc; font: inherit; font-size: 11px; text-overflow: ellipsis; }
+.wallet-picker select:disabled { color: #8b8fa7; opacity: 1; }
+.wallet-picker select:focus-visible, .monad-panel a:focus-visible { outline: 3px solid var(--purple); outline-offset: 3px; }
+.wallet-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+.monad-action { min-height: 39px; padding: 8px 12px; border: 1px solid #4a4262; border-radius: 7px; color: #c8bddf; background: #b29afd06; font-size: 11px; }
+.monad-action:not(:disabled):hover { background: #b29afd16; border-color: #b29afd75; }
+.monad-primary { border-color: #b29afd70; color: #e1d6ff; background: #b29afd19; }
+.monad-message { margin: 10px 0 0; color: #98a5bd; font-size: 10px; line-height: 1.85; overflow-wrap: anywhere; }
+.wallet-help { margin: 7px 0 0; color: #92a0b9; font-size: 10px; line-height: 1.85; }
+.monad-panel a { color: #c4adfb; text-decoration: none; }
+.monad-panel a:hover { text-decoration: underline; }
+.wallet-help a { display: inline-block; }
+.wallet-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 19px; }
+.wallet-metrics > div { min-width: 0; }
+.wallet-metrics span { display: block; color: #94a2bc; font-size: 10px; }
+.wallet-metrics strong { display: block; margin: 6px 0; color: #ddd4f5; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 20px; font-weight: 450; overflow-wrap: anywhere; }
+.wallet-metrics small, .wallet-metrics a { display: block; color: #8f9db6; font-size: 10px; line-height: 1.7; overflow-wrap: anywhere; }
+.wallet-metrics a { color: #c4adfb; }
+.wallet-address-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; }
+.wallet-address-details { color: #91a0b9; font-size: 10px; margin-top: 8px; }
+.wallet-address-details summary { cursor: pointer; padding: 6px 0; }
+.wallet-address-details input { width: 100%; min-height: 40px; padding: 9px; margin-top: 6px; color: #d5c5ff; border: 1px solid #49405e; border-radius: 7px; background: #141a27; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 11px; }
+#wallet-copy-message:empty { display: none; }
+.monad-chain { min-width: 0; padding: 0 0 0 25px; border-left: 1px solid #b29afd20; }
+.monad-chain-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #d5c9ed; font-size: 12px; }
+.monad-chain-title > span:last-child { color: #8d9bb4; font-size: 10px; }
+.monad-block { display: block; margin: 13px 0 8px; color: #c6b0ff; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 30px; font-weight: 450; line-height: 1.25; letter-spacing: -.8px; overflow-wrap: anywhere; }
+.monad-block-time { margin: 0; color: #9ba7bf; font-size: 10px; line-height: 1.8; }
+.monad-chain-links { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 8px; min-height: 16px; color: #8e9bb3; font-size: 10px; }
+[data-chain-state="stale"] .monad-block { color: #a89bbf; }
+[data-chain-state="stale"] #monad-chain-state { color: #d7b191; }
+[data-chain-state="fresh"] #monad-chain-state { color: #8fcdb3; }
+.monad-sample-section { margin-top: 18px; }
+.monad-sample-section > p { display: flex; justify-content: space-between; gap: 10px; margin: 0 0 9px; color: #b4a8cb; font-size: 10px; }
+.monad-sample-section > p > small { color: #8f9cb2; font-size: 9px; }
+.monad-samples { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding: 0; margin: 0; list-style: none; }
+.monad-samples li { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 7px 9px; border: 1px solid #b29afd19; border-radius: 6px; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 10px; min-width: 0; }
+.monad-samples li:first-child { border-color: #b29afd50; background: #b29afd0b; }
+.monad-samples a { min-width: 0; overflow-wrap: anywhere; }
+.monad-samples small { color: #8f9cb2; font-size: 8px; }
+.monad-config { margin-top: 18px; border-top: 1px solid #b29afd1a; color: #a69bbf; font-size: 10px; }
+.monad-config summary { display: flex; align-items: center; justify-content: space-between; min-height: 41px; cursor: pointer; list-style: none; }
+.monad-config summary::-webkit-details-marker { display: none; }
+.monad-config summary::after { content: '+'; font-size: 16px; color: var(--purple); }
+.monad-config[open] summary::after { content: '−'; }
+.monad-config dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; padding: 12px 14px; margin: 0; border: 1px solid #b29afd24; border-radius: 8px; background: #12172450; }
+.monad-config dt { color: #8f9cb2; margin-bottom: 6px; }
+.monad-config dd { margin: 0; color: #d4c7ed; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 12px; }
+.monad-config small { color: #8f9cb2; font-size: 10px; }
+.monad-config-rpc { grid-column: 1 / -1; }
+.monad-config-rpc dd { display: flex; align-items: center; flex-wrap: wrap; gap: 7px 16px; }
+.monad-config code { overflow-wrap: anywhere; user-select: all; }
+.monad-scope { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-top: 20px; padding-top: 14px; border-top: 1px solid #b29afd1a; color: #97a0b8; font-size: 10px; line-height: 1.8; }
+.monad-scope > a { flex-shrink: 0; }
+@media (max-width: 1100px) {
+  .top-actions { gap: 14px; }
+  .topbar .local-tag { display: none; }
+  .monad-grid { gap: 20px; }
+  .monad-chain { padding-left: 20px; }
+  .wallet-picker { flex-wrap: wrap; gap: 8px; }
+  .wallet-picker select { max-width: none; flex-basis: 100%; }
+  .wallet-metrics { gap: 12px; }
+  .wallet-metrics strong { font-size: 17px; }
+}
+@media (max-width: 740px) {
+  .topbar { height: auto; min-height: 77px; gap: 12px; flex-wrap: wrap; padding: 15px 0; }
+  .top-actions { margin-left: auto; gap: 9px; }
+  .topbar .reset-label { display: none; }
+  .topbar #reset { width: 35px; padding: 0; font-size: 22px; }
+  .monad-button { min-height: 40px; padding: 8px 10px; font-size: 10px; gap: 6px; }
+  .monad-panel { margin-top: 18px; }
+  .monad-heading { align-items: flex-start; gap: 10px; margin-bottom: 19px; }
+  .monad-heading-actions { flex-direction: column; gap: 2px; flex-shrink: 0; }
+  .monad-heading-actions .monad-text-button { min-height: 30px; }
+  .monad-brand { gap: 9px; }
+  .monad-brand h2 { font-size: 16px; }
+  .monad-brand .small-label { font-size: 8px; }
+  .monad-mark { width: 33px; height: 33px; border-radius: 9px; font-size: 18px; }
+  .monad-status { padding: 4px 7px; font-size: 9px; }
+  .monad-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .wallet-picker { flex-wrap: nowrap; gap: 12px; }
+  .wallet-picker select { flex-basis: auto; }
+  .wallet-actions { gap: 7px; }
+  .monad-action { min-height: 42px; font-size: 11px; }
+  .wallet-steps { gap: 11px; }
+  .wallet-steps li { gap: 5px; font-size: 10px; }
+  .wallet-steps li > span { width: 20px; height: 20px; }
+  .wallet-address-actions .monad-text-button { min-height: 40px; font-size: 11px; }
+  .monad-config { font-size: 11px; }
+  .monad-config summary { min-height: 44px; }
+  .monad-config dl { gap: 16px 10px; padding: 12px; }
+  .monad-config dd { font-size: 11px; }
+  .monad-config dd > small { display: block; margin-top: 4px; }
+  .monad-config-rpc dd { gap: 3px; }
+  .monad-config-rpc .monad-text-button { min-height: 42px; font-size: 11px; }
+  .monad-message, .wallet-help { font-size: 11px; }
+  .wallet-metrics { gap: 15px; }
+  .wallet-metrics strong { font-size: 19px; }
+  .wallet-metrics span, .wallet-metrics small, .wallet-metrics a { font-size: 10px; }
+  .monad-chain { padding: 18px 0 0; border-left: 0; border-top: 1px solid #b29afd20; }
+  .monad-block { font-size: 28px; }
+  .monad-block-time, .monad-chain-links { font-size: 10px; }
+  .monad-scope { flex-direction: column; gap: 8px; margin-top: 18px; font-size: 10px; }
+}
+@media (max-width: 360px) {
+  .monad-brand h2 { font-size: 14px; }
+  .monad-mark { display: none; }
+  .wallet-picker { flex-wrap: wrap; gap: 7px; }
+  .wallet-picker select { flex-basis: 100%; }
+  .wallet-metrics { grid-template-columns: minmax(0, 1fr); }
+  .wallet-steps { gap: 8px; }
+  .wallet-steps li { font-size: 9px; }
+  .wallet-steps li > span { width: 18px; height: 18px; }
+  .monad-samples { grid-template-columns: minmax(0, 1fr); }
+  .monad-button { font-size: 9px; padding: 8px; }
+}

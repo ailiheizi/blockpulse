@@ -6,13 +6,45 @@
   <title>BlockPulse · 交易竞技场</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23b29afd'/%3E%3Cpath d='M7 22h8l4-11 5 20 4-9h5' fill='none' stroke='%2310131c' stroke-width='3'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./monad.css">
 </head>
 <body>
 <div class="shell">
-  <header class="topbar"><div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M3 17h7l4-10 5 19 4-9h6"></path></svg></span><span>BLOCK<span class="brand-light">PULSE</span><small>区块预言家 / 交易竞技场</small></span></div><nav class="topnav" aria-label="页面导航"><a class="current" href="#game">交易竞技场</a><a href="#history-section">成交与复盘</a><a id="rules-link" href="#rules">玩法说明 ↗</a></nav><div class="top-actions"><span class="local-tag"><i></i> 本地模拟</span><button id="reset" class="quiet-button" type="button">重置积分 ↻</button></div></header>
+  <header class="topbar"><div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M3 17h7l4-10 5 19 4-9h6"></path></svg></span><span>BLOCK<span class="brand-light">PULSE</span><small>区块预言家 / 交易竞技场</small></span></div><nav class="topnav" aria-label="页面导航"><a class="current" href="#game">交易竞技场</a><a href="#history-section">成交与复盘</a><a id="rules-link" href="#rules">玩法说明 ↗</a></nav><div class="top-actions"><span class="local-tag"><i></i> 积分模拟</span><button id="wallet-shortcut" class="monad-button" type="button"><span class="monad-button-mark" aria-hidden="true">M</span><span id="wallet-shortcut-label">连接钱包</span></button><button id="reset" class="quiet-button" type="button" aria-label="重置模拟积分" title="重置模拟积分"><span class="reset-label">重置积分</span> <span aria-hidden="true">↻</span></button></div></header>
   <main>
     <section class="intro"><div><p class="eyebrow">一分钟，交易你的判断</p><h1>读懂价格，<span>把握下一步。</span></h1><p class="intro-copy">买低卖高，或者持有到收盘。与策略 Bot 同场，用有限的行动改变局势。</p></div><div class="mode-picker"><span>选择对手规模 <small>切换会重置余额与历史</small></span><div class="segmented" role="group" aria-label="对手数量，切换会重置场次"><button type="button" data-bots="2" class="selected" aria-pressed="true">2 位 Bot</button><button type="button" data-bots="20" aria-pressed="false">20 位 · 繁忙模式</button></div></div></section>
     <div class="round-guide" aria-label="每轮五十五秒交易、五秒封盘、三张行动券"><div><strong>55<span>秒</span></strong><small>自由买卖 · 报价随成交变化</small></div><div><strong>5<span>秒</span></strong><small>封盘等待 · 不再交易或控场</small></div><div><strong>3<span>张</span></strong><small>行动额度 · 可以保留不用</small></div></div>
+    <section id="monad-panel" class="panel monad-panel" aria-labelledby="monad-title" data-wallet-state="disconnected" data-chain-state="idle">
+      <div class="monad-heading">
+        <div class="monad-brand"><span class="monad-mark" aria-hidden="true">M</span><div><p class="small-label">MONAD / TESTNET</p><h2 id="monad-title">把钱包，接入竞技场。</h2></div></div>
+        <div class="monad-heading-actions"><span id="wallet-state" class="monad-status">尚未连接</span><button id="monad-toggle" class="monad-text-button" type="button" aria-expanded="true" aria-controls="monad-body">收起面板</button></div>
+      </div>
+      <div id="monad-body">
+      <div class="monad-grid">
+        <div class="monad-wallet">
+          <ol class="wallet-steps" aria-label="钱包连接步骤"><li id="wallet-step-account" data-state="current"><span>1</span>选择钱包</li><li id="wallet-step-network"><span>2</span>切换测试网</li><li id="wallet-step-balance"><span>3</span>查看余额</li></ol>
+          <div class="wallet-picker"><label for="wallet-provider">选择浏览器钱包</label><select id="wallet-provider" disabled><option value="">未检测到钱包扩展</option></select></div>
+          <div class="wallet-actions"><button id="wallet-connect" class="monad-action monad-primary" type="button">连接所选钱包</button><button id="wallet-switch" class="monad-action monad-primary" type="button" hidden>切换到 Monad Testnet</button><button id="wallet-refresh" class="monad-action" type="button" hidden>刷新余额</button><button id="wallet-disconnect" class="monad-action" type="button" hidden>断开本站连接</button></div>
+          <p id="wallet-message" class="monad-message" role="status" aria-live="polite">没有钱包也能继续试玩，或单独读取测试网区块。</p>
+          <p id="wallet-help" class="wallet-help">请用支持 EVM 的浏览器钱包打开本地 HTTP 或在线页面。<a href="https://docs.monad.xyz/guides/add-monad-to-wallet/testnet" target="_blank" rel="noopener noreferrer">查看官方钱包接入说明 ↗</a></p>
+          <div class="wallet-metrics"><div><span>钱包地址</span><strong id="wallet-address">未连接</strong><div class="wallet-address-actions"><button id="wallet-copy" class="monad-text-button" type="button" hidden>复制地址</button><a id="wallet-account-link" target="_blank" rel="noopener noreferrer" hidden>查看测试网地址 ↗</a></div></div><div><span>测试网余额 · MON</span><strong id="wallet-balance">—</strong><small id="wallet-network">等待连接钱包</small><small id="wallet-balance-time"></small></div></div>
+          <details id="wallet-address-details" class="wallet-address-details" hidden><summary>完整钱包地址</summary><input id="wallet-full-address" readonly aria-label="完整钱包地址，可手动复制" spellcheck="false"></details>
+          <p id="wallet-copy-message" class="monad-message" role="status" aria-live="polite"></p>
+        </div>
+        <div class="monad-chain">
+          <div class="monad-chain-title"><span>真实测试网区块</span><span id="monad-chain-state">尚未读取</span></div>
+          <strong id="monad-block" class="monad-block">—</strong>
+          <p id="monad-block-time" class="monad-block-time">按需连接公开 RPC，读取后每 5 秒刷新</p>
+          <div class="monad-chain-links"><a id="monad-block-link" target="_blank" rel="noopener noreferrer" hidden>查看区块 ↗</a><span id="monad-latency"></span></div>
+          <div class="wallet-actions"><button id="monad-refresh" class="monad-action" type="button">读取测试网</button><button id="monad-pause" class="monad-action" type="button" hidden>暂停读取</button></div>
+          <p id="monad-rpc-message" class="monad-message">无需钱包即可读取；这里不是本机的模拟区块或模拟成交频率。</p>
+          <div id="monad-sample-section" class="monad-sample-section" hidden><p>最近读到的区块 <small>采样记录，非连续区块</small></p><ol id="monad-samples" class="monad-samples" aria-label="最近六个不同区块的采样记录"></ol></div>
+        </div>
+      </div>
+      <details class="monad-config"><summary>手动添加网络 / 连接帮助</summary><dl><div><dt>网络名称</dt><dd>Monad Testnet</dd></div><div><dt>Chain ID</dt><dd>10143 <small>0x279f</small></dd></div><div><dt>货币符号</dt><dd>MON <small>测试币</small></dd></div><div class="monad-config-rpc"><dt>RPC 地址</dt><dd><code id="monad-config-rpc">https://testnet-rpc.monad.xyz</code><button id="monad-copy-rpc" class="monad-text-button" type="button">复制 RPC</button></dd></div></dl><p id="monad-config-message" class="monad-message" role="status" aria-live="polite">钱包不支持自动切网时，可在钱包的网络设置中手动填写。浏览器内未检测到扩展时，请换用已安装钱包的桌面浏览器。</p></details>
+      <div class="monad-scope"><span>钱包 MON 与模拟积分独立。当前买卖和结算仍在本地，不请求签名或扣除 MON。</span><a href="https://faucet.monad.xyz" target="_blank" rel="noopener noreferrer">测试网领水 ↗</a></div>
+      </div>
+    </section>
     <div class="overview" aria-label="账户与模拟市场概览"><div><span>你的可用积分</span><strong id="balance">1,000.00</strong><small>未投入持仓的账户余额</small></div><div><span>预计清仓净值 / 累计盈亏</span><strong id="equity">1,000.00</strong><small id="total-pnl">+0.00 · 清仓估算口径</small></div><div><span>做市资金余额</span><strong id="reserve">1,000.00</strong><small>含交易收入与手续费 · 负责兑付</small></div><div><span>本地模拟成交</span><strong><b id="trade-count">0</b><em id="trade-rate">0 笔 / 近 1 秒</em></strong><small>已接受的模拟成交数，非链上 TPS</small></div></div>
     <div id="game" class="arena-grid">
       <div class="market-column">
@@ -56,7 +88,7 @@
     <div id="history-section" class="bottom-grid"><section class="panel trades-panel"><div class="panel-header"><h2>最近成交</h2><span class="section-caption">实际模拟账本 · 非展示动画</span></div><div class="table-scroll"><table class="trade-table"><thead><tr><th>时间 / 参与者</th><th>方向</th><th>份数</th><th>平均价</th><th>手续费</th><th>支付 / 到账</th></tr></thead><tbody id="trades-body"><tr><td colspan="6" class="empty-cell">开场后，这里记录每一笔实际成交。</td></tr></tbody></table></div></section><section class="panel history-panel"><div class="panel-header"><h2>收盘记录</h2><span id="record-count" class="section-caption">0 轮</span></div><div id="results-list" class="results-list"><p class="empty-message">第一轮，从你的判断开始。</p></div><div class="feed-heading"><span>场内动态</span><i></i></div><ol id="feed" class="feed"></ol></section></div>
     <div id="notice" class="notice" role="status" aria-live="polite">纯本地模拟，积分不可兑现。准备好后，开始第一轮。</div>
   </main>
-  <footer><span>BLOCKPULSE <i>/</i> 观察 · 交易 · 复盘</span><span>本地原型 v2 · 未接钱包或区块链 · 不构成真实赔率或收益承诺</span></footer>
+  <footer><span>BLOCKPULSE <i>/</i> 观察 · 交易 · 复盘</span><span>支持 Monad 测试网钱包 · 交易仍为模拟积分 · 不构成收益承诺</span></footer>
 </div>
 <script type="module" src="./app.js"></script>
 </body>

@@ -1,6 +1,8 @@
 import { createGame, resetGame, startRound, advance, executeTrade, playerAction, nextRound, quoteTrade, marketPrices, scenarioOdds, participantStats } from './game.js';
+import { mountMonad } from './monad-ui.js';
 
 const $ = id => document.getElementById(id);
+const setText = (id, value) => { if ($(id).textContent !== value) $(id).textContent = value; };
 const KEY = 'blockpulse-playground-v2';
 const COLORS = ['red', 'black', 'green'];
 const LABELS = { red: '红', black: '黑', green: '绿' };
@@ -169,8 +171,8 @@ function renderQuote(prices) {
   $('selected-chip').innerHTML = `<i></i>${NAMES[selectedColor]}`;
   $('available').textContent = buy ? `可用 ${fmt(player.balance)} 积分` : `持有 ${fmt(player.holdings[selectedColor], 0)} 份`;
   $('quote-total-label').textContent = buy ? '预计支付（含费用）' : '预计到账（扣除费用）';
-  $('submit-label').textContent = state.phase === 'settled' ? '本轮已到期' : state.phase === 'locked' ? '已封盘，等待结算' : `${buy ? '买入' : '卖出'}${LABELS[selectedColor]}色份额`;
-  $('max-shares').textContent = buy ? '最多' : player.holdings[selectedColor] > 1000 ? '卖 1,000 份' : '卖出 100%';
+  setText('submit-label', state.phase === 'settled' ? '本轮已到期' : state.phase === 'locked' ? '已封盘，等待结算' : `${buy ? '买入' : '卖出'}${LABELS[selectedColor]}色份额`);
+  setText('max-shares', buy ? '最多' : player.holdings[selectedColor] > 1000 ? '卖 1,000 份' : '卖出 100%');
   $('max-shares').disabled = closed || (!buy && player.holdings[selectedColor] < 1);
   $('shares').disabled = closed;
   document.querySelectorAll('[data-shares]').forEach(b => { const selected = Number(b.dataset.shares) === quantity; b.disabled = closed; b.classList.toggle('selected', selected); b.setAttribute('aria-pressed', String(selected)); });
@@ -226,7 +228,7 @@ function render() {
   $('time').textContent = fmt(state.remainingMs / 1000, 1);
   $('window-label').textContent = trading ? `距封盘 ${fmt(Math.max(0, 55000 - state.elapsedMs) / 1000, 1)} 秒` : state.phase === 'locked' ? '买卖与行动均已停止' : '55 秒交易 + 5 秒封盘';
   $('round-action').disabled = live(state) || simulationFailed;
-  $('round-action-label').textContent = state.phase === 'ready' ? '开始 60 秒交易' : settled ? '继续下一轮' : state.phase === 'locked' ? '等待到期结算' : '交易进行中';
+  setText('round-action-label', state.phase === 'ready' ? '开始 60 秒交易' : settled ? '继续下一轮' : state.phase === 'locked' ? '等待到期结算' : '交易进行中');
   $('time-bar').style.width = `${100 * state.remainingMs / state.durationMs}%`;
   $('timer').setAttribute('aria-valuenow', fmt(state.remainingMs / 1000, 1));
   $('timer').classList.toggle('urgent', state.phase === 'locked');
@@ -354,7 +356,13 @@ document.querySelectorAll('[data-bots]').forEach(b => b.addEventListener('click'
 window.addEventListener('resize', () => { chartKey = ''; drawChart(marketPrices(state)); });
 window.addEventListener('pagehide', () => { try { flushTime(); persist(); } catch { /* Optional save. */ } });
 setInterval(() => {
-  try { flushTime(); render(); if (performance.now() - lastPersistAt > 1000) persist(); }
+  try {
+    const running = live(state);
+    flushTime();
+    if (running) render();
+    if (running && performance.now() - lastPersistAt > 1000) persist();
+  }
   catch (error) { simulationFailed = true; showError(`本地进度无法继续：${error.reason || error.message}。请用右上角“重置积分”重新开始。`); }
 }, 100);
 render();
+mountMonad();

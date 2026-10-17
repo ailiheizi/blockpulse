@@ -29,13 +29,190 @@
 @media(max-width:340px){.overview{gap:8px}.overview>div{padding:12px}.overview small{font-size:7px}}
 
 </style>
+  <style>
+.monad-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 8px 13px; border: 1px solid #b29afd55; border-radius: 9px; color: #d9cbff; background: #b29afd12; font-size: 11px; white-space: nowrap; }
+.monad-button:not(:disabled):hover { background: #b29afd22; border-color: #b29afd99; }
+.monad-button-mark { font-family: 'Avenir Next', system-ui, sans-serif; font-size: 13px; font-weight: 750; }
+.monad-panel { margin-top: 22px; border-color: #b29afd3d; background: linear-gradient(120deg, #252239a6, #171e2d); scroll-margin-top: 20px; }
+.monad-heading { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 21px; }
+.monad-heading-actions { display: flex; align-items: center; justify-content: flex-end; gap: 12px; }
+.monad-text-button { min-height: 36px; padding: 5px 0; border: 0; color: var(--purple); background: transparent; font-size: 10px; white-space: nowrap; }
+.monad-text-button:hover { color: #e1d6ff; text-decoration: underline; }
+[data-collapsed="true"] .monad-heading { margin-bottom: 0; }
+.wallet-steps { display: flex; gap: 15px; padding: 0; margin: 0 0 18px; list-style: none; }
+.wallet-steps li { display: flex; align-items: center; gap: 6px; color: #7e8ba5; font-size: 10px; white-space: nowrap; }
+.wallet-steps li > span { display: grid; place-items: center; width: 21px; height: 21px; border: 1px solid #3b4156; border-radius: 50%; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 9px; }
+.wallet-steps [data-state="current"] { color: #d5c5ff; }
+.wallet-steps [data-state="current"] > span { border-color: #b29afd99; background: #b29afd18; }
+.wallet-steps [data-state="complete"] { color: #91cbb5; }
+.wallet-steps [data-state="complete"] > span { border-color: #78dfb862; background: #78dfb80b; }
+.monad-brand { display: flex; align-items: center; gap: 12px; }
+.monad-mark { display: grid; place-items: center; flex-shrink: 0; width: 39px; height: 39px; border: 1px solid #b29afd4d; border-radius: 11px; background: #b29afd13; color: #c9b6ff; font-family: 'Avenir Next', system-ui, sans-serif; font-size: 21px; font-weight: 650; }
+.monad-brand .small-label { margin-bottom: 3px; font-size: 9px; }
+.monad-brand h2 { font-size: 17px; }
+.monad-status { padding: 5px 9px; color: #ad9acb; background: #b29afd0a; border: 1px solid #b29afd24; border-radius: 20px; font-size: 10px; white-space: nowrap; }
+[data-wallet-state="connected"] .monad-status { color: #8ee0bf; background: #78dfb80a; border-color: #78dfb836; }
+[data-wallet-state="wrong-network"] .monad-status { color: #ffca9d; border-color: #ffb68e36; }
+.monad-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 25px; }
+.monad-wallet { min-width: 0; }
+.wallet-picker { display: flex; align-items: center; gap: 14px; }
+.wallet-picker label { flex-shrink: 0; color: #a5afc5; font-size: 11px; }
+.wallet-picker select { min-width: 0; flex: 1; width: 100%; max-width: 280px; min-height: 39px; padding: 8px 28px 8px 10px; border: 1px solid #403a56; border-radius: 8px; background: #151a27; color: #c6c9dc; font: inherit; font-size: 11px; text-overflow: ellipsis; }
+.wallet-picker select:disabled { color: #8b8fa7; opacity: 1; }
+.wallet-picker select:focus-visible, .monad-panel a:focus-visible { outline: 3px solid var(--purple); outline-offset: 3px; }
+.wallet-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; }
+.monad-action { min-height: 39px; padding: 8px 12px; border: 1px solid #4a4262; border-radius: 7px; color: #c8bddf; background: #b29afd06; font-size: 11px; }
+.monad-action:not(:disabled):hover { background: #b29afd16; border-color: #b29afd75; }
+.monad-primary { border-color: #b29afd70; color: #e1d6ff; background: #b29afd19; }
+.monad-message { margin: 10px 0 0; color: #98a5bd; font-size: 10px; line-height: 1.85; overflow-wrap: anywhere; }
+.wallet-help { margin: 7px 0 0; color: #92a0b9; font-size: 10px; line-height: 1.85; }
+.monad-panel a { color: #c4adfb; text-decoration: none; }
+.monad-panel a:hover { text-decoration: underline; }
+.wallet-help a { display: inline-block; }
+.wallet-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 19px; }
+.wallet-metrics > div { min-width: 0; }
+.wallet-metrics span { display: block; color: #94a2bc; font-size: 10px; }
+.wallet-metrics strong { display: block; margin: 6px 0; color: #ddd4f5; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 20px; font-weight: 450; overflow-wrap: anywhere; }
+.wallet-metrics small, .wallet-metrics a { display: block; color: #8f9db6; font-size: 10px; line-height: 1.7; overflow-wrap: anywhere; }
+.wallet-metrics a { color: #c4adfb; }
+.wallet-address-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 12px; }
+.wallet-address-details { color: #91a0b9; font-size: 10px; margin-top: 8px; }
+.wallet-address-details summary { cursor: pointer; padding: 6px 0; }
+.wallet-address-details input { width: 100%; min-height: 40px; padding: 9px; margin-top: 6px; color: #d5c5ff; border: 1px solid #49405e; border-radius: 7px; background: #141a27; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 11px; }
+#wallet-copy-message:empty { display: none; }
+.monad-chain { min-width: 0; padding: 0 0 0 25px; border-left: 1px solid #b29afd20; }
+.monad-chain-title { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: #d5c9ed; font-size: 12px; }
+.monad-chain-title > span:last-child { color: #8d9bb4; font-size: 10px; }
+.monad-block { display: block; margin: 13px 0 8px; color: #c6b0ff; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 30px; font-weight: 450; line-height: 1.25; letter-spacing: -.8px; overflow-wrap: anywhere; }
+.monad-block-time { margin: 0; color: #9ba7bf; font-size: 10px; line-height: 1.8; }
+.monad-chain-links { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 8px; min-height: 16px; color: #8e9bb3; font-size: 10px; }
+[data-chain-state="stale"] .monad-block { color: #a89bbf; }
+[data-chain-state="stale"] #monad-chain-state { color: #d7b191; }
+[data-chain-state="fresh"] #monad-chain-state { color: #8fcdb3; }
+.monad-sample-section { margin-top: 18px; }
+.monad-sample-section > p { display: flex; justify-content: space-between; gap: 10px; margin: 0 0 9px; color: #b4a8cb; font-size: 10px; }
+.monad-sample-section > p > small { color: #8f9cb2; font-size: 9px; }
+.monad-samples { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; padding: 0; margin: 0; list-style: none; }
+.monad-samples li { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 7px 9px; border: 1px solid #b29afd19; border-radius: 6px; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 10px; min-width: 0; }
+.monad-samples li:first-child { border-color: #b29afd50; background: #b29afd0b; }
+.monad-samples a { min-width: 0; overflow-wrap: anywhere; }
+.monad-samples small { color: #8f9cb2; font-size: 8px; }
+.monad-config { margin-top: 18px; border-top: 1px solid #b29afd1a; color: #a69bbf; font-size: 10px; }
+.monad-config summary { display: flex; align-items: center; justify-content: space-between; min-height: 41px; cursor: pointer; list-style: none; }
+.monad-config summary::-webkit-details-marker { display: none; }
+.monad-config summary::after { content: '+'; font-size: 16px; color: var(--purple); }
+.monad-config[open] summary::after { content: '−'; }
+.monad-config dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 15px; padding: 12px 14px; margin: 0; border: 1px solid #b29afd24; border-radius: 8px; background: #12172450; }
+.monad-config dt { color: #8f9cb2; margin-bottom: 6px; }
+.monad-config dd { margin: 0; color: #d4c7ed; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 12px; }
+.monad-config small { color: #8f9cb2; font-size: 10px; }
+.monad-config-rpc { grid-column: 1 / -1; }
+.monad-config-rpc dd { display: flex; align-items: center; flex-wrap: wrap; gap: 7px 16px; }
+.monad-config code { overflow-wrap: anywhere; user-select: all; }
+.monad-scope { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-top: 20px; padding-top: 14px; border-top: 1px solid #b29afd1a; color: #97a0b8; font-size: 10px; line-height: 1.8; }
+.monad-scope > a { flex-shrink: 0; }
+@media (max-width: 1100px) {
+  .top-actions { gap: 14px; }
+  .topbar .local-tag { display: none; }
+  .monad-grid { gap: 20px; }
+  .monad-chain { padding-left: 20px; }
+  .wallet-picker { flex-wrap: wrap; gap: 8px; }
+  .wallet-picker select { max-width: none; flex-basis: 100%; }
+  .wallet-metrics { gap: 12px; }
+  .wallet-metrics strong { font-size: 17px; }
+}
+@media (max-width: 740px) {
+  .topbar { height: auto; min-height: 77px; gap: 12px; flex-wrap: wrap; padding: 15px 0; }
+  .top-actions { margin-left: auto; gap: 9px; }
+  .topbar .reset-label { display: none; }
+  .topbar #reset { width: 35px; padding: 0; font-size: 22px; }
+  .monad-button { min-height: 40px; padding: 8px 10px; font-size: 10px; gap: 6px; }
+  .monad-panel { margin-top: 18px; }
+  .monad-heading { align-items: flex-start; gap: 10px; margin-bottom: 19px; }
+  .monad-heading-actions { flex-direction: column; gap: 2px; flex-shrink: 0; }
+  .monad-heading-actions .monad-text-button { min-height: 30px; }
+  .monad-brand { gap: 9px; }
+  .monad-brand h2 { font-size: 16px; }
+  .monad-brand .small-label { font-size: 8px; }
+  .monad-mark { width: 33px; height: 33px; border-radius: 9px; font-size: 18px; }
+  .monad-status { padding: 4px 7px; font-size: 9px; }
+  .monad-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .wallet-picker { flex-wrap: nowrap; gap: 12px; }
+  .wallet-picker select { flex-basis: auto; }
+  .wallet-actions { gap: 7px; }
+  .monad-action { min-height: 42px; font-size: 11px; }
+  .wallet-steps { gap: 11px; }
+  .wallet-steps li { gap: 5px; font-size: 10px; }
+  .wallet-steps li > span { width: 20px; height: 20px; }
+  .wallet-address-actions .monad-text-button { min-height: 40px; font-size: 11px; }
+  .monad-config { font-size: 11px; }
+  .monad-config summary { min-height: 44px; }
+  .monad-config dl { gap: 16px 10px; padding: 12px; }
+  .monad-config dd { font-size: 11px; }
+  .monad-config dd > small { display: block; margin-top: 4px; }
+  .monad-config-rpc dd { gap: 3px; }
+  .monad-config-rpc .monad-text-button { min-height: 42px; font-size: 11px; }
+  .monad-message, .wallet-help { font-size: 11px; }
+  .wallet-metrics { gap: 15px; }
+  .wallet-metrics strong { font-size: 19px; }
+  .wallet-metrics span, .wallet-metrics small, .wallet-metrics a { font-size: 10px; }
+  .monad-chain { padding: 18px 0 0; border-left: 0; border-top: 1px solid #b29afd20; }
+  .monad-block { font-size: 28px; }
+  .monad-block-time, .monad-chain-links { font-size: 10px; }
+  .monad-scope { flex-direction: column; gap: 8px; margin-top: 18px; font-size: 10px; }
+}
+@media (max-width: 360px) {
+  .monad-brand h2 { font-size: 14px; }
+  .monad-mark { display: none; }
+  .wallet-picker { flex-wrap: wrap; gap: 7px; }
+  .wallet-picker select { flex-basis: 100%; }
+  .wallet-metrics { grid-template-columns: minmax(0, 1fr); }
+  .wallet-steps { gap: 8px; }
+  .wallet-steps li { font-size: 9px; }
+  .wallet-steps li > span { width: 18px; height: 18px; }
+  .monad-samples { grid-template-columns: minmax(0, 1fr); }
+  .monad-button { font-size: 9px; padding: 8px; }
+}
+
+</style>
 </head>
 <body>
 <div class="shell">
-  <header class="topbar"><div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M3 17h7l4-10 5 19 4-9h6"></path></svg></span><span>BLOCK<span class="brand-light">PULSE</span><small>区块预言家 / 交易竞技场</small></span></div><nav class="topnav" aria-label="页面导航"><a class="current" href="#game">交易竞技场</a><a href="#history-section">成交与复盘</a><a id="rules-link" href="#rules">玩法说明 ↗</a></nav><div class="top-actions"><span class="local-tag"><i></i> 本地模拟</span><button id="reset" class="quiet-button" type="button">重置积分 ↻</button></div></header>
+  <header class="topbar"><div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32"><path d="M3 17h7l4-10 5 19 4-9h6"></path></svg></span><span>BLOCK<span class="brand-light">PULSE</span><small>区块预言家 / 交易竞技场</small></span></div><nav class="topnav" aria-label="页面导航"><a class="current" href="#game">交易竞技场</a><a href="#history-section">成交与复盘</a><a id="rules-link" href="#rules">玩法说明 ↗</a></nav><div class="top-actions"><span class="local-tag"><i></i> 积分模拟</span><button id="wallet-shortcut" class="monad-button" type="button"><span class="monad-button-mark" aria-hidden="true">M</span><span id="wallet-shortcut-label">连接钱包</span></button><button id="reset" class="quiet-button" type="button" aria-label="重置模拟积分" title="重置模拟积分"><span class="reset-label">重置积分</span> <span aria-hidden="true">↻</span></button></div></header>
   <main>
     <section class="intro"><div><p class="eyebrow">一分钟，交易你的判断</p><h1>读懂价格，<span>把握下一步。</span></h1><p class="intro-copy">买低卖高，或者持有到收盘。与策略 Bot 同场，用有限的行动改变局势。</p></div><div class="mode-picker"><span>选择对手规模 <small>切换会重置余额与历史</small></span><div class="segmented" role="group" aria-label="对手数量，切换会重置场次"><button type="button" data-bots="2" class="selected" aria-pressed="true">2 位 Bot</button><button type="button" data-bots="20" aria-pressed="false">20 位 · 繁忙模式</button></div></div></section>
     <div class="round-guide" aria-label="每轮五十五秒交易、五秒封盘、三张行动券"><div><strong>55<span>秒</span></strong><small>自由买卖 · 报价随成交变化</small></div><div><strong>5<span>秒</span></strong><small>封盘等待 · 不再交易或控场</small></div><div><strong>3<span>张</span></strong><small>行动额度 · 可以保留不用</small></div></div>
+    <section id="monad-panel" class="panel monad-panel" aria-labelledby="monad-title" data-wallet-state="disconnected" data-chain-state="idle">
+      <div class="monad-heading">
+        <div class="monad-brand"><span class="monad-mark" aria-hidden="true">M</span><div><p class="small-label">MONAD / TESTNET</p><h2 id="monad-title">把钱包，接入竞技场。</h2></div></div>
+        <div class="monad-heading-actions"><span id="wallet-state" class="monad-status">尚未连接</span><button id="monad-toggle" class="monad-text-button" type="button" aria-expanded="true" aria-controls="monad-body">收起面板</button></div>
+      </div>
+      <div id="monad-body">
+      <div class="monad-grid">
+        <div class="monad-wallet">
+          <ol class="wallet-steps" aria-label="钱包连接步骤"><li id="wallet-step-account" data-state="current"><span>1</span>选择钱包</li><li id="wallet-step-network"><span>2</span>切换测试网</li><li id="wallet-step-balance"><span>3</span>查看余额</li></ol>
+          <div class="wallet-picker"><label for="wallet-provider">选择浏览器钱包</label><select id="wallet-provider" disabled><option value="">未检测到钱包扩展</option></select></div>
+          <div class="wallet-actions"><button id="wallet-connect" class="monad-action monad-primary" type="button">连接所选钱包</button><button id="wallet-switch" class="monad-action monad-primary" type="button" hidden>切换到 Monad Testnet</button><button id="wallet-refresh" class="monad-action" type="button" hidden>刷新余额</button><button id="wallet-disconnect" class="monad-action" type="button" hidden>断开本站连接</button></div>
+          <p id="wallet-message" class="monad-message" role="status" aria-live="polite">没有钱包也能继续试玩，或单独读取测试网区块。</p>
+          <p id="wallet-help" class="wallet-help">请用支持 EVM 的浏览器钱包打开本地 HTTP 或在线页面。<a href="https://docs.monad.xyz/guides/add-monad-to-wallet/testnet" target="_blank" rel="noopener noreferrer">查看官方钱包接入说明 ↗</a></p>
+          <div class="wallet-metrics"><div><span>钱包地址</span><strong id="wallet-address">未连接</strong><div class="wallet-address-actions"><button id="wallet-copy" class="monad-text-button" type="button" hidden>复制地址</button><a id="wallet-account-link" target="_blank" rel="noopener noreferrer" hidden>查看测试网地址 ↗</a></div></div><div><span>测试网余额 · MON</span><strong id="wallet-balance">—</strong><small id="wallet-network">等待连接钱包</small><small id="wallet-balance-time"></small></div></div>
+          <details id="wallet-address-details" class="wallet-address-details" hidden><summary>完整钱包地址</summary><input id="wallet-full-address" readonly aria-label="完整钱包地址，可手动复制" spellcheck="false"></details>
+          <p id="wallet-copy-message" class="monad-message" role="status" aria-live="polite"></p>
+        </div>
+        <div class="monad-chain">
+          <div class="monad-chain-title"><span>真实测试网区块</span><span id="monad-chain-state">尚未读取</span></div>
+          <strong id="monad-block" class="monad-block">—</strong>
+          <p id="monad-block-time" class="monad-block-time">按需连接公开 RPC，读取后每 5 秒刷新</p>
+          <div class="monad-chain-links"><a id="monad-block-link" target="_blank" rel="noopener noreferrer" hidden>查看区块 ↗</a><span id="monad-latency"></span></div>
+          <div class="wallet-actions"><button id="monad-refresh" class="monad-action" type="button">读取测试网</button><button id="monad-pause" class="monad-action" type="button" hidden>暂停读取</button></div>
+          <p id="monad-rpc-message" class="monad-message">无需钱包即可读取；这里不是本机的模拟区块或模拟成交频率。</p>
+          <div id="monad-sample-section" class="monad-sample-section" hidden><p>最近读到的区块 <small>采样记录，非连续区块</small></p><ol id="monad-samples" class="monad-samples" aria-label="最近六个不同区块的采样记录"></ol></div>
+        </div>
+      </div>
+      <details class="monad-config"><summary>手动添加网络 / 连接帮助</summary><dl><div><dt>网络名称</dt><dd>Monad Testnet</dd></div><div><dt>Chain ID</dt><dd>10143 <small>0x279f</small></dd></div><div><dt>货币符号</dt><dd>MON <small>测试币</small></dd></div><div class="monad-config-rpc"><dt>RPC 地址</dt><dd><code id="monad-config-rpc">https://testnet-rpc.monad.xyz</code><button id="monad-copy-rpc" class="monad-text-button" type="button">复制 RPC</button></dd></div></dl><p id="monad-config-message" class="monad-message" role="status" aria-live="polite">钱包不支持自动切网时，可在钱包的网络设置中手动填写。浏览器内未检测到扩展时，请换用已安装钱包的桌面浏览器。</p></details>
+      <div class="monad-scope"><span>钱包 MON 与模拟积分独立。当前买卖和结算仍在本地，不请求签名或扣除 MON。</span><a href="https://faucet.monad.xyz" target="_blank" rel="noopener noreferrer">测试网领水 ↗</a></div>
+      </div>
+    </section>
     <div class="overview" aria-label="账户与模拟市场概览"><div><span>你的可用积分</span><strong id="balance">1,000.00</strong><small>未投入持仓的账户余额</small></div><div><span>预计清仓净值 / 累计盈亏</span><strong id="equity">1,000.00</strong><small id="total-pnl">+0.00 · 清仓估算口径</small></div><div><span>做市资金余额</span><strong id="reserve">1,000.00</strong><small>含交易收入与手续费 · 负责兑付</small></div><div><span>本地模拟成交</span><strong><b id="trade-count">0</b><em id="trade-rate">0 笔 / 近 1 秒</em></strong><small>已接受的模拟成交数，非链上 TPS</small></div></div>
     <div id="game" class="arena-grid">
       <div class="market-column">
@@ -79,7 +256,7 @@
     <div id="history-section" class="bottom-grid"><section class="panel trades-panel"><div class="panel-header"><h2>最近成交</h2><span class="section-caption">实际模拟账本 · 非展示动画</span></div><div class="table-scroll"><table class="trade-table"><thead><tr><th>时间 / 参与者</th><th>方向</th><th>份数</th><th>平均价</th><th>手续费</th><th>支付 / 到账</th></tr></thead><tbody id="trades-body"><tr><td colspan="6" class="empty-cell">开场后，这里记录每一笔实际成交。</td></tr></tbody></table></div></section><section class="panel history-panel"><div class="panel-header"><h2>收盘记录</h2><span id="record-count" class="section-caption">0 轮</span></div><div id="results-list" class="results-list"><p class="empty-message">第一轮，从你的判断开始。</p></div><div class="feed-heading"><span>场内动态</span><i></i></div><ol id="feed" class="feed"></ol></section></div>
     <div id="notice" class="notice" role="status" aria-live="polite">纯本地模拟，积分不可兑现。准备好后，开始第一轮。</div>
   </main>
-  <footer><span>BLOCKPULSE <i>/</i> 观察 · 交易 · 复盘</span><span>本地原型 v2 · 未接钱包或区块链 · 不构成真实赔率或收益承诺</span></footer>
+  <footer><span>BLOCKPULSE <i>/</i> 观察 · 交易 · 复盘</span><span>支持 Monad 测试网钱包 · 交易仍为模拟积分 · 不构成收益承诺</span></footer>
 </div>
 <script>
 (() => {
@@ -507,11 +684,599 @@ function nextRound(state) {
   return next;
 }
 
-return { createGame, resetGame, startRound, advance, executeTrade, playerAction, nextRound, quoteTrade, marketPrices, scenarioOdds, participantStats };
+return { COLORS, ROUND_DURATION_MS, TRADING_DURATION_MS, BLOCK_DURATION_MS, POINT_PRECISION, GameError, marketPrices, scenarioOdds, participantStats, createGame, resetGame, startRound, quoteTrade, executeTrade, playerAction, advance, nextRound };
+})();
+const MonadNetwork = (() => {
+const MONAD_TESTNET = Object.freeze({
+  chainId: 10143,
+  chainIdHex: '0x279f',
+  name: 'Monad Testnet',
+  rpcUrl: 'https://testnet-rpc.monad.xyz',
+  explorerUrl: 'https://testnet.monadvision.com',
+  faucetUrl: 'https://faucet.monad.xyz',
+  nativeCurrency: Object.freeze({ name: 'Testnet MON Token', symbol: 'MON', decimals: 18 }),
+});
+
+const ADDRESS = /^0x[\da-f]{40}$/i;
+const HEX = /^0x[\da-f]+$/i;
+const isAddress = value => typeof value === 'string' && ADDRESS.test(value);
+
+class MonadError extends Error {
+  constructor(code, message) {
+    super(message);
+    this.name = 'MonadError';
+    this.code = code;
+  }
+}
+
+function normalizeChainId(value) {
+  if (typeof value !== 'string' || !HEX.test(value) || value.length > 66) {
+    throw new MonadError('INVALID_CHAIN', '未返回有效的网络标识，请刷新状态。');
+  }
+  return `0x${BigInt(value).toString(16)}`;
+}
+
+function parseQuantity(value) {
+  if (typeof value !== 'string' || !HEX.test(value) || value.length > 66) {
+    throw new MonadError('INVALID_RESPONSE', '网络返回了无效数据，请稍后重试。');
+  }
+  return BigInt(value);
+}
+
+function shortenAddress(address) {
+  return isAddress(address) ? `${address.slice(0, 6)}…${address.slice(-4)}` : '未连接';
+}
+
+function formatMon(wei) {
+  if (typeof wei !== 'bigint' || wei < 0n) return '—';
+  if (wei > 0n && wei < 100000000000000n) return '<0.0001';
+  const whole = (wei / 1000000000000000000n).toLocaleString('en-US');
+  const fraction = (wei % 1000000000000000000n).toString().padStart(18, '0').slice(0, 4);
+  return `${whole}.${fraction}`;
+}
+
+function walletErrorMessage(error) {
+  const code = Number(error?.code ?? error?.data?.originalError?.code);
+  if (code === 4001) return '你已取消钱包请求，可以继续本地试玩。';
+  if (code === -32002) return '钱包里已有待处理请求，请先打开钱包完成或取消。';
+  if (code === 4200 || code === -32601) return '这个钱包暂不支持此操作，请在钱包中手动添加 Monad Testnet。';
+  if (code === 4900 || code === 4901) return '钱包网络已断开，请检查钱包连接后重试。';
+  if (error instanceof MonadError) return error.message;
+  return '钱包请求未完成，请检查钱包扩展后重试。';
+}
+
+function createWalletClient({ readTimeoutMs = 8000, now = Date.now } = {}) {
+  let provider = null;
+  let connectionVersion = 0;
+  let readVersion = 0;
+  let detach = () => {};
+  let state = Object.freeze({ status: 'disconnected', account: null, chainId: null, balanceWei: null, balanceReadAt: null, pending: false, reading: false, message: '' });
+  const listeners = new Set();
+
+  function update(patch) {
+    state = Object.freeze({ ...state, ...patch });
+    for (const listener of listeners) listener(state);
+  }
+
+  function disconnect(message = '') {
+    connectionVersion += 1;
+    readVersion += 1;
+    detach();
+    detach = () => {};
+    provider = null;
+    update({ status: 'disconnected', account: null, chainId: null, balanceWei: null, balanceReadAt: null, pending: false, reading: false, message });
+  }
+
+  async function readWallet(source, payload) {
+    let timer;
+    try {
+      return await Promise.race([
+        source.request(payload),
+        new Promise((resolve, reject) => {
+          timer = setTimeout(() => reject(new MonadError('WALLET_TIMEOUT', '钱包状态读取超时，可点击“刷新余额”重试，或断开后重新连接。')), readTimeoutMs);
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async function refresh() {
+    if (!provider) return;
+    const source = provider;
+    const connection = connectionVersion;
+    const read = ++readVersion;
+    const current = () => source === provider && connection === connectionVersion && read === readVersion;
+    update({ reading: true, message: '' });
+    try {
+      const [accounts, rawChainId] = await Promise.all([
+        readWallet(source, { method: 'eth_accounts' }),
+        readWallet(source, { method: 'eth_chainId' }),
+      ]);
+      if (!current()) return;
+      if (!Array.isArray(accounts)) throw new MonadError('INVALID_ACCOUNT', '钱包没有返回有效地址，请重新连接。');
+      if (!accounts.length) { disconnect('钱包已取消本站的账户连接。'); return; }
+      if (!isAddress(accounts[0])) throw new MonadError('INVALID_ACCOUNT', '钱包没有返回有效地址，请重新连接。');
+      const chainId = normalizeChainId(rawChainId);
+      const sameAccount = state.account?.toLowerCase() === accounts[0].toLowerCase();
+      const sameContext = sameAccount && chainId === state.chainId;
+      update({ account: accounts[0], chainId, balanceWei: sameContext ? state.balanceWei : null, balanceReadAt: sameContext ? state.balanceReadAt : null, status: chainId === MONAD_TESTNET.chainIdHex ? 'connected' : 'wrong-network' });
+      if (chainId !== MONAD_TESTNET.chainIdHex) { update({ balanceWei: null, balanceReadAt: null }); return; }
+      const balance = await readWallet(source, { method: 'eth_getBalance', params: [accounts[0], 'latest'] });
+      if (current()) update({ balanceWei: parseQuantity(balance), balanceReadAt: now() });
+    } catch (error) {
+      if (current()) {
+        if (!state.account) disconnect(walletErrorMessage(error));
+        else update({ status: 'error', balanceWei: null, balanceReadAt: null, message: walletErrorMessage(error) });
+      }
+    } finally {
+      if (current()) update({ reading: false });
+    }
+  }
+
+  function attach(source) {
+    const changed = () => {
+      if (source !== provider) return;
+      readVersion += 1;
+      update({ status: 'refreshing', balanceWei: null, balanceReadAt: null, chainId: null });
+      void refresh();
+    };
+    const disconnected = () => { if (source === provider) disconnect('钱包连接已断开，本地模拟仍可继续。'); };
+    if (typeof source.on !== 'function' || typeof source.removeListener !== 'function') return;
+    source.on('accountsChanged', changed);
+    source.on('chainChanged', changed);
+    source.on('disconnect', disconnected);
+    detach = () => {
+      source.removeListener?.('accountsChanged', changed);
+      source.removeListener?.('chainChanged', changed);
+      source.removeListener?.('disconnect', disconnected);
+    };
+  }
+
+  async function connect(source) {
+    if (state.pending) return;
+    disconnect();
+    const connection = connectionVersion;
+    if (typeof source?.request !== 'function') {
+      update({ message: '没有检测到浏览器钱包。请通过本地 HTTP 或在线页面打开，并启用支持 EVM 的钱包。' });
+      return;
+    }
+    update({ pending: true, status: 'connecting', message: '' });
+    try {
+      const accounts = await source.request({ method: 'eth_requestAccounts' });
+      if (connection !== connectionVersion) return;
+      if (!Array.isArray(accounts) || !isAddress(accounts[0])) throw new MonadError('INVALID_ACCOUNT', '钱包未开放有效账户，请重新连接。');
+      provider = source;
+      attach(source);
+      await refresh();
+    } catch (error) {
+      if (connection === connectionVersion) disconnect(walletErrorMessage(error));
+    } finally {
+      if (connection === connectionVersion) update({ pending: false });
+    }
+  }
+
+  async function switchNetwork() {
+    if (!provider || state.pending) return;
+    const source = provider;
+    const connection = connectionVersion;
+    const current = () => source === provider && connection === connectionVersion;
+    update({ pending: true, message: '' });
+    try {
+      try {
+        await source.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: MONAD_TESTNET.chainIdHex }] });
+      } catch (error) {
+        if (!current()) return;
+        const code = Number(error?.code ?? error?.data?.originalError?.code);
+        if (code !== 4902) throw error;
+        await source.request({ method: 'wallet_addEthereumChain', params: [{
+          chainId: MONAD_TESTNET.chainIdHex,
+          chainName: MONAD_TESTNET.name,
+          nativeCurrency: { ...MONAD_TESTNET.nativeCurrency },
+          rpcUrls: [MONAD_TESTNET.rpcUrl],
+          blockExplorerUrls: [MONAD_TESTNET.explorerUrl],
+        }] });
+        if (!current()) return;
+        await source.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: MONAD_TESTNET.chainIdHex }] });
+      }
+      if (current()) await refresh();
+    } catch (error) {
+      if (current()) update({ message: walletErrorMessage(error) });
+    } finally {
+      if (current()) update({ pending: false });
+    }
+  }
+
+  return {
+    getState: () => state,
+    subscribe(listener) { listeners.add(listener); listener(state); return () => listeners.delete(listener); },
+    connect,
+    switchNetwork,
+    refresh,
+    disconnect: () => disconnect('已断开本站连接；钱包扩展中的授权可在钱包内管理。'),
+  };
+}
+
+function discoverWallets(target, onChange) {
+  const wallets = [];
+  function add(provider, name, uuid = '') {
+    if (typeof provider?.request !== 'function' || wallets.length >= 16) return;
+    const existing = wallets.find(wallet => wallet.provider === provider);
+    if (existing) {
+      if (uuid) { existing.name = name; existing.uuid = uuid; onChange([...wallets]); }
+      return;
+    }
+    if (uuid && wallets.some(wallet => wallet.uuid === uuid)) return;
+    wallets.push({ provider, name, uuid });
+    onChange([...wallets]);
+  }
+  const announced = event => {
+    const info = event.detail?.info;
+    if (!info || typeof info.name !== 'string' || typeof info.uuid !== 'string' || !info.uuid || info.uuid.length > 128) return;
+    add(event.detail.provider, info.name.slice(0, 80) || '浏览器钱包', info.uuid);
+  };
+  function request() {
+    target.dispatchEvent(new Event('eip6963:requestProvider'));
+    if (!wallets.length && target.ethereum) {
+      const legacy = Array.isArray(target.ethereum.providers) ? target.ethereum.providers : [target.ethereum];
+      legacy.slice(0, 16).forEach((provider, index) => add(provider, legacy.length > 1 ? `浏览器钱包 ${index + 1}` : '浏览器钱包'));
+    }
+    onChange([...wallets]);
+  }
+  target.addEventListener('eip6963:announceProvider', announced);
+  request();
+  return { request, dispose: () => target.removeEventListener('eip6963:announceProvider', announced) };
+}
+
+async function readMonadHead({ fetcher = globalThis.fetch, signal, timeoutMs = 8000, now = Date.now } = {}) {
+  const controller = new AbortController();
+  let timedOut = false;
+  let requestId = 0;
+  const started = now();
+  const abort = () => controller.abort();
+  if (signal?.aborted) controller.abort();
+  signal?.addEventListener('abort', abort, { once: true });
+  const timeout = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
+  async function rpc(method, params) {
+    if (controller.signal.aborted) throw new Error('Aborted');
+    const id = ++requestId;
+    const response = await fetcher(MONAD_TESTNET.rpcUrl, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ jsonrpc: '2.0', id, method, params }),
+      signal: controller.signal, credentials: 'omit', referrerPolicy: 'no-referrer',
+    });
+    if (!response.ok) throw new MonadError('RPC_HTTP', response.status === 429 ? '测试网 RPC 繁忙，请稍后重试。' : '测试网 RPC 暂不可用，请稍后重试。');
+    const body = await response.json();
+    if (body?.jsonrpc !== '2.0' || body.id !== id || body.error || !Object.hasOwn(body, 'result')) {
+      throw new MonadError('RPC_RESPONSE', '测试网 RPC 返回错误，请稍后重试。');
+    }
+    return body.result;
+  }
+  try {
+    const chainId = normalizeChainId(await rpc('eth_chainId', []));
+    if (chainId !== MONAD_TESTNET.chainIdHex) throw new MonadError('RPC_WRONG_CHAIN', 'RPC 网络不匹配，未将返回数据作为 Monad 测试网展示。');
+    const block = await rpc('eth_getBlockByNumber', ['latest', false]);
+    if (!block || typeof block.hash !== 'string' || !/^0x[\da-f]{64}$/i.test(block.hash)) throw new MonadError('RPC_BLOCK', '未读到有效区块，请稍后重试。');
+    const number = parseQuantity(block.number);
+    const timestamp = Number(parseQuantity(block.timestamp)) * 1000;
+    if (!Number.isSafeInteger(timestamp) || Number.isNaN(new Date(timestamp).getTime())) throw new MonadError('RPC_BLOCK', '区块时间无效，请稍后重试。');
+    return Object.freeze({ number, hash: block.hash, timestamp, readAt: now(), latencyMs: Math.max(0, now() - started) });
+  } catch (error) {
+    if (signal?.aborted) throw new MonadError('ABORTED', '已取消读取。');
+    if (timedOut) throw new MonadError('RPC_TIMEOUT', '测试网 RPC 读取超时，请检查网络后重试。');
+    if (error instanceof MonadError) throw error;
+    throw new MonadError('RPC_UNAVAILABLE', '无法读取测试网，请检查网络或稍后重试。本地模拟仍可使用。');
+  } finally {
+    clearTimeout(timeout);
+    signal?.removeEventListener('abort', abort);
+  }
+}
+
+return { MONAD_TESTNET, MonadError, shortenAddress, formatMon, walletErrorMessage, createWalletClient, discoverWallets, readMonadHead };
+})();
+const MonadMonitor = (() => {
+const { readMonadHead } = MonadNetwork;
+
+function createHeadMonitor({ read = readMonadHead, intervalMs = 5000, setTimer = setTimeout, clearTimer = clearTimeout } = {}) {
+  const listeners = new Set();
+  let version = 0;
+  let timer;
+  let request;
+  let disposed = false;
+  let state = Object.freeze({ status: 'idle', enabled: false, visible: true, online: true, head: null, samples: Object.freeze([]), error: '' });
+
+  function update(patch) {
+    state = Object.freeze({ ...state, ...patch });
+    for (const listener of listeners) listener(state);
+  }
+
+  function cancel() {
+    clearTimer(timer);
+    timer = undefined;
+    version += 1;
+    request?.abort();
+    request = null;
+  }
+
+  async function refresh() {
+    if (disposed) return;
+    if (!state.visible || !state.online) {
+      cancel();
+      update({ enabled: true, status: state.online ? 'paused' : 'offline', error: '' });
+      return;
+    }
+    if (request) return;
+    clearTimer(timer);
+    const currentVersion = ++version;
+    const controller = new AbortController();
+    request = controller;
+    update({ status: 'reading', enabled: true, error: '' });
+    try {
+      const head = await read({ signal: controller.signal });
+      if (currentVersion !== version || disposed) return;
+      const previous = state.samples.filter(sample => sample.number !== head.number || sample.hash !== head.hash);
+      const samples = Object.freeze([head, ...previous].slice(0, 6));
+      update({ status: 'live', head, samples });
+    } catch (error) {
+      if (currentVersion !== version || disposed) return;
+      update({ status: 'error', enabled: false, error: error?.message || '区块读取失败，请稍后重试。' });
+    } finally {
+      if (currentVersion === version && !disposed) {
+        request = null;
+        if (state.enabled && state.visible && state.online) timer = setTimer(() => { void refresh(); }, intervalMs);
+      }
+    }
+  }
+
+  function setEnvironment({ visible = state.visible, online = state.online }) {
+    if (disposed || (visible === state.visible && online === state.online)) return;
+    update({ visible, online });
+    if (!state.enabled) return;
+    if (!visible || !online) {
+      cancel();
+      update({ status: online ? 'paused' : 'offline' });
+    } else {
+      void refresh();
+    }
+  }
+
+  return {
+    getState: () => state,
+    subscribe(listener) { listeners.add(listener); listener(state); return () => listeners.delete(listener); },
+    refresh,
+    setEnvironment,
+    pause() {
+      if (disposed) return;
+      cancel();
+      update({ status: 'paused', enabled: false });
+    },
+    dispose() {
+      cancel();
+      disposed = true;
+      listeners.clear();
+    },
+  };
+}
+
+return { createHeadMonitor };
+})();
+const MonadUI = (() => {
+const { MONAD_TESTNET, createWalletClient, discoverWallets, formatMon, shortenAddress } = MonadNetwork;
+const { createHeadMonitor } = MonadMonitor;
+
+function mountMonad() {
+  const $ = id => document.getElementById(id);
+  if (!$('monad-panel')) return;
+  const wallet = createWalletClient();
+  const monitor = createHeadMonitor();
+  let wallets = [];
+  let userSelected = false;
+  let displayedAccount = null;
+  let copyVersion = 0;
+  let sampleKey = '';
+  const setText = (id, value) => { if ($(id).textContent !== value) $(id).textContent = value; };
+  const time = timestamp => new Date(timestamp).toLocaleString('zh-CN', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
+
+  function renderWallet(state) {
+    const connected = Boolean(state.account);
+    const onMonad = connected && state.chainId === MONAD_TESTNET.chainIdHex;
+    const ready = onMonad && state.status === 'connected' && typeof state.balanceWei === 'bigint';
+    $('monad-panel').dataset.walletState = ready ? 'connected' : state.status;
+    if (displayedAccount !== state.account) {
+      displayedAccount = state.account;
+      copyVersion += 1;
+      setText('wallet-copy-message', '');
+      $('wallet-address-details').open = false;
+      $('wallet-full-address').value = state.account || '';
+    }
+    const steps = [connected, onMonad, ready];
+    ['wallet-step-account', 'wallet-step-network', 'wallet-step-balance'].forEach((id, index) => {
+      const current = !steps[index] && (index === 0 || steps[index - 1]);
+      $(id).dataset.state = steps[index] ? 'complete' : current ? 'current' : 'waiting';
+      if (current) $(id).setAttribute('aria-current', 'step');
+      else $(id).removeAttribute('aria-current');
+    });
+    setText('wallet-address', shortenAddress(state.account));
+    $('wallet-address').title = state.account || '连接后显示钱包地址';
+    $('wallet-account-link').hidden = !connected;
+    if (connected) $('wallet-account-link').href = `${MONAD_TESTNET.explorerUrl}/address/${state.account}`;
+    else $('wallet-account-link').removeAttribute('href');
+    $('wallet-copy').hidden = !connected;
+    $('wallet-address-details').hidden = !connected;
+    setText('wallet-balance', ready ? formatMon(state.balanceWei) : '—');
+    setText('wallet-balance-time', state.balanceReadAt === null ? '' : `余额读取于 ${time(state.balanceReadAt)}`);
+    const chainText = state.status === 'refreshing' ? '正在核对网络' : onMonad ? 'Monad Testnet · 10143' : state.chainId ? `当前网络 ${BigInt(state.chainId).toString()} · 请切换测试网` : '等待连接钱包';
+    setText('wallet-network', chainText);
+    setText('wallet-state', state.reading ? '正在读取钱包' : state.pending ? '等待钱包确认' : ready ? '测试网已连接' : connected && state.status === 'wrong-network' ? '需要切换网络' : connected ? '状态待刷新' : '尚未连接');
+    const message = state.reading ? '正在核对账户、网络与余额…' : ready ? state.balanceWei === 0n ? '测试网余额为 0，可从下方领水；模拟交易不需要 MON。' : '余额来自当前测试网账户，可单独刷新；游戏积分保持独立。' : connected && onMonad ? '余额暂未读到，可点击“刷新余额”重试。' : connected ? '请切换到 Monad Testnet，或展开下方网络帮助手动设置。' : '选择钱包开始连接。也可以直接试玩，或单独读取测试网区块。';
+    setText('wallet-message', state.message || message);
+    setText('wallet-shortcut-label', state.reading ? '读取中…' : state.pending ? '等待确认…' : connected ? shortenAddress(state.account) : '连接钱包');
+    $('wallet-connect').hidden = connected;
+    $('wallet-connect').disabled = state.pending;
+    setText('wallet-connect', state.pending ? '等待钱包确认…' : '连接所选钱包');
+    $('wallet-provider').disabled = connected || state.pending || !wallets.length;
+    $('wallet-switch').hidden = !connected || state.chainId === MONAD_TESTNET.chainIdHex;
+    $('wallet-switch').disabled = state.pending || state.reading;
+    $('wallet-refresh').hidden = !connected;
+    $('wallet-refresh').disabled = state.pending || state.reading;
+    setText('wallet-refresh', state.reading ? '余额读取中…' : '刷新余额');
+    $('wallet-disconnect').hidden = !connected && !state.pending;
+    setText('wallet-disconnect', state.pending && !connected ? '取消本站连接' : '断开本站连接');
+    $('wallet-shortcut').disabled = state.pending;
+  }
+
+  const unsubscribeWallet = wallet.subscribe(renderWallet);
+  const discovery = discoverWallets(window, next => {
+    const value = $('wallet-provider').value;
+    const selected = value === '' ? undefined : wallets[Number(value)]?.provider;
+    wallets = next;
+    const choices = [];
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = wallets.length ? '请选择钱包' : '未检测到钱包扩展';
+    choices.push(placeholder);
+    wallets.forEach((item, index) => {
+      const option = document.createElement('option');
+      option.value = String(index);
+      option.textContent = item.name;
+      choices.push(option);
+    });
+    $('wallet-provider').replaceChildren(...choices);
+    const index = wallets.findIndex(item => item.provider === selected);
+    $('wallet-provider').value = wallets.length === 1 ? '0' : userSelected && index >= 0 ? String(index) : '';
+    $('wallet-help').hidden = wallets.length > 0;
+    renderWallet(wallet.getState());
+  });
+
+  function connectSelected() {
+    discovery.request();
+    const value = $('wallet-provider').value;
+    if (wallets.length && value === '') {
+      setText('wallet-message', '检测到多个钱包，请先选择你想连接的那个。');
+      $('wallet-provider').focus();
+      return;
+    }
+    void wallet.connect(value === '' ? undefined : wallets[Number(value)]?.provider);
+  }
+
+  function setPanelOpen(open) {
+    $('monad-body').hidden = !open;
+    $('monad-toggle').setAttribute('aria-expanded', String(open));
+    $('monad-panel').dataset.collapsed = String(!open);
+    setText('monad-toggle', open ? '收起面板' : '展开面板');
+    if (!open && monitor.getState().enabled) monitor.pause();
+  }
+
+  function renderMonitor(state) {
+    const { head, status } = state;
+    $('monad-panel').dataset.chainState = status === 'live' ? 'fresh' : head ? 'stale' : 'idle';
+    $('monad-refresh').disabled = status === 'reading';
+    $('monad-pause').hidden = !state.enabled;
+    setText('monad-chain-state', { idle: '尚未读取', reading: '正在读取', live: '已读取真实区块', paused: '读取已暂停', offline: '浏览器已离线', error: '读取失败' }[status]);
+    setText('monad-refresh', status === 'error' ? '重试读取' : head ? '刷新区块' : '读取测试网');
+    const messages = {
+      idle: '无需钱包即可读取；真实区块不参与本地游戏结算。',
+      reading: '正在查询 Monad 测试网公开 RPC…',
+      live: '每 5 秒采样一次；切到后台、离线或收起面板时暂停。',
+      paused: state.enabled ? '当前页面不可见，返回后会恢复读取。' : '已暂停读取，点击读取按钮可继续。',
+      offline: '浏览器处于离线状态，联网后会恢复；本地模拟可继续。',
+      error: state.error,
+    };
+    setText('monad-rpc-message', messages[status]);
+    if (head) {
+      setText('monad-block', head.number.toLocaleString('en-US'));
+      $('monad-block-link').href = `${MONAD_TESTNET.explorerUrl}/block/${head.number}`;
+      $('monad-block-link').hidden = false;
+      setText('monad-block-time', `区块时间 ${time(head.timestamp)} · ${status === 'live' ? '读取于' : '上次读取'} ${time(head.readAt)}${status === 'live' ? '' : ' · 非实时数据'}`);
+      setText('monad-latency', `RPC 查询 ${head.latencyMs} ms`);
+    }
+    $('monad-sample-section').hidden = !state.samples.length;
+    const key = state.samples.map(sample => `${sample.number}:${sample.hash}`).join(';');
+    if (sampleKey !== key) {
+      sampleKey = key;
+      $('monad-samples').replaceChildren(...state.samples.map(sample => {
+        const item = document.createElement('li');
+        const link = document.createElement('a');
+        link.href = `${MONAD_TESTNET.explorerUrl}/block/${sample.number}`;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = sample.number.toLocaleString('en-US');
+        link.title = `区块 ${sample.number} · ${sample.hash}`;
+        const caption = document.createElement('small');
+        caption.textContent = new Date(sample.timestamp).toLocaleTimeString('zh-CN', { hour12: false });
+        item.append(link, caption);
+        return item;
+      }));
+    }
+  }
+
+  const unsubscribeMonitor = monitor.subscribe(renderMonitor);
+  function syncEnvironment() { monitor.setEnvironment({ visible: !document.hidden, online: navigator.onLine !== false }); }
+  syncEnvironment();
+  const handlers = [];
+  function listen(target, type, handler) { target.addEventListener(type, handler); handlers.push(() => target.removeEventListener(type, handler)); }
+  listen($('wallet-provider'), 'change', () => { userSelected = true; });
+  listen($('wallet-connect'), 'click', connectSelected);
+  listen($('wallet-shortcut'), 'click', () => {
+    setPanelOpen(true);
+    $('monad-panel').scrollIntoView({ block: 'start', behavior: 'auto' });
+    if (!wallet.getState().account) connectSelected();
+  });
+  listen($('monad-toggle'), 'click', () => setPanelOpen($('monad-body').hidden));
+  listen($('wallet-switch'), 'click', () => { void wallet.switchNetwork(); });
+  listen($('wallet-refresh'), 'click', () => { void wallet.refresh(); });
+  listen($('wallet-disconnect'), 'click', () => wallet.disconnect());
+  listen($('wallet-copy'), 'click', async () => {
+    const account = wallet.getState().account;
+    if (!account) return;
+    const version = ++copyVersion;
+    const current = () => version === copyVersion && wallet.getState().account === account;
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(account);
+      if (current()) setText('wallet-copy-message', '钱包地址已复制。');
+    } catch {
+      if (!current()) return;
+      $('wallet-address-details').open = true;
+      $('wallet-full-address').focus();
+      $('wallet-full-address').select();
+      setText('wallet-copy-message', '浏览器未允许自动复制，已展开完整地址，可手动复制。');
+    }
+  });
+  listen($('monad-copy-rpc'), 'click', async () => {
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard unavailable');
+      await navigator.clipboard.writeText(MONAD_TESTNET.rpcUrl);
+      setText('monad-config-message', 'RPC 地址已复制，可粘贴到钱包的网络设置。');
+    } catch {
+      setText('monad-config-message', '浏览器未允许自动复制，请手动选择上方完整 RPC 地址后复制。');
+    }
+  });
+  listen($('monad-refresh'), 'click', () => { void monitor.refresh(); });
+  listen($('monad-pause'), 'click', () => monitor.pause());
+  listen(document, 'visibilitychange', syncEnvironment);
+  listen(window, 'online', syncEnvironment);
+  listen(window, 'offline', syncEnvironment);
+  listen(window, 'pagehide', () => monitor.setEnvironment({ visible: false }));
+  listen(window, 'pageshow', syncEnvironment);
+
+  return () => {
+    handlers.forEach(remove => remove());
+    unsubscribeWallet();
+    unsubscribeMonitor();
+    discovery.dispose();
+    monitor.dispose();
+    wallet.disconnect();
+  };
+}
+
+return { mountMonad };
 })();
 const { createGame, resetGame, startRound, advance, executeTrade, playerAction, nextRound, quoteTrade, marketPrices, scenarioOdds, participantStats } = GameEngine;
+const { mountMonad } = MonadUI;
 
 const $ = id => document.getElementById(id);
+const setText = (id, value) => { if ($(id).textContent !== value) $(id).textContent = value; };
 const KEY = 'blockpulse-playground-v2';
 const COLORS = ['red', 'black', 'green'];
 const LABELS = { red: '红', black: '黑', green: '绿' };
@@ -680,8 +1445,8 @@ function renderQuote(prices) {
   $('selected-chip').innerHTML = `<i></i>${NAMES[selectedColor]}`;
   $('available').textContent = buy ? `可用 ${fmt(player.balance)} 积分` : `持有 ${fmt(player.holdings[selectedColor], 0)} 份`;
   $('quote-total-label').textContent = buy ? '预计支付（含费用）' : '预计到账（扣除费用）';
-  $('submit-label').textContent = state.phase === 'settled' ? '本轮已到期' : state.phase === 'locked' ? '已封盘，等待结算' : `${buy ? '买入' : '卖出'}${LABELS[selectedColor]}色份额`;
-  $('max-shares').textContent = buy ? '最多' : player.holdings[selectedColor] > 1000 ? '卖 1,000 份' : '卖出 100%';
+  setText('submit-label', state.phase === 'settled' ? '本轮已到期' : state.phase === 'locked' ? '已封盘，等待结算' : `${buy ? '买入' : '卖出'}${LABELS[selectedColor]}色份额`);
+  setText('max-shares', buy ? '最多' : player.holdings[selectedColor] > 1000 ? '卖 1,000 份' : '卖出 100%');
   $('max-shares').disabled = closed || (!buy && player.holdings[selectedColor] < 1);
   $('shares').disabled = closed;
   document.querySelectorAll('[data-shares]').forEach(b => { const selected = Number(b.dataset.shares) === quantity; b.disabled = closed; b.classList.toggle('selected', selected); b.setAttribute('aria-pressed', String(selected)); });
@@ -737,7 +1502,7 @@ function render() {
   $('time').textContent = fmt(state.remainingMs / 1000, 1);
   $('window-label').textContent = trading ? `距封盘 ${fmt(Math.max(0, 55000 - state.elapsedMs) / 1000, 1)} 秒` : state.phase === 'locked' ? '买卖与行动均已停止' : '55 秒交易 + 5 秒封盘';
   $('round-action').disabled = live(state) || simulationFailed;
-  $('round-action-label').textContent = state.phase === 'ready' ? '开始 60 秒交易' : settled ? '继续下一轮' : state.phase === 'locked' ? '等待到期结算' : '交易进行中';
+  setText('round-action-label', state.phase === 'ready' ? '开始 60 秒交易' : settled ? '继续下一轮' : state.phase === 'locked' ? '等待到期结算' : '交易进行中');
   $('time-bar').style.width = `${100 * state.remainingMs / state.durationMs}%`;
   $('timer').setAttribute('aria-valuenow', fmt(state.remainingMs / 1000, 1));
   $('timer').classList.toggle('urgent', state.phase === 'locked');
@@ -865,10 +1630,16 @@ document.querySelectorAll('[data-bots]').forEach(b => b.addEventListener('click'
 window.addEventListener('resize', () => { chartKey = ''; drawChart(marketPrices(state)); });
 window.addEventListener('pagehide', () => { try { flushTime(); persist(); } catch { /* Optional save. */ } });
 setInterval(() => {
-  try { flushTime(); render(); if (performance.now() - lastPersistAt > 1000) persist(); }
+  try {
+    const running = live(state);
+    flushTime();
+    if (running) render();
+    if (running && performance.now() - lastPersistAt > 1000) persist();
+  }
   catch (error) { simulationFailed = true; showError(`本地进度无法继续：${error.reason || error.message}。请用右上角“重置积分”重新开始。`); }
 }, 100);
 render();
+mountMonad();
 
 })();
 </script>
